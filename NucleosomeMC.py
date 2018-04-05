@@ -301,7 +301,7 @@ class NucPose(object):
         self.nuc_type = input_file.split('.')[0]
         if input_file == None:
             input_file = "3LZ0.3DNA"
-            print 'Default file: ' + input_file
+            print('Default file: ' + input_file)
         #   read protein coords from pdb file
         filename = pdb_source_dir + input_file
         filename = fileio.change_extension(filename, 'pdb')

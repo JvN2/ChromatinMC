@@ -271,7 +271,7 @@ def main():
     z = all_coord[:, 2] / 10
     wlc = 1 - 0.5 * np.sqrt(0.1 * kT / (forces * pars['P_nm']))
     grid = []
-    for i in xrange(1, pars['n_nuc'] + 1):
+    for i in range(1, pars['n_nuc'] + 1):
         grid.append(wlc * (pars['L_bp'] - 80 * i) / 3)
         grid.append(wlc * (pars['L_bp'] - (pars['n_nuc'] * 80 + i * (147 - 80))) / 3)
     wlc *= pars['L_bp'] / 3
@@ -284,7 +284,7 @@ def main():
         print('Accept rate = %.1f %%' % (100 * float(accept) / (n_step * n_substeps * (pars['L_bp'] - 1))))
     try:
         fileio.create_mp4_pov(fileio.get_filename(sub=True, folder=True), origin_frame=0, reverse=False)
-    except Exception, e:
+    except Exception as e:
         print(Exception, e)
 
 

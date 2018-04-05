@@ -120,7 +120,7 @@ def read_dataset_xlsx(filename, dataset, pars=None):
     for p in pars:
         try:
             pars[p].value = df.at[row, p]
-        except Exception, e:
+        except Exception as e:
             pass
         df = pd.read_excel(filename, 'Min')
         try:
@@ -153,7 +153,9 @@ def read_param_xlsx(filename, param):
         print ('Parameter [{:}] not found'.format(param))
     return
 
-def write_param_xlsx(filename, param, data):
+def write_param_xlsx(filename, param, data, report_file=None):
+    if not (report_file):
+        report_file = filename
     filename = change_extension(filename, 'xlsx')
     df = pd.read_excel(filename, 'Value')
     df[param] = data
@@ -242,7 +244,7 @@ def create_mp4_images(image_files, fps=5.0, delete=True, filename=None, reverse=
         for image in image_files:
             os.remove(image)
     out.release()
-    print 'Movie saved as:', filename
+    print('Movie saved as:', filename)
     return filename
 
 
@@ -253,15 +255,15 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
     plt.close()
     plt.figure(figsize=(4, 3))
     if not transpose:
-        xsel = data[0][data[3] <> 0]
-        ysel = data[1][data[3] <> 0]
+        xsel = data[0][data[3] != 0]
+        ysel = data[1][data[3] != 0]
         xunsel = data[0][data[3] == 0]
         yunsel = data[1][data[3] == 0]
         xline = data[0]
         yline = data[2]
     else:
-        xsel = data[1][data[3] <> 0]
-        ysel = data[0][data[3] <> 0]
+        xsel = data[1][data[3] != 0]
+        ysel = data[0][data[3] != 0]
         xunsel = data[1][data[3] == 0]
         yunsel = data[0][data[3] == 0]
         xline = data[2]
@@ -381,7 +383,7 @@ def create_mp4_pov(directory, origin_frame=0, fps=5, reverse=True):
     image_files = []
     j = 0
     report_progress(len(filenames), title='create_pov_mp4', init=True)
-    print filenames
+    print(filenames)
     for file in filenames:
         j += 1
         report_progress(j, title='create_pov_mp4')

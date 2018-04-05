@@ -13,7 +13,7 @@ import pandas as pd
 import easygui as eg
 
 # ChromatinMC modules:
-import NucleosomeMC3 as nMC
+import NucleosomeMC as nMC
 import POVutils as pov
 import FileIO as fileio
 import RunMC as rMC
@@ -165,7 +165,7 @@ def plot_energy(filename):
 
     energy_F = np.asarray(energy_F)
 
-    i = xrange(len(dna.params))
+    i = range(len(dna.params))
 
     plt.close()
     plt.figure(figsize=(12, 3))
@@ -192,13 +192,13 @@ def plot_energy(filename):
 
 
 def plot_step_params(filename, dataset, save=False, wait=0, plot_energy=True):
-    filename = change_extension(filename, 'xlsx')
-    sets, files, _ = contents_xlsx(filename)
+    filename = fileio.change_extension(filename, 'xlsx')
+    sets, files, _ = fileio.contents_xlsx(filename)
     if dataset == -1:
         filename = sorted(files)[-1]
     else:
         filename = files[sets.index(dataset)]
-    dna = HelixPose.from_file(change_extension(filename, 'npz'))
+    dna = HelixPose.from_file(fileio.change_extension(filename, 'npz'))
 
     p0 = np.load(default_step_file)[0]
     sigma2 = np.load(default_step_file)[1:]
@@ -209,7 +209,7 @@ def plot_step_params(filename, dataset, save=False, wait=0, plot_energy=True):
     energy_kT = np.asarray(energy_kT)
     energy_kT = np.sum(np.abs(energy_kT), axis=1)
 
-    i = xrange(len(dna.params))
+    i = range(len(dna.params))
 
     plt.close()
     plt.figure(figsize=(12, 4))
@@ -229,10 +229,10 @@ def plot_step_params(filename, dataset, save=False, wait=0, plot_energy=True):
 
     plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
     plt.draw()
-    if wait <> 0:
+    if wait != 0:
         plt.pause(wait)
     if save:
-        filename = change_extension(filename, '_step.jpg')
+        filename = fileio.change_extension(filename, '_step.jpg')
         plt.savefig(filename, dpi=600, format='jpg')
     return
 
