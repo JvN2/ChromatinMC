@@ -367,8 +367,8 @@ def plot_dna(pose, tf=None, color='blue', update=False, title='', range_nm=100, 
     plt.draw()
     plt.pause(0.05)
     if save:
-        filename = get_filename(incr=True, sub=True, ext='jpg')
-        plt.savefig(filename, dpi=600, format='jpg')
+        filename = get_filename(incr=True, sub=True, ext='png')
+        plt.savefig(filename, dpi=600, format='png')
     time.sleep(wait)
     return
 
