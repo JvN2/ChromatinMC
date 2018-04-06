@@ -14,7 +14,6 @@ try:
 except:
     pass
 
-import numba
 import numpy as np
 from lmfit import Parameters
 from helixmc import util
@@ -47,7 +46,7 @@ def get_unwrap_energy(wrap_params, fixed_wrap_params, e_wrap_kT):
     sigma_trans = 1  # 1 Angstrom, similar to basepair steps
     sigma_rot = 5 * np.pi / 180  # 5 degree, similar to basepair steps
     k1 = kT / np.asarray([sigma_trans, sigma_trans, sigma_trans, sigma_rot, sigma_rot, sigma_rot]) ** 2
-    k1 *=10
+    k1 *= 10
     G_unwrap = 0.5 * k1 * (wrap_params - fixed_wrap_params) ** 2
     G_unwrap = np.clip(G_unwrap, 0, e_wrap_kT * kT / 6)
     return np.sum(G_unwrap), G_unwrap
@@ -111,7 +110,7 @@ def get_new_step_params(moving_bp, prev_bp, dna, dyads, nucl, random_step):
         new_step_params = random_step()[0]
     return new_step_params
 
-@numba.jit
+
 def MC_move(dna, moving_bp, previous_bp, scorefxn, fixed_wrap_params, fixed_stack_params, dyads, nucl,
             random_step, e_wrap_kT, e_stack_kT, fiber_start):
     old_step_params = dna.params[moving_bp]
@@ -137,8 +136,7 @@ def MC_move(dna, moving_bp, previous_bp, scorefxn, fixed_wrap_params, fixed_stac
 
 def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT, e_stack_kT, \
                      fiber_start, p0, k, force):
-
-    e_nucl= score_dna(0, len(nucl.dna.params), nucl.dna, p0, k)
+    e_nucl = score_dna(0, len(nucl.dna.params), nucl.dna, p0, k)
     g_wrap = 0
     g_dna = 0
     g_stack = 0
@@ -162,6 +160,7 @@ def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_
     g_nuc_kT = np.asarray([g_dna, g_wrap, g_stack, g_work]) / kT
     names = ['g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT']
     return g_nuc_kT, names
+
 
 def main():
     # Params for reporting results
@@ -250,7 +249,7 @@ def main():
         scorefxn = ScoreTweezers(force)
         previous_bp = 0
 
-        g_nuc_kT_all =[]
+        g_nuc_kT_all = []
         for bp in basepairs:
             accept += MC_move(dna, bp, previous_bp, scorefxn, fixed_wrap_params, fixed_stack_params,
                               dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
@@ -258,7 +257,7 @@ def main():
         basepairs = basepairs[::-1]
 
         g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
-                                       e_stack_kT, fiber_start, p0, k, force)
+                                           e_stack_kT, fiber_start, p0, k, force)
         g_nuc_kT_all.append(g_nuc_kT)
         if i == 4:
             e_stack_kT = pars['e_stack_kT'].value
