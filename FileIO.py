@@ -105,7 +105,8 @@ def change_extension(filename, extension):
     return base + extension
 
 
-def read_dataset_xlsx(filename, dataset, pars=None):
+def read_xlsx_row(filename, dataset, pars=None):
+    # Read a row in Excel sheet
     sets, files, _ = contents_xlsx(filename)
     df = pd.read_excel(filename, 'Value')
     for index in df.index.values:
@@ -115,7 +116,7 @@ def read_dataset_xlsx(filename, dataset, pars=None):
         pars = Parameters()
         for par in list(df):
             pars.add(str(par), value=df.at[row, par])
-        return (pars)
+        return pars, files[sets == dataset]
 
     for p in pars:
         try:
@@ -143,7 +144,7 @@ def read_dataset_xlsx(filename, dataset, pars=None):
     return pars, files[sets == dataset]
 
 
-def read_param_xlsx(filename, param):
+def read_xlsx_collumn(filename, param):
     filename = change_extension(filename, 'xlsx')
     df = pd.read_excel(filename, 'Value')
     try:
@@ -152,6 +153,7 @@ def read_param_xlsx(filename, param):
     except:
         print ('Parameter [{:}] not found'.format(param))
     return
+
 
 def write_param_xlsx(filename, param, data, report_file=None):
     if not (report_file):
@@ -165,7 +167,7 @@ def write_param_xlsx(filename, param, data, report_file=None):
     return
 
 
-def write_xlsx(filename, dataset, pars, report_file=None):
+def write_xlsx_row(filename, dataset, pars, report_file=None):
     if not (report_file):
         report_file = filename
     report_file = change_extension(report_file, 'xlsx')
@@ -220,36 +222,53 @@ def contents_xlsx(filename):
     return datasets, files, par_names
 
 
-def create_mp4_images(image_files, fps=5.0, delete=True, filename=None, reverse=True):
+def create_movie(image_files, fps=5.0, delete=True, filename=None, reverse=True, titles=None):
+
     image_files = sorted(image_files)
+    if reverse:
+        image_files.append(reversed(image_files))
+        titles.append(reversed(titles))
+
     if filename == None:
         filename = image_files[0]
-    filename = change_extension(filename, 'mp4')
+    filename = change_extension(filename, 'avi')
 
     frame = cv2.imread(image_files[0])
     height, width, channels = frame.shape
+    bottomLeftCornerOfText = (20, height - 20)
+    font = cv2.FONT_HERSHEY_DUPLEX
+    fontScale = 1
+    fontColor = (0, 0, 0)
+    lineType = 2
 
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v') # Be sure to use lower case
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Be sure to use lower case
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Be sure to use lower case
     out = cv2.VideoWriter(filename, fourcc, fps, (width, height))
 
-    for image in image_files:
+    for i, image in enumerate(image_files):
         frame = cv2.imread(image)
+        try:
+            cv2.putText(frame, titles[i],
+                        bottomLeftCornerOfText,
+                        font,
+                        fontScale,
+                        fontColor,
+                        lineType)
+        except:
+            pass
+
         out.write(frame)  # Write out frame to video
-    if reverse:
-        for image in reversed(image_files):
-            frame = cv2.imread(image)
-            out.write(frame)  # Write out frame to video
+
     if delete:
         for image in image_files:
             os.remove(image)
     out.release()
-    print('Movie saved as:', filename)
+    print('>>> Movie saved as: {}'.format(filename))
     return filename
 
 
-def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=True, filename=None, transpose=False):
-    #   data = [x, y, line, selected]
+def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=True,
+              filename=None, transpose=False):
+    #  used format of data: [x, y, line, selected]
     if filename is None:
         filename = get_filename(incr=True)
     plt.close()
@@ -285,7 +304,7 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
     if xrange is not None:
         plt.xlim(xrange)
     if yrange is not None:
-        plt.xlim(yrange)
+        plt.ylim(yrange)
     plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
     plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0], loc='left',
               fontdict={'fontsize': 10})
@@ -293,13 +312,13 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
     plt.draw()
     plt.pause(0.05)
     if save:
-        filename = get_filename(ext='png')
+        filename = change_extension(filename, 'png')
         plt.savefig(filename, dpi=600, format='png')
     return filename
 
 
-def pov_dna(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
-            show=False):
+def create_pov(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
+               show=False):
     if radius is None:
         radius = np.append([10], (np.ones(8) * 4))
         radius = np.append(radius, 3)
@@ -308,7 +327,6 @@ def pov_dna(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pi
         colors = 'kbbggryrycy'
 
     filename = change_extension(filename, 'pov')
-
     aspect_ratio = range_A[1] / float(range_A[0])
     pov_image = pov.init(plt_width=range_A[0], aspect_ratio=aspect_ratio)
     i = 0
@@ -373,8 +391,9 @@ def plot_dna(pose, tf=None, color='blue', update=False, title='', range_nm=100, 
     return
 
 
-def create_mp4_pov(directory, origin_frame=0, fps=5, reverse=True):
-    filenames = sorted(glob.glob(directory + '\\*.npz'))
+def create_pov_movie(filename, origin_frame=0, fps=5, reverse=True):
+    pix = 500
+    sets, filenames, _ = contents_xlsx(filename)
     r = np.append([10], (np.ones(8) * 4))
     r = np.append(r, 3)
     r = np.append(r, 2)
@@ -382,29 +401,31 @@ def create_mp4_pov(directory, origin_frame=0, fps=5, reverse=True):
 
     image_files = []
     j = 0
-    report_progress(len(filenames), title='create_pov_mp4', init=True)
-    print(filenames)
-    for file in filenames:
-        j += 1
-        report_progress(j, title='create_pov_mp4')
+    print('>>> {}'.format(filename))
+    report_progress(len(filenames)-1, title='create_pov_movie', init=True)
+    for j, file in enumerate(filenames):
+        report_progress(j, title=file)
+        if os.path.isfile(change_extension(file, 'png')):
+            image_files.append(change_extension(file, 'png'))
+        else:
+            try:
+                dna = HelixPose.from_file(change_extension(file, 'npz'))
+                origin_of = nMC.get_of(dna, origin_frame)
+                tf = nMC.get_transformation(origin_of)
+                coords = nMC.apply_transformation(dna.coords, tf)
+                file = create_pov(file, [coords], range_A=[1000, 1500], offset_A=[0, 0, 150], show=False, width_pix=pix)
+                image_files.append(file)
+            except:
+                pass
 
-        dna = HelixPose.from_file(file)
-        origin_of = nMC.get_of(dna, origin_frame)
-        tf = nMC.get_transformation(origin_of)
-        coords = nMC.apply_transformation(dna.coords, tf)
-        image_files.append(pov_dna(file, [coords], range_A=[1000, 1500], offset_A=[0, 0, 150], show=False))
-    create_mp4_images(image_files, fps=fps, delete=True, filename=directory + '.mp4', reverse=reverse)
+    forces = read_xlsx_collumn(filename, 'F_pN')
+    titles = []
+    for force in forces:
+        titles.append('F = {:2.1f} pN'.format(force))
+
+    create_movie(image_files, fps=fps, delete=False, filename=filename, reverse=reverse,
+                 titles=titles)
     return
-
-
-def create_pov_npz(filename):
-    filename = change_extension(filename, 'npz')
-    dna = HelixPose.from_file(filename)
-    pov_dna(filename, [dna.coords], range_A=[1500, 2500], offset_A=[0, 0, 150], show=True)
-    return
-
-    # filename = 'E:\\users\\noort\\data\\20180320\\12nucs_016.dat'
-    # plot_step_params(filename, -1, save=True)
 
 
 def main():

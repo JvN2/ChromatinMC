@@ -22,7 +22,7 @@ import FileIO as fileio
 plt.interactive(False)
 np.set_printoptions(formatter={'float': '{: 0.1f}, '.format})
 
-pdb_source_dir = "E:\\users\\noort\\PycharmProjects\\ChromatinMC\\PDBs\\"
+pdb_source_dir = "E:\\Users\\Noort\\Python\\ChromatinMC_3\\PDBs\\"
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
 
@@ -130,7 +130,7 @@ def get_wrap_params(dna, dyad, fixed):
     dyad_of = get_of(dna, dyad)
     for i in fixed:
         base_of = get_of(dna, dyad + i)
-        fixed_params.append(ofs2params(dyad_of, base_of))
+        fixed_params.append((dyad_of, base_of))
     return np.asarray(fixed_params).reshape((-1, 6))
 
 
@@ -414,7 +414,7 @@ def main():
     n_coords.append(of2axis(nuc_ax, length=60))
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
-    fileio.pov_dna(filename, n_coords, range_A=[300, 300], offset_A=[0, 0, 60], show=True, width_pix=500)
+    fileio.create_pov(filename, n_coords, range_A=[300, 300], offset_A=[0, 0, 60], show=True, width_pix=500)
 
 
 if __name__ == '__main__':
