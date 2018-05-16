@@ -2,7 +2,7 @@
 """
 Created on Wed Nov 18 16:43:39 2015
 
-@author: John
+@author: John van Noort
 
 Add functionalities for nucleoosmes to HelixMC
 """
@@ -14,7 +14,7 @@ mpl.interactive(False)
 
 import numpy as np
 from helixmc.pose import HelixPose
-from helixmc.util import frames2params
+from helixmc.util import frames2params_3dna, frames2params
 import matplotlib.pyplot as plt
 # ChromatinMC modules:
 import FileIO as fileio
@@ -26,14 +26,16 @@ pdb_source_dir = "E:\\Users\\Noort\\Python\\ChromatinMC_3\\PDBs\\"
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
 
-def ofs2params(of1, of2):
+def ofs2params(of1, of2, _3dna=False):
     o1 = of1[0]
     f1 = of1[1:, :] - o1
     o2 = of2[0]
     f2 = of2[1:, :] - o2
-    f1 = np.transpose(f1)
-    f2 = np.transpose(f2)
-    params = frames2params(o1, o2, f1, f2)
+
+    if _3dna:
+        params = frames2params_3dna(o1, o2, f1, f2)
+    else:
+        params = frames2params(o1, o2, f1, f2)
     return params
 
 
@@ -41,14 +43,14 @@ def find(lst, predicate):
     return (i for i, j in enumerate(lst) if predicate(j)).next()
 
 
-def of2axis(of, length=60):
+def of2axis(of, length=60, axes=[0, 1, 2]):
     """
     converts originframe to axis for plotting purposes
     """
     o = of[0]
     f = of[1:] - o
     coords_out = []
-    for i in np.arange(0, 3):
+    for i in axes:
         for j in np.linspace(0, (i + 1) * length, length * 1):
             coords_out.append(o + j * f[i])
     return np.asarray(coords_out)
@@ -113,25 +115,39 @@ def get_nuc_of(dna, dyad, nucl):
     Calculate the center of mass and the reference frame (=of) of a nucleosome in dna
     """
     tf = get_transformation(get_of(nucl.dna, nucl.dyad), get_of(dna, dyad))
+    print(tf)
     n_of = apply_transformation(nucl.of, tf)
     return n_of
 
 
 def get_of(dna, i):
+    of = get_of_2(dna.coords, dna.frames, i)
+    return of
+
+
+def get_of_2(dna_coords, dna_frames, i):
     of = []
-    of.append(dna.coords[i])
-    for f in np.transpose(dna.frames[i]):
-        of.append(dna.coords[i] + f)
+    of.append(dna_coords[i])
+    for f in dna_frames[i].T:
+        of.append(dna_coords[i] + f)
     return np.asarray(of)
 
 
-def get_wrap_params(dna, dyad, fixed):
+# def get_wrap_params2(dna, dyad, fixed):
+#     fixed_params = []
+#     dyad_of = get_of(dna, dyad)
+#     for i in fixed:
+#         base_of = get_of(dna, dyad + i)
+#         fixed_params.append((dyad_of, base_of))
+#     return np.asarray(fixed_params).reshape((-1, 6))
+
+
+def get_wrap_param(dna_coords, dna_frames, dyad, fixed):
     fixed_params = []
-    dyad_of = get_of(dna, dyad)
     for i in fixed:
-        base_of = get_of(dna, dyad + i)
-        fixed_params.append((dyad_of, base_of))
-    return np.asarray(fixed_params).reshape((-1, 6))
+        params = frames2params(dna_coords[dyad], dna_coords[dyad + i], dna_frames[dyad], dna_frames[dyad + i])
+        fixed_params.append(params)
+    return np.asarray(fixed_params)
 
 
 def seq3_to_1(seq3):
@@ -373,15 +389,12 @@ class NucPose(object):
             self.dna = HelixPose(params)
 
         # get origin and frame of nucleosome
-        cm = np.mean(self.dna.coords[self.fixed], axis=0)
+        cm = np.mean(self.dna.coords[self.fixed[3:11]], axis=0)
         Nx = self.dna.coords[self.dyad] - cm
         Nx = Nx / np.linalg.norm(Nx)
         Nz = np.mean(self.dna.coords[self.fixed[:7], :], axis=0) - np.mean(self.dna.coords[self.fixed[7:], :], axis=0)
-        Nz = Nz / np.linalg.norm(Nz)
-
         Ny = np.cross(Nx, Nz)
         Ny = Ny / np.linalg.norm(Nz)
-
         Nz = np.cross(Nx, Ny)
         Nz = Nz / np.linalg.norm(Nz)
         origin = cm

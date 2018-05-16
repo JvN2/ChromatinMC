@@ -59,7 +59,7 @@ def report_progress(value, title='', init=False):
     return
 
 
-def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False):
+def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False, current=False, wildcard='*'):
     global working_directory, root_name, file_number, sub_number
     if 'root_name' not in globals():
         if root is None:
@@ -69,6 +69,12 @@ def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False):
     if 'working_directory' not in globals():
         user = getpass.getuser()
         working_directory = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, datetime.now().strftime('%Y%m%d'))
+    if current:
+        filename = working_directory + wildcard + '.' + ext
+        list_of_files = glob.glob(filename)  # * means all if need specific format then *.csv
+        filename = max(list_of_files, key=os.path.getctime)
+        return filename
+
     if 'file_number' not in globals():
         try:
             filename = working_directory + root_name + '_' + '*.*'
@@ -155,7 +161,7 @@ def read_xlsx_collumn(filename, param):
     return
 
 
-def write_param_xlsx(filename, param, data, report_file=None):
+def write_xlsx_column(filename, param, data, report_file=None):
     if not (report_file):
         report_file = filename
     filename = change_extension(filename, 'xlsx')
@@ -223,7 +229,6 @@ def contents_xlsx(filename):
 
 
 def create_movie(image_files, fps=5.0, delete=True, filename=None, reverse=True, titles=None):
-
     image_files = sorted(image_files)
     if reverse:
         image_files.append(reversed(image_files))
@@ -273,6 +278,7 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
         filename = get_filename(incr=True)
     plt.close()
     plt.figure(figsize=(4, 3))
+    plt.axes([0.15, 0.15, .8, .75])
     if not transpose:
         xsel = data[0][data[3] != 0]
         ysel = data[1][data[3] != 0]
@@ -308,12 +314,12 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
     plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
     plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0], loc='left',
               fontdict={'fontsize': 10})
-    plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
+    # plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
     plt.draw()
     plt.pause(0.05)
     if save:
-        filename = change_extension(filename, 'png')
-        plt.savefig(filename, dpi=600, format='png')
+        filename = change_extension(filename, 'jpg')
+        plt.savefig(filename, dpi=600, format='jpg')
     return filename
 
 
@@ -350,13 +356,12 @@ def create_pov(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width
     return filename
 
 
-def plot_dna(pose, tf=None, color='blue', update=False, title='', range_nm=100, save=False, wait=0):
+def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', range_nm=100, save=False, wait=0,
+             dna_pose2=None):
     global ax, fig, scale
 
-    if tf is None:
-        coords = pose.coords / 10.0
-    else:
-        coords = nMC.apply_transformation(pose.coords, tf) / 10.0
+    tf = nMC.get_transformation(nMC.get_of(dna_pose1, origin_index))
+    coords = nMC.apply_transformation(dna_pose1.coords, tf) / 10.0
 
     if update:
         ax.clear()
@@ -376,7 +381,11 @@ def plot_dna(pose, tf=None, color='blue', update=False, title='', range_nm=100, 
 
     ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=pointsize, c=color, alpha=0.25)
     ax.scatter(coords[0, 0], coords[0, 1], coords[0, 2], s=pointsize, c='red', alpha=0.55)
-    ax.scatter([0], [0], [0], s=pointsize, c='k', alpha=0.55)
+    ax.scatter([0], [0], [0], s=pointsize * 5, c='k', alpha=0.55)
+
+    if dna_pose2 is not None:
+        coords = nMC.apply_transformation(dna_pose2.coords, tf) / 10.0
+        ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=pointsize, c='black', alpha=0.25)
 
     plt.xlim((-scale, scale))
     plt.ylim((-scale, scale))
@@ -387,6 +396,7 @@ def plot_dna(pose, tf=None, color='blue', update=False, title='', range_nm=100, 
     if save:
         filename = get_filename(incr=True, sub=True, ext='png')
         plt.savefig(filename, dpi=600, format='png')
+        print('plot saved in file: ', filename)
     time.sleep(wait)
     return
 
@@ -399,15 +409,21 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=True):
     r = np.append(r, 2)
     c = 'kbbggryrycy'
 
+    for i, f in enumerate(filenames):
+        filenames[i] = change_extension(f, 'png')
+
+    path = (filename.split('.')[0])
+    existing_files = glob.glob(path + '\\*.png')
     image_files = []
+
     j = 0
     print('>>> {}'.format(filename))
-    report_progress(len(filenames)-1, title='create_pov_movie', init=True)
-    for j, file in enumerate(filenames):
-        report_progress(j, title=file)
-        if os.path.isfile(change_extension(file, 'png')):
-            image_files.append(change_extension(file, 'png'))
+    report_progress(len(filenames) - len(existing_files) - 1, title='create_pov_movie', init=True)
+    for file in filenames:
+        if file in existing_files:
+            image_files.append(file)
         else:
+            report_progress(j, title=file)
             try:
                 dna = HelixPose.from_file(change_extension(file, 'npz'))
                 origin_of = nMC.get_of(dna, origin_frame)
@@ -415,6 +431,7 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=True):
                 coords = nMC.apply_transformation(dna.coords, tf)
                 file = create_pov(file, [coords], range_A=[1000, 1500], offset_A=[0, 0, 150], show=False, width_pix=pix)
                 image_files.append(file)
+                j += 1
             except:
                 pass
 

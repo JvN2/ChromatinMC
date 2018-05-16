@@ -28,18 +28,22 @@ import FileIO as fileio
 
 dna_step_file = 'C:\\Python27\\Lib\\site-packages\\helixmc\\data\\DNA_gau.npy'
 kT = 41.0
-np.set_printoptions(formatter={'float': '{: 0.1f}, '.format})
+np.set_printoptions(formatter={'float': '{: 0.3f}, '.format})
 
 
-def score_dna(start_bp, end_bp, dna, p0, k):
+def score_dna(dna_params, p0, k, start_bp=0, end_bp=None):
+    if end_bp is None:
+        end_bp = len(dna_params) - 1
     g_dna = 0
     for i in range(start_bp, end_bp, 1):
-        g_dna += np.sum(0.5 * (dna.params[i] - p0) * np.dot(k, dna.params[i] - p0)) - 3
+        g_dna += np.sum(0.5 * (dna_params[i] - p0) * np.dot(k, dna_params[i] - p0)) - 3
     return g_dna * kT
 
 
-def score_work(start_bp, end_bp, dna, force):
-    g_work = -(dna.coords[end_bp, 2] - dna.coords[start_bp, 2]) * force
+def score_work(dna_coords, force, start_bp=0, end_bp=None):
+    if end_bp is None:
+        end_bp = len(dna_coords) - 1
+    g_work = -(dna_coords[end_bp, 2] - dna_coords[start_bp, 2]) * force
     return g_work
 
 
@@ -53,45 +57,50 @@ def get_unwrap_energy(wrap_params, fixed_wrap_params, e_wrap_kT):
     return np.sum(G_unwrap), G_unwrap
 
 
-def score_wrapping(moving_bp, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT, half_nuc=False):
+def score_wrapping(moving_bp, dna_coords, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT, half_nuc=False):
     closest_dyad = dyads[np.abs(dyads - moving_bp).argmin()]
     start_bp = closest_dyad - nucl.dyad
     end_bp = start_bp + len(nucl.dna.params)
+
     if start_bp <= moving_bp < end_bp:
-        wrap_params = nMC.get_wrap_params(dna, closest_dyad, nucl.fixed)
-        G, Gwrap_all = get_unwrap_energy(wrap_params, fixed_wrap_params, e_wrap_kT)
+        wrap_params = nMC.get_wrap_param(dna_coords, dna_frames, closest_dyad, nucl.fixed)
+        g, g_wrap_all = get_unwrap_energy(wrap_params, fixed_wrap_params, e_wrap_kT)
         if half_nuc is True:
             if moving_bp < closest_dyad:
-                G = np.sum(Gwrap_all[nucl.fixed < 0])
+                g = np.sum(g_wrap_all[nucl.fixed < 0])
             else:
-                G = np.sum(Gwrap_all[nucl.fixed > 0])
+                g = np.sum(g_wrap_all[nucl.fixed > 0])
     else:
-        G = 0
-    return G
+        g = 0
+    return g
 
 
-def score_stacking(moving_bp, dna, dyads, fixed_stack_params, e_stack_kT, fiber_start=1):
+def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start=1):
     start_dyad = np.argmax(dyads > moving_bp) - 1
     if 0 <= start_dyad < len(dyads) - fiber_start:
-        stack_params = fMC.get_stack_pars(dna, [dyads[start_dyad], dyads[start_dyad + fiber_start]])
-        sigma = np.asarray([1, 1, 1, 0.1, 0.1, 0.1])
-        sigma /= 1
+        # print(dyads[start_dyad], dyads[start_dyad + fiber_start], -dyads[start_dyad]+ dyads[start_dyad + fiber_start])
+        stack_params = fMC.get_stack_pars(coords, frames, dyads[start_dyad], dyads[start_dyad + fiber_start],
+                                          nucl)
+        sigma = np.asarray([0.5, 0.5, 0.5, 0.2, 0.2, 0.2])
+        sigma /= 1.0
         k = kT / sigma ** 2
+
         g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
         g = np.clip(g, 0, e_stack_kT * kT)
+
         # second potential
         sigma = np.asarray([10, 10, 10, 1e3, 1e3, 1e3])
+        sigma *= 1
         k = kT / sigma ** 2
         g2 = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
-        g2 = np.clip(g2, 0, e_stack_kT * kT)
         g += g2
     else:
         g = 0
     return g
 
 
-def score_surface(dna):
-    surface = dna.coords[:, 2] < 0
+def score_surface(dna_coords):
+    surface = dna_coords[:, 2] < 0
     if np.sum(surface) > 0:
         return 1e7
     else:
@@ -114,18 +123,24 @@ def get_new_step_params(moving_bp, prev_bp, dna, dyads, nucl, random_step):
 
 def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT, e_stack_kT, \
                      fiber_start, p0, k, force):
-    e_nucl = score_dna(0, len(nucl.dna.params), nucl.dna, p0, k)
+    dna_coords = dna.coords
+    dna_params = dna.params
+    dna_frames = dna.frames
+    e_nucl = score_dna(nucl.dna.params, p0, k)
     g_wrap = 0
     g_dna = 0
     g_stack = 0
     g_work = 0
     n_nucs = len(dyads)
     for dyad1, dyad2 in zip(dyads[:-1], dyads[1:]):
-        g_dna += score_dna(dyad1, dyad2, dna, p0, k)
-        g_stack += score_stacking(dyad1 + 1, dna, dyads, fixed_stack_params, e_stack_kT, fiber_start)
-        g_work += score_work(dyad1, dyad2, dna, force)
-        g_wrap += score_wrapping(dyad1 + 2, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT, half_nuc=True)
-        g_wrap += score_wrapping(dyad2 - 2, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT, half_nuc=True)
+        g_dna += score_dna(dna_params, p0, k, start_bp=dyad1, end_bp=dyad2)
+        g_stack += score_stacking(dyad1 + 1, dna_coords, dna_frames, dyads, fixed_stack_params, e_stack_kT, nucl,
+                                  fiber_start)
+        g_work += score_work(dna_coords, force, start_bp=dyad1, end_bp=dyad2, )
+        g_wrap += score_wrapping(dyad1 + 2, dna_coords, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                 half_nuc=True)
+        g_wrap += score_wrapping(dyad2 - 2, dna_coords, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                 half_nuc=True)
 
     g_wrap /= (n_nucs - 1)
     g_dna /= (n_nucs - 1)
@@ -140,69 +155,42 @@ def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_
     return g_nuc_kT, names
 
 
-from numba import jit
+def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, dyads, nucl,
+            random_step, e_wrap_kT, e_stack_kT, fiber_start):
+    old_step_params = dna.params[bp]
+    new_step_params = get_new_step_params(bp, previous_bp, dna, dyads, nucl, random_step)
+    if np.array_equal(old_step_params, new_step_params):
+        return False
+    else:
+        coords = dna.coords
+        frames = dna.frames
+        old_score = [
+            score_wrapping(bp, coords, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT),
+            score_stacking(bp, coords, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            score_work(coords, force),
+            score_surface(coords),
+            0]
+        dna.update(bp, new_step_params)
+        coords = dna.coords
+        frames = dna.frames
+        new_score = [
+            score_wrapping(bp, coords, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT),
+            score_stacking(bp, coords, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            score_work(coords, force),
+            score_surface(coords),
+            0]
+    if util.MC_acpt_rej(np.sum(old_score), np.sum(new_score)):
+        return True
+    else:
+        dna.update(bp, old_step_params)
+        return False
 
 
-@jit
-def MC_moves(dna, basepairs, scorefxn, fixed_wrap_params, fixed_stack_params, dyads, nucl,
-             random_step, e_wrap_kT, e_stack_kT, fiber_start):
-    previous_bp = 0
-    old_dna_score = scorefxn(dna) + score_surface(dna)
-    for moving_bp in basepairs:
-        old_step_params = dna.params[moving_bp]
-        new_step_params = get_new_step_params(moving_bp, previous_bp, dna, dyads, nucl, random_step)
-        if not np.array_equal(old_step_params, new_step_params):
-            old_score = old_dna_score \
-                        + score_wrapping(moving_bp, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT) \
-                        + score_stacking(moving_bp, dna, dyads, fixed_stack_params, e_stack_kT, fiber_start)
-            dna.update(moving_bp, new_step_params)
-            new_dna_score = scorefxn(dna) + score_surface(dna)
-            new_score = new_dna_score \
-                        + score_wrapping(moving_bp, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT) \
-                        + score_stacking(moving_bp, dna, dyads, fixed_stack_params, e_stack_kT, fiber_start)
-            if util.MC_acpt_rej(old_score, new_score):
-                old_dna_score = new_dna_score
-            else:
-                dna.update(moving_bp, old_step_params)
-        previous_bp = moving_bp
-    return
-
-
-def main():
-    # Params for reporting results
-    pars = Parameters()
-    pars.add('F_pN', value=0)
-    pars.add('z_nm', value=0)
-
-    pars.add('g_dna_kT', value=0)
-    pars.add('g_wrap_kT', value=0)
-    pars.add('g_stack_kT', value=0)
-    pars.add('g_work_kT', value=0)
-
-    # Params that define the nucleosomal array
-    pars.add('L_bp', value=1000)
-    pars.add('P_nm', value=50)
-    pars.add('n_nuc', value=4)
-    pars.add('dyad0_bp', value=0)
-    # Params that define the folded fiber
-    pars.add('diameter_A', value=330)
-    pars.add('rise_A', value=100)
-    pars.add('nld_A', value=25)
-    pars.add('chirality', value=-1)
-    pars.add('face', value=1)
-
-    # Params that are typically varied between simulations
-    pars.add('NRL', value=197)
-    pars.add('fiber_start', value=1)
-    pars.add('Unwrapped_bp', value=30)
-    pars.add('e_wrap_kT', value=3)
-    pars.add('e_stack_kT', value=23)
-
-    e_wrap_kT = pars['e_wrap_kT'].value
-
+def main(pars):
     # Setup files and forces
-    filename = fileio.get_filename(incr=True, root='4x197')
-    n_force_steps = 500
+    root = '{0}st{1}x{2}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value)
+    filename = fileio.get_filename(incr=True, root=root)
+    n_force_steps = 10000
     n_samples = 250
 
     fmax_pN = 10
@@ -210,34 +198,31 @@ def main():
     forces = np.linspace(fmin_pN, fmax_pN, n_force_steps / 2)
 
     sample_forces = np.logspace(np.log10(fmin_pN), np.log10(fmax_pN), n_samples / 2)
-    sample_indices = (np.searchsorted(forces, sample_forces))
-    sample_indices = (np.append(sample_indices, n_force_steps / 2 + (n_force_steps / 2 - sample_indices[::-1]) - 1))
+    sample_indices = np.searchsorted(forces, sample_forces)
+    sample_indices = np.append(sample_indices, n_force_steps / 2 + (n_force_steps / 2 - sample_indices[::-1]) - 1)
 
     forces = np.append(forces, forces[::-1])
+    duty_cycle = 1  # only Monte Carlo dna handles in 1 out of [dutycyle] forcesteps
 
-    get_from_file = False
-    if get_from_file:
-        # Get from file
-        file_in = 'E:\\Users\\noort\\data\\20180321\\data_003.xlsx'
-        dataset = 0
-        pars, datafile = fileio.read_xlsx(file_in, dataset, pars=pars)
-        dna, dyads, nucl = fMC.create_nuc_array(p=pars)
+    # Initialize fiber pose
+    dna, dyads, nucl = fMC.create_unfolded_fiber(fiber_pars=pars)
+    # Get from file
+    if False:
+        datafile = 'E:\\Users\\noort\\data\\20180513\\2x197_006\\2x197_006_0001.npz'
         dna = HelixPose.from_file(fileio.change_extension(datafile, 'npz'))
-    else:
-        # Initialize fiber pose
-        dna, dyads, nucl = fMC.create_nuc_array(p=pars)
 
-    pars['dyad0_bp'].value = dyads[0]
-    # fileio.plot_dna(dna, title='Initial conformation\n', range_nm=100, save=True)
-    dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
+    # fileio.plot_dna(dna, title='Initial conformation\n', range_nm=100, save=False, wait=10)
 
     pars.pretty_print(columns=['value'])
     print('>>> Current file: {}'.format(filename))
 
     # Get stack and wrap parameters
-    fixed_wrap_params = nMC.get_wrap_params(nucl.dna, nucl.dyad, nucl.fixed)
-    fiber_dna, dyads, w = fMC.create_folded_fiber(pars, nucl)
-    fixed_stack_params = fMC.get_stack_pars(fiber_dna, dyads)[0]
+    fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coords, nucl.dna.frames, nucl.dyad, nucl.fixed)
+    e_wrap_kT = pars['e_wrap_kT'].value
+
+    casted_fiber, _, _ = fMC.create_casted_fiber(pars, nucl)
+    # fileio.plot_dna(casted_fiber, range_nm=50, wait=1, origin_index=dyads[0])
+    fixed_stack_params = fMC.get_stack_pars(casted_fiber.coords, casted_fiber.frames, dyads[0], dyads[1], nucl)
     fiber_start = pars['fiber_start'].value
 
     # Initialize random steps
@@ -246,29 +231,42 @@ def main():
     k = np.linalg.inv(np.load(dna_step_file)[1:])
 
     basepairs = np.asarray(range(pars['L_bp'] - 1))
-    accept = 0
-    all_coord = np.empty((n_samples, 3))
+    fiber_basepairs = [dyads[0] + nucl.fixed[0], dyads[-1] + nucl.fixed[-1]]
 
-    current_step = 0
     e_stack_kT = 1e6
     g_nuc_kT_all = []
-    fileio.report_progress(n_force_steps, title='RunMC3', init=True)
+
+    pars['F_pN'].value = 0
+    pars['z_nm'].value = dna.coord_terminal[2] / 10
+    fileio.write_xlsx_row(fileio.get_filename(sub=True, incr=True, ext='npz'), -1, pars, report_file=filename)
+    dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
+
+    previous_bp = 0
+    fileio.report_progress(n_force_steps, title='RunMC', init=True)
     for i, force in enumerate(forces):
-        fileio.report_progress(i, title='Force = {:.1f} pN'.format(force))
-        scorefxn = ScoreTweezers(force)
-        MC_moves(dna, basepairs, scorefxn, fixed_wrap_params, fixed_stack_params,
-                 dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
+        if i % duty_cycle == 0:
+            iter_range = [0, len(dna.params) - 1]
+        else:
+            iter_range = fiber_basepairs
+
+        for bp in basepairs:
+            MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params,
+                    dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
+            previous_bp = bp
         basepairs = basepairs[::-1]
 
         g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
                                            e_stack_kT, fiber_start, p0, k, force)
         g_nuc_kT_all.append(g_nuc_kT)
-        if i == 10:
+
+        fileio.report_progress(i, title='Force = {0:.1f} pN, g_stack = {1:.1f} kT'.format(force, g_nuc_kT[2]))
+
+        if i == 100:
             e_stack_kT = pars['e_stack_kT'].value
 
         if i in sample_indices:
             # fileio.plot_dna(dna, update=True, title='F = {:.1f} pN\n'.format(force), save=True)
-            g_nuc_kT_all = np.sum(g_nuc_kT_all, axis=0)
+            g_nuc_kT_all = np.mean(g_nuc_kT_all, axis=0)
             for g, name in zip(g_nuc_kT_all, names):
                 pars[name].value = g
             g_nuc_kT_all = []
@@ -276,15 +274,46 @@ def main():
             pars['z_nm'].value = dna.coord_terminal[2] / 10
             fileio.write_xlsx_row(fileio.get_filename(sub=True, incr=True, ext='npz'), i, pars, report_file=filename)
             dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
-            all_coord[current_step] = dna.coord_terminal
 
-    aMC.plot_fz(filename)
+    aMC.plot_fz(fileio.change_extension(filename, 'xlsx'))
+    aMC.plot_gz(fileio.change_extension(filename, 'xlsx'))
     try:
         fileio.create_pov_movie(fileio.get_filename(sub=True, folder=True), origin_frame=0, reverse=False)
     except Exception as e:
         print(Exception, e)
+    return
 
 
 if __name__ == '__main__':
-    main()
-# Github works!!!!
+    # Parameters for reporting results
+    pars = Parameters()
+    pars.add('F_pN', value=0)
+    pars.add('z_nm', value=0)
+    pars.add('g_dna_kT', value=0)
+    pars.add('g_wrap_kT', value=0)
+    pars.add('g_stack_kT', value=0)
+    pars.add('g_work_kT', value=0)
+
+    # Parameters that define the nucleosomal array
+    pars.add('L_bp', value=1000)
+    pars.add('P_nm', value=50)
+    pars.add('n_nuc', value=4)
+
+    # Parameters that define the folded fiber
+    pars.add('rise_A', value=100)
+    pars.add('nld_A', value=25)
+    pars.add('chirality', value=-1)
+    pars.add('face', value=1)
+
+    # Parameters that are typically varied between simulations
+    pars.add('diameter_A', value=330)
+    pars.add('NRL', value=197)
+    if pars['NRL'].value == 167:
+        pars.add('fiber_start', value=2)
+    else:
+        pars.add('fiber_start', value=1)
+    pars.add('Unwrapped_bp', value=0)
+    pars.add('e_wrap_kT', value=3.0)
+    pars.add('e_stack_kT', value=22)
+
+    main(pars)

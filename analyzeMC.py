@@ -24,64 +24,72 @@ default_folder = 'E:\\users\\'
 kT = 41
 
 
-def analyze_dna(filename):
-    filename=fileio.change_extension(filename, 'xlsx')
+def plot_gf(filename, calc=False):
+    filename = fileio.change_extension(filename, 'xlsx')
     print('>>> Current file: {}'.format(filename))
-    default_params = np.load(default_step_file)
-    p0 = default_params[0]
-    k = np.linalg.inv(default_params[1:])
 
-    pars = fileio.read_xlsx_row(filename, 0)
+    if calc:
+        default_params = np.load(default_step_file)
+        p0 = default_params[0]
+        k = np.linalg.inv(default_params[1:])
+        pars, _ = fileio.read_xlsx_row(filename, 0)
+        dna, dyads, nucl = fMC.create_unfolded_fiber(fiber_pars=pars)
 
-    dna, dyads, nucl = fMC.create_nuc_array(p=pars)
+        # Get stack and wrap parameters
+        fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coords, nucl.dna.frames, nucl.dyad, nucl.fixed)
 
-    # Get stack and wrap parameters
-    fixed_wrap_params = nMC.get_wrap_params(nucl.dna, nucl.dyad, nucl.fixed)
-    fiber_dna, dyads, w = fMC.create_folded_fiber(pars, nucl)
-    fixed_stack_params = fMC.get_stack_pars(fiber_dna, dyads)[0]
+        fiber_start = pars['fiber_start'].value
+        fiber_dna, dyads, w = fMC.create_casted_fiber(pars, nucl)
+        fixed_stack_params = fMC.get_stack_pars(fiber_dna.coords, fiber_dna.frames, dyads[0], dyads[fiber_start])
 
-    e_stack_kT = pars['e_stack_kT'].value
-    e_wrap_kT = pars['e_wrap_kT'].value
-    fiber_start = pars['fiber_start'].value
+        e_stack_kT = pars['e_stack_kT'].value
+        e_wrap_kT = pars['e_wrap_kT'].value
+        fiber_start = pars['fiber_start'].value
 
-    sets, files, _ = fileio.contents_xlsx(filename)
-    fileio.report_progress(len(sets), title='analyze_dna', init=True)
-    i = 0
-    g_nuc_kT_all = []
-    for set, file in zip(sets, files):
-        fileio.report_progress(i)
-        pars = fileio.read_xlsx_row(filename, set)
-        force = pars['F_pN'].value
-        # iter = pars['Unwrapped_bp'].value
-        dna = HelixPose.from_file(fileio.change_extension(file, 'npz'))
-        g_nuc_kT, names = rMC.get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads[2:4], nucl, e_wrap_kT,
-                                               e_stack_kT, fiber_start, p0, k, force)
-        g_nuc_kT_all.append(g_nuc_kT)
-        for g, name in zip(g_nuc_kT, names):
-            pars[name].value = g
-        i += 1
-        # fileio.write_xlsx(file, set, pars, report_file=filename)
+        sets, files, _ = fileio.contents_xlsx(filename)
+        fileio.report_progress(len(sets), title='plot_gf', init=True)
+        i = 0
+        g_nuc_kT_all = []
+        for set, file in zip(sets, files):
+            fileio.report_progress(i)
+            pars, _ = fileio.read_xlsx_row(filename, set)
+            force = pars['F_pN'].value
+            dna = HelixPose.from_file(fileio.change_extension(file, 'npz'))
+            g_nuc_kT, names = rMC.get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl,
+                                                   e_wrap_kT, e_stack_kT, fiber_start, p0, k, force)
+            g_nuc_kT_all.append(g_nuc_kT)
+            for g, name in zip(g_nuc_kT, names):
+                pars[name].value = g
+            i += 1
+    else:
+        names = ['g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT']
+        g_nuc_kT_all = []
+        for name in names:
+            g_nuc_kT_all.append(fileio.read_xlsx_collumn(filename, name))
+        g_nuc_kT_all = np.transpose(g_nuc_kT_all)
+
     force = fileio.read_xlsx_collumn(filename, 'F_pN')
     plt.close()
-    plt.figure(figsize=(5, 4))
+    plt.figure(figsize=(4, 3))
+    plt.axes([0.15, 0.15, .8, .75])
+
     plt.semilogx(force, np.asarray(g_nuc_kT_all))
     plt.xlim(0.08, 12)
     plt.xlabel('F (pN)')
-    # plt.xlabel('Unwrapped (bp)')
-    # plt.plot(range(len(g_nuc_kT_all)), np.asarray(g_nuc_kT_all)[:,1], color = 'darkorange')
-    # plt.xlim(0, 140)
     plt.ylim(-75, 75)
     plt.ylabel(r'$\Delta$G (kT)')
     plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
     plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0], loc='left',
               fontdict={'fontsize': 10})
+    for i, name in enumerate(names):
+        names[i] = name.split('_')[1]
     plt.legend(names)
-    plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
     plt.draw()
     plt.pause(5)
-    filename = fileio.change_extension(filename, '_Edna.jpg')
+    filename = fileio.change_extension(filename, '_gf.jpg')
     plt.savefig(filename, dpi=600, format='jpg')
     return
+
 
 def create_dummy_dna():
     pars = Parameters()
@@ -121,13 +129,14 @@ def create_dummy_dna():
     for unwrap in range(0, 146):
         pars['Unwrapped_bp'].value = unwrap
         # dna, dyads, nucl = fMC.create_nuc_array(p=pars)
-        _, dna, _, dyads = fMC.create_unfolded_fiber(pars, ref_of= None)
+        _, dna, _, dyads = fMC.create_folded_fiber(pars, ref_of=None)
         pars['dyad0_bp'].value = dyads[0]
-        fileio.plot_dna(dna, update= (unwrap > 0), title='Unwrapped = {:.1f} bp\n'.format(unwrap), save=True)
+        fileio.plot_dna(dna, update=(unwrap > 0), title='Unwrapped = {:.1f} bp\n'.format(unwrap), save=True)
         pose_file = fileio.get_filename(sub=True, ext='npz', incr=True)
         fileio.write_xlsx_row(pose_file, unwrap, pars, report_file=filename)
         dna.write2disk(pose_file)
     return filename
+
 
 def plot_energy(filename):
     params = np.load(default_step_file)
@@ -236,6 +245,7 @@ def plot_step_params(filename, dataset, save=False, wait=0, plot_energy=True):
         plt.savefig(filename, dpi=600, format='jpg')
     return
 
+
 def plot_fz(filename):
     forces = fileio.read_xlsx_collumn(filename, 'F_pN')
     z = fileio.read_xlsx_collumn(filename, 'z_nm')
@@ -244,31 +254,28 @@ def plot_fz(filename):
 
     pars, datafile = fileio.read_xlsx_row(filename, 0)
 
-    wlc = 1 - 0.5 * np.sqrt(0.1 * kT / (forces * pars['P_nm']))/selected
+    forces = np.clip(forces, 1e-3, 1e2)
+    wlc = 1 - 0.5 * np.sqrt(0.1 * kT / (forces * pars['P_nm'])) / selected
     grid = []
     for i in range(1, pars['n_nuc'] + 1):
         grid.append(wlc * (pars['L_bp'] - 80 * i) / 3)
         grid.append(wlc * (pars['L_bp'] - (pars['n_nuc'] * 80 + i * (147 - 80))) / 3)
     wlc *= pars['L_bp'] / 3
 
-    file_out = fileio.save_plot((forces, z, wlc, selected), filename=filename,
-                     ax_labels=['z (nm)', 'F (pN)'], grid=grid, yrange=[-0.5,10.5],
+    filename = fileio.change_extension(filename, '_fz.jpg')
+
+    fileio.save_plot((forces, z, wlc, selected), filename=filename,
+                     ax_labels=['z (nm)', 'F (pN)'], grid=grid, yrange=[-0.5, 10.5],
                      transpose=True, xrange=[0, 1.1 * pars['L_bp'] / 3])
     return
 
 
 def main():
-    # filename = create_dummy_dna()
-    # return
-    # filename = 'E:\\users\\noort\\data\\20180321\\12nucs_003.dat'
-    filename = 'E:\\users\\noort\\data\\20180410\\4x197_002.xlsx'
+    filename = (fileio.get_filename(ext='xlsx', current=True, wildcard='*197*'))
+    # filename = 'E:\\users\\noort\\data\\20180516\\1st4x197_002.xlsx'
     # filename = eg.fileopenbox()
-    # df = pd.ExcelFile(filename)
-    # fileio.create_mp4_pov('E:\\Users\\Noort\\data\\20180330\\dummy_006', origin_frame=0, reverse=False)
-
     # plot_energy(filename)
-    # analyze_dna(filename)
-    # filename = fileio.get_filename(incr=False)
+    plot_gf(filename)
     plot_fz(filename)
     fileio.create_pov_movie(filename, origin_frame=0, fps=5, reverse=False)
     return
@@ -277,6 +284,3 @@ def main():
 if __name__ == "__main__":
     # execute only if run as a script
     main()
-    # create_pov_mp4('E:\\Users\\Noort\\data\\20180315\\2nucs_001', origin_frame=0, reverse=False)
-    # filename = get_filename(incr=True, base='2nucs')
-    # print(filename)
