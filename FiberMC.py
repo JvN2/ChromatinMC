@@ -253,13 +253,13 @@ def scan_fiber_param(fiber_pars, iter_param, iter_vals):
             fiber_pars = out.params
             coords, dna, tf = create_unfolded_fiber(fiber_pars, ref_of)
             image_files.append(
-                fileio.pov_dna(filename, [dna.coords], range_A=[400, 400], offset_A=[0, 0, 150], show=True))
-            fileio.write_xlsx(filename, str(setnr), fiber_pars, report_file=report_file)
+                fileio.create_pov(filename, [dna.coords], range_A=[400, 400], offset_A=[0, 0, 150], show=True))
+            fileio.write_xlsx_row(filename, str(setnr), fiber_pars, report_file=report_file)
             dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
         except:
             print('Fit did not converge')
         setnr += 1
-    fileio.create_mp4_images(image_files, filename=report_file)
+    fileio.create_movie(image_files, filename=report_file)
     return
 
 

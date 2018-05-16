@@ -4,6 +4,7 @@ Created on Sat Feb 17 10:07:46 2018
 
 @author: noort
 """
+
 from __future__ import print_function
 import matplotlib as mpl
 
@@ -22,6 +23,7 @@ from helixmc.pose import HelixPose
 # ChromatinMC modules:
 import FiberMC as fMC
 import NucleosomeMC as nMC
+import analyzeMC as aMC
 import FileIO as fileio
 
 dna_step_file = 'C:\\Python27\\Lib\\site-packages\\helixmc\\data\\DNA_gau.npy'
@@ -45,7 +47,7 @@ def get_unwrap_energy(wrap_params, fixed_wrap_params, e_wrap_kT):
     sigma_trans = 1  # 1 Angstrom, similar to basepair steps
     sigma_rot = 5 * np.pi / 180  # 5 degree, similar to basepair steps
     k1 = kT / np.asarray([sigma_trans, sigma_trans, sigma_trans, sigma_rot, sigma_rot, sigma_rot]) ** 2
-    k1 *=10
+    k1 *= 10
     G_unwrap = 0.5 * k1 * (wrap_params - fixed_wrap_params) ** 2
     G_unwrap = np.clip(G_unwrap, 0, e_wrap_kT * kT / 6)
     return np.sum(G_unwrap), G_unwrap
@@ -110,33 +112,9 @@ def get_new_step_params(moving_bp, prev_bp, dna, dyads, nucl, random_step):
     return new_step_params
 
 
-def MC_move(dna, moving_bp, previous_bp, scorefxn, fixed_wrap_params, fixed_stack_params, dyads, nucl,
-            random_step, e_wrap_kT, e_stack_kT, fiber_start):
-    old_step_params = dna.params[moving_bp]
-    new_step_params = get_new_step_params(moving_bp, previous_bp, dna, dyads, nucl, random_step)
-    if np.array_equal(old_step_params, new_step_params):
-        return False
-    else:
-        old_score = scorefxn(dna) \
-                    + score_wrapping(moving_bp, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT) \
-                    + score_stacking(moving_bp, dna, dyads, fixed_stack_params, e_stack_kT, fiber_start) \
-                    + score_surface(dna)
-        dna.update(moving_bp, new_step_params)
-        new_score = scorefxn(dna) \
-                    + score_wrapping(moving_bp, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT) \
-                    + score_stacking(moving_bp, dna, dyads, fixed_stack_params, e_stack_kT, fiber_start) \
-                    + score_surface(dna)
-        if util.MC_acpt_rej(old_score, new_score):
-            return True
-        else:
-            dna.update(moving_bp, old_step_params)
-            return False
-
-
 def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT, e_stack_kT, \
                      fiber_start, p0, k, force):
-
-    e_nucl= score_dna(0, len(nucl.dna.params), nucl.dna, p0, k)
+    e_nucl = score_dna(0, len(nucl.dna.params), nucl.dna, p0, k)
     g_wrap = 0
     g_dna = 0
     g_stack = 0
@@ -162,15 +140,45 @@ def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_
     return g_nuc_kT, names
 
 
+from numba import jit
+
+
+@jit
+def MC_moves(dna, basepairs, scorefxn, fixed_wrap_params, fixed_stack_params, dyads, nucl,
+             random_step, e_wrap_kT, e_stack_kT, fiber_start):
+    previous_bp = 0
+    old_dna_score = scorefxn(dna) + score_surface(dna)
+    for moving_bp in basepairs:
+        old_step_params = dna.params[moving_bp]
+        new_step_params = get_new_step_params(moving_bp, previous_bp, dna, dyads, nucl, random_step)
+        if not np.array_equal(old_step_params, new_step_params):
+            old_score = old_dna_score \
+                        + score_wrapping(moving_bp, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT) \
+                        + score_stacking(moving_bp, dna, dyads, fixed_stack_params, e_stack_kT, fiber_start)
+            dna.update(moving_bp, new_step_params)
+            new_dna_score = scorefxn(dna) + score_surface(dna)
+            new_score = new_dna_score \
+                        + score_wrapping(moving_bp, dna, dyads, nucl, fixed_wrap_params, e_wrap_kT) \
+                        + score_stacking(moving_bp, dna, dyads, fixed_stack_params, e_stack_kT, fiber_start)
+            if util.MC_acpt_rej(old_score, new_score):
+                old_dna_score = new_dna_score
+            else:
+                dna.update(moving_bp, old_step_params)
+        previous_bp = moving_bp
+    return
+
+
 def main():
     # Params for reporting results
     pars = Parameters()
     pars.add('F_pN', value=0)
     pars.add('z_nm', value=0)
+
     pars.add('g_dna_kT', value=0)
     pars.add('g_wrap_kT', value=0)
     pars.add('g_stack_kT', value=0)
     pars.add('g_work_kT', value=0)
+
     # Params that define the nucleosomal array
     pars.add('L_bp', value=1000)
     pars.add('P_nm', value=50)
@@ -188,18 +196,23 @@ def main():
     pars.add('fiber_start', value=1)
     pars.add('Unwrapped_bp', value=30)
     pars.add('e_wrap_kT', value=3)
-    pars.add('e_stack_kT', value=22)
+    pars.add('e_stack_kT', value=23)
 
     e_wrap_kT = pars['e_wrap_kT'].value
 
     # Setup files and forces
     filename = fileio.get_filename(incr=True, root='4x197')
-    n_step = 250
-    n_substeps = 150
+    n_force_steps = 500
+    n_samples = 250
+
     fmax_pN = 10
     fmin_pN = 0.1
-    # forces = np.linspace(fmin_pN, fmax_pN, n_step / 2)
-    forces = np.logspace(np.log10(fmin_pN), np.log10(fmax_pN), n_step / 2)
+    forces = np.linspace(fmin_pN, fmax_pN, n_force_steps / 2)
+
+    sample_forces = np.logspace(np.log10(fmin_pN), np.log10(fmax_pN), n_samples / 2)
+    sample_indices = (np.searchsorted(forces, sample_forces))
+    sample_indices = (np.append(sample_indices, n_force_steps / 2 + (n_force_steps / 2 - sample_indices[::-1]) - 1))
+
     forces = np.append(forces, forces[::-1])
 
     get_from_file = False
@@ -215,7 +228,7 @@ def main():
         dna, dyads, nucl = fMC.create_nuc_array(p=pars)
 
     pars['dyad0_bp'].value = dyads[0]
-    fileio.plot_dna(dna, title='Initial conformation\n', range_nm=100, save=True)
+    # fileio.plot_dna(dna, title='Initial conformation\n', range_nm=100, save=True)
     dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
 
     pars.pretty_print(columns=['value'])
@@ -234,56 +247,40 @@ def main():
 
     basepairs = np.asarray(range(pars['L_bp'] - 1))
     accept = 0
-    all_coord = np.empty((n_step, 3))
+    all_coord = np.empty((n_samples, 3))
 
     current_step = 0
     e_stack_kT = 1e6
-    fileio.report_progress(n_step, title='RunMC3', init=True)
-    for force in forces:
-        fileio.report_progress(current_step + 1, title='Force = {:.1f} pN'.format(force))
+    g_nuc_kT_all = []
+    fileio.report_progress(n_force_steps, title='RunMC3', init=True)
+    for i, force in enumerate(forces):
+        fileio.report_progress(i, title='Force = {:.1f} pN'.format(force))
         scorefxn = ScoreTweezers(force)
-        previous_bp = 0
-        for sub_step in range(n_substeps):
-            g_nuc_kT_all =[]
-            for bp in basepairs:
-                accept += MC_move(dna, bp, previous_bp, scorefxn, fixed_wrap_params, fixed_stack_params,
-                                  dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
-                previous_bp = bp
-            basepairs = basepairs[::-1]
-            g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
+        MC_moves(dna, basepairs, scorefxn, fixed_wrap_params, fixed_stack_params,
+                 dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
+        basepairs = basepairs[::-1]
+
+        g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
                                            e_stack_kT, fiber_start, p0, k, force)
-            g_nuc_kT_all.append(g_nuc_kT)
-        if current_step == 4:
+        g_nuc_kT_all.append(g_nuc_kT)
+        if i == 10:
             e_stack_kT = pars['e_stack_kT'].value
 
-        fileio.plot_dna(dna, update=True, title='F = {:.1f} pN\n'.format(force), save=True)
+        if i in sample_indices:
+            # fileio.plot_dna(dna, update=True, title='F = {:.1f} pN\n'.format(force), save=True)
+            g_nuc_kT_all = np.sum(g_nuc_kT_all, axis=0)
+            for g, name in zip(g_nuc_kT_all, names):
+                pars[name].value = g
+            g_nuc_kT_all = []
+            pars['F_pN'].value = force
+            pars['z_nm'].value = dna.coord_terminal[2] / 10
+            fileio.write_xlsx_row(fileio.get_filename(sub=True, incr=True, ext='npz'), i, pars, report_file=filename)
+            dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
+            all_coord[current_step] = dna.coord_terminal
 
-        g_nuc_kT_all = np.sum(g_nuc_kT_all, axis=0)
-        for g, name in zip(g_nuc_kT_all, names):
-            pars[name].value = g
-        pars['F_pN'].value = force
-        pars['z_nm'].value = dna.coord_terminal[2]
-        fileio.write_xlsx(fileio.get_filename(sub=True), current_step, pars, report_file=filename)
-        dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
-        all_coord[current_step] = dna.coord_terminal
-        current_step += 1
-
-    z = all_coord[:, 2] / 10
-    wlc = 1 - 0.5 * np.sqrt(0.1 * kT / (forces * pars['P_nm']))
-    grid = []
-    for i in range(1, pars['n_nuc'] + 1):
-        grid.append(wlc * (pars['L_bp'] - 80 * i) / 3)
-        grid.append(wlc * (pars['L_bp'] - (pars['n_nuc'] * 80 + i * (147 - 80))) / 3)
-    wlc *= pars['L_bp'] / 3
-    selected = np.diff(np.append([-1], forces)) > 0
-
-    fileio.save_plot((forces, z, wlc, selected), filename=filename,
-                     ax_labels=['z (nm)', 'F (pN)'], grid=grid, transpose=True, xrange=[0, 1.1 * pars['L_bp'] / 3])
-
-    if n_step > 0:
-        print('Accept rate = %.1f %%' % (100 * float(accept) / (n_step * n_substeps * (pars['L_bp'] - 1))))
+    aMC.plot_fz(filename)
     try:
-        fileio.create_mp4_pov(fileio.get_filename(sub=True, folder=True), origin_frame=0, reverse=False)
+        fileio.create_pov_movie(fileio.get_filename(sub=True, folder=True), origin_frame=0, reverse=False)
     except Exception as e:
         print(Exception, e)
 
