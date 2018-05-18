@@ -20,7 +20,7 @@ import RunMC as rMC
 import FiberMC as fMC
 
 default_step_file = 'C:\\Python27\\Lib\\site-packages\\helixmc\\data\\DNA_gau.npy'
-default_folder = 'E:\\users\\'
+default_folder = 'D:\\users\\'
 kT = 41
 
 
@@ -72,8 +72,9 @@ def plot_gf(filename, calc=False):
     plt.close()
     plt.figure(figsize=(4, 3))
     plt.axes([0.15, 0.15, .8, .75])
-
-    plt.semilogx(force, np.asarray(g_nuc_kT_all))
+    colors = ['steelblue', 'orange', 'g', 'r']
+    for ydata,color in zip(np.asarray(g_nuc_kT_all).T,colors):
+        plt.semilogx(force, ydata, color = color)
     plt.xlim(0.08, 12)
     plt.xlabel('F (pN)')
     plt.ylim(-75, 75)
@@ -272,7 +273,7 @@ def plot_fz(filename):
 
 def main():
     filename = (fileio.get_filename(ext='xlsx', current=True, wildcard='*197*'))
-    filename = 'E:\\users\\noort\\data\\20180517\\1st4x197_007.xlsx'
+    # filename = 'E:\\users\\noort\\data\\20180517\\1st4x197_007.xlsx'
     # filename = eg.fileopenbox()
     # plot_energy(filename)
     plot_gf(filename)

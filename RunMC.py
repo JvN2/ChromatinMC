@@ -81,7 +81,7 @@ def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack
         # print(dyads[start_dyad], dyads[start_dyad + fiber_start], -dyads[start_dyad]+ dyads[start_dyad + fiber_start])
         stack_params = fMC.get_stack_pars(coords, frames, dyads[start_dyad], dyads[start_dyad + fiber_start],
                                           nucl)
-        sigma = np.asarray([1.0, 1.0, 1.0, 0.1, 0.1, 0.1])
+        sigma = np.asarray([10.0, 1.0, 1.0, 0.1, 0.1, 0.1])
         k = kT / sigma ** 2
 
         g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
@@ -302,14 +302,14 @@ if __name__ == '__main__':
     pars.add('n_nuc', value=4)
 
     # Parameters that define the folded fiber
-    pars.add('rise_A', value=100)
+    pars.add('rise_A', value=50)
     pars.add('nld_A', value=20)
     pars.add('chirality', value=-1)
     pars.add('face', value=1)
 
     # Parameters that are typically varied between simulations
     pars.add('diameter_A', value=330)
-    pars.add('NRL', value=197)
+    pars.add('NRL', value=167)
 
     if pars['NRL'].value == 167:
         pars.add('fiber_start', value=2)

@@ -27,7 +27,7 @@ from helixmc.pose import HelixPose
 import NucleosomeMC as nMC
 import POVutils as pov
 
-default_folder = 'E:\\users\\'
+default_folder = 'D:\\users\\'
 kT = 41
 
 
@@ -242,7 +242,7 @@ def create_movie(image_files, fps=5.0, delete=True, filename=None, reverse=True,
     height, width, channels = frame.shape
     bottomLeftCornerOfText = (20, height - 20)
     font = cv2.FONT_HERSHEY_DUPLEX
-    fontScale = 1
+    fontScale = 3
     fontColor = (0, 0, 0)
     lineType = 2
 
@@ -402,7 +402,7 @@ def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', ra
 
 
 def create_pov_movie(filename, origin_frame=0, fps=5, reverse=True):
-    pix = 500
+    pix = 1500
     sets, filenames, _ = contents_xlsx(filename)
     r = np.append([10], (np.ones(8) * 4))
     r = np.append(r, 3)
