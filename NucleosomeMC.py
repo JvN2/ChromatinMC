@@ -89,8 +89,10 @@ def get_transformation(start, target=None):
     Q = target
     if Q is None:
         Q = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    Pc = sum(P) / (1.0 * len(P))
-    Qc = sum(Q) / (1.0 * len(Q))
+    # Pc = sum(P) / (1.0 * len(P))
+    # Qc = sum(Q) / (1.0 * len(Q))
+    Pc = sum(P) / len(P)
+    Qc = sum(Q) / len(Q)
     C = np.dot(np.transpose(P - Pc), Q - Qc)
     V, S, W = np.linalg.svd(C)
     d = (np.linalg.det(V) * np.linalg.det(W)) < 0.0
@@ -110,12 +112,11 @@ def join_o_f(origin, frame):
     return np.asarray(of)
 
 
-def get_nuc_of(dna, dyad, nucl):
+def get_nuc_of(coords, frames, dyad, nucl):
     """
     Calculate the center of mass and the reference frame (=of) of a nucleosome in dna
     """
-    tf = get_transformation(get_of(nucl.dna, nucl.dyad), get_of(dna, dyad))
-    print(tf)
+    tf = get_transformation(nucl.dyad_of, target=get_of_2(coords, frames, dyad))
     n_of = apply_transformation(nucl.of, tf)
     return n_of
 
@@ -125,12 +126,8 @@ def get_of(dna, i):
     return of
 
 
-def get_of_2(dna_coords, dna_frames, i):
-    of = []
-    of.append(dna_coords[i])
-    for f in dna_frames[i].T:
-        of.append(dna_coords[i] + f)
-    return np.asarray(of)
+def get_of_2(coords, frames, i):
+    return np.concatenate(([coords[i]], frames[i].T+coords[i]), axis = 0)
 
 
 # def get_wrap_params2(dna, dyad, fixed):
@@ -400,7 +397,7 @@ class NucPose(object):
         origin = cm
         frame = np.array([Nx, Ny, Nz])
         self.of = join_o_f(origin, np.transpose(frame))
-
+        self.dyad_of = get_of(self.dna, self.dyad)
         #   get link coordinates Glu61 (H2A) and Asp24 (H4)
         # int_dict = {'H2A': 60, 'H2A*': 60, 'H4': 23, 'H4*': 23}
         # self.l_coords = []

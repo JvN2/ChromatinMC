@@ -272,7 +272,7 @@ def plot_fz(filename):
 
 def main():
     filename = (fileio.get_filename(ext='xlsx', current=True, wildcard='*197*'))
-    # filename = 'E:\\users\\noort\\data\\20180516\\1st4x197_002.xlsx'
+    filename = 'E:\\users\\noort\\data\\20180517\\1st4x197_007.xlsx'
     # filename = eg.fileopenbox()
     # plot_energy(filename)
     plot_gf(filename)

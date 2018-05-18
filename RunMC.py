@@ -81,8 +81,7 @@ def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack
         # print(dyads[start_dyad], dyads[start_dyad + fiber_start], -dyads[start_dyad]+ dyads[start_dyad + fiber_start])
         stack_params = fMC.get_stack_pars(coords, frames, dyads[start_dyad], dyads[start_dyad + fiber_start],
                                           nucl)
-        sigma = np.asarray([0.5, 0.5, 0.5, 0.2, 0.2, 0.2])
-        sigma /= 1.0
+        sigma = np.asarray([1.0, 1.0, 1.0, 0.1, 0.1, 0.1])
         k = kT / sigma ** 2
 
         g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
@@ -190,7 +189,7 @@ def main(pars):
     # Setup files and forces
     root = '{0}st{1}x{2}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value)
     filename = fileio.get_filename(incr=True, root=root)
-    n_force_steps = 10000
+    n_force_steps = 25000
     n_samples = 250
 
     fmax_pN = 10
@@ -233,7 +232,10 @@ def main(pars):
     basepairs = np.asarray(range(pars['L_bp'] - 1))
     fiber_basepairs = [dyads[0] + nucl.fixed[0], dyads[-1] + nucl.fixed[-1]]
 
-    e_stack_kT = 1e6
+    if pars['fiber_start'].value == 1:
+        e_stack_kT = 1e6
+    else:
+        e_stack_kT = pars['e_stack_kT'].value
     g_nuc_kT_all = []
 
     pars['F_pN'].value = 0
@@ -301,19 +303,20 @@ if __name__ == '__main__':
 
     # Parameters that define the folded fiber
     pars.add('rise_A', value=100)
-    pars.add('nld_A', value=25)
+    pars.add('nld_A', value=20)
     pars.add('chirality', value=-1)
     pars.add('face', value=1)
 
     # Parameters that are typically varied between simulations
     pars.add('diameter_A', value=330)
     pars.add('NRL', value=197)
+
     if pars['NRL'].value == 167:
         pars.add('fiber_start', value=2)
     else:
         pars.add('fiber_start', value=1)
     pars.add('Unwrapped_bp', value=0)
     pars.add('e_wrap_kT', value=3.0)
-    pars.add('e_stack_kT', value=22)
+    pars.add('e_stack_kT', value=20)
 
     main(pars)
