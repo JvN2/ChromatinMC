@@ -309,7 +309,7 @@ if __name__ == '__main__':
 
     # Parameters that are typically varied between simulations
     pars.add('diameter_A', value=330)
-    pars.add('NRL', value=167)
+    pars.add('NRL', value=197)
 
     if pars['NRL'].value == 167:
         pars.add('fiber_start', value=2)

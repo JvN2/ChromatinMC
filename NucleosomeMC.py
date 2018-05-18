@@ -20,9 +20,6 @@ import matplotlib.pyplot as plt
 import FileIO as fileio
 
 plt.interactive(False)
-np.set_printoptions(formatter={'float': '{: 0.1f}, '.format})
-
-pdb_source_dir = fileio.default_folder+"\\Noort\\Python\\ChromatinMC_3\\PDBs\\"
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
 
@@ -187,7 +184,7 @@ def read_pdb(pdb_file):
 
     '''
     #    print '###>'+ pdb_file
-    f = open(pdb_file, 'r')
+    f = open('PDBs\\'+pdb_file, 'r')
     pdb = f.readlines()
     f.close()
 
@@ -316,13 +313,13 @@ class NucPose(object):
             input_file = "3LZ0.3DNA"
             print('Default file: ' + input_file)
         #   read protein coords from pdb file
-        filename = pdb_source_dir + input_file
+        filename = input_file
         filename = fileio.change_extension(filename, 'pdb')
         chains = read_pdb(filename)
 
         #   read 3DNA file
         filename = fileio.change_extension(filename, '3DNA')
-        with open(filename) as f:
+        with open('PDBs\\'+filename) as f:
             lines = f.read().splitlines()
 
         #   Basepair step parameters
