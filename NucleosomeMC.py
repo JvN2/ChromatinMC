@@ -48,7 +48,7 @@ def of2axis(of, length=60, axes=[0, 1, 2]):
     f = of[1:] - o
     coords_out = []
     for i in axes:
-        for j in np.linspace(0, (i + 1) * length, length * 1):
+        for j in np.linspace(0, (0.5*i + 1) * length, (0.5*i + 1)*length):
             coords_out.append(o + j * f[i])
     return np.asarray(coords_out)
 
@@ -383,7 +383,7 @@ class NucPose(object):
             self.dna = HelixPose(params)
 
         # get origin and frame of nucleosome
-        cm = np.mean(self.dna.coords[self.fixed[3:11]], axis=0)
+        cm = np.mean(self.dna.coords[self.fixed[4:-4]], axis=0)
         Nx = self.dna.coords[self.dyad] - cm
         Nx = Nx / np.linalg.norm(Nx)
         Nz = np.mean(self.dna.coords[self.fixed[:7], :], axis=0) - np.mean(self.dna.coords[self.fixed[7:], :], axis=0)
@@ -411,6 +411,7 @@ def main():
     for chain in nuc.chains:
         coords.append(nuc.chains[chain][2])
 
+    # tf = get_transformation(nuc.of, target=np.asarray([[0,0,0],[0,0,-1],[0,1,0],[1,0,0]]))
     tf = get_transformation(nuc.of)
 
     n_coords = []
@@ -421,7 +422,7 @@ def main():
     n_coords.append(of2axis(nuc_ax, length=60))
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
-    fileio.create_pov(filename, n_coords, range_A=[300, 300], offset_A=[0, 0, 60], show=True, width_pix=500)
+    fileio.create_pov(filename, n_coords, range_A=[300, 300], offset_A=[0, 0, 150], show=True, width_pix=500)
 
 
 if __name__ == '__main__':

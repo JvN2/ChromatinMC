@@ -147,25 +147,22 @@ def get_casted_fiber_frames(par):
     d_ofs : ndarray of (N, 4, 3)
         The coordinates of the dyad frames
     '''
-
+    fiber_start = par['fiber_start'].value
     r = par['diameter_A'].value / 2.0 - 65.0
     nld = par['nld_A'].value
     rise = par['rise_A'].value
-    cm = []
-    n_ofs = []
-
-    # if par['fiber_start'].value >= 2:
-    #     nld /=2
     phi = np.sqrt(rise ** 2 - nld ** 2) / r
-    # if par['fiber_start'].value >= 2:
-    #     phi = phi /2.0 + np.pi
-    #     print('2-start fiber')
+    if fiber_start is 2:
+        phi = 0.5 * phi + np.pi
     if par['chirality'].value < 0:
         phi *= -1
 
-    for i in np.arange(par['n_nuc'].value + 1):
+    cm = []
+    for i in np.arange(par['n_nuc'].value + fiber_start):
         cm.append(np.asarray([r * np.cos(i * phi), r * np.sin(i * phi), i * nld]))
-    for cm1, cm2 in zip(cm, cm[1:]):
+
+    n_ofs = []
+    for cm1, cm2 in zip(cm, cm[fiber_start:]):
         Nx = par['face'].value * cm1 * [-1, -1, 0]
         Nx /= np.linalg.norm(Nx)
         Nz = cm2 - cm1
@@ -352,18 +349,32 @@ def scan_fiber_param(fiber_pars, iter_param, iter_vals):
     return
 
 
-def main(fiber_par):
-    # fiber_par = fileio.read_xlsx('E:\\tmp\\TestData\\data05.xlsx', '16', fiber_par)
+def main(pars):
+    root = '{0}st{1}x{2}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value)
+    filename = fileio.get_filename(incr=True, root=root)
 
     # create fiber with straight linker DNA
-    unfolded_fiber, dyads, nucl = create_unfolded_fiber(fiber_par)
+    unfolded_fiber, dyads, nucl = create_unfolded_fiber(pars)
     # fileio.plot_dna(unfolded_fiber, range_nm=50, wait=1, origin_index=dyads[0])
 
     # create fiber with positioned nucleosomes, but missing linker DNA
-    casted_fiber, _, w = create_casted_fiber(fiber_par, nucl)
-    fileio.plot_dna(casted_fiber, range_nm=50, wait=0.5, origin_index=0)
+    casted_fiber, _, w = create_casted_fiber(pars, nucl)
+    # fileio.plot_dna(casted_fiber, range_nm=50, wait=5, origin_index=0)
+
+    bases2 = []
+    bases1 = []
+    bases3 = []
+    for dyad in dyads:
+        bases1.append(casted_fiber.coords[dyad + nucl.fixed[0]])
+        bases2.append(casted_fiber.coords[dyad + nucl.fixed[-1]])
+        for i in nucl.fixed[1:-1]:
+            bases3.append(casted_fiber.coords[dyad + i])
+
+    print(fileio.create_pov(filename, [bases1, bases2, casted_fiber.coords, bases3], range_A=[500, 500],
+                            offset_A=[0, 0, 150], show=True, width_pix=3000, colors='rbky', radius=[11, 11, 10, 11]))
+
     print('\n fixed stack_params:')
-    for dyad0, dyad1 in zip(dyads, dyads[1:]):
+    for dyad0, dyad1 in zip(dyads, dyads[pars['fiber_start'].value:]):
         fixed_stack_params = get_stack_pars(casted_fiber.coords, casted_fiber.frames, dyad0, dyad1, nucl)
         print(fixed_stack_params)
 
@@ -371,27 +382,26 @@ def main(fiber_par):
 
     # fit linker DNA parameters
     dyad0_of = nMC.get_of_2(casted_fiber.coords, casted_fiber.frames, dyads[0])
-    out = minimize(residual_stack_coords, fiber_par, args=(dyad0_of, casted_fiber.coords, w), method='nelder')
+    out = minimize(residual_stack_coords, pars, args=(dyad0_of, casted_fiber.coords, w), method='nelder')
     # report_fit(out)
     print('\n fit stack_coords:')
-    fiber_par = out.params
+    pars = out.params
 
     # create folded fiber with bent linker DNA
-    folded_fiber, _, _ = create_folded_fiber(fiber_par)
+    folded_fiber, _, _ = create_folded_fiber(pars)
     fileio.plot_dna(folded_fiber, range_nm=50, wait=1, origin_index=dyads[0], save=True)
     print(get_stack_pars(folded_fiber.coords, folded_fiber.frames, dyads[0], dyads[1], nucl))
 
     # write to file
-    filename = fileio.get_filename(incr=True, root='2x197')
-    fileio.write_xlsx_row(fileio.get_filename(sub=True, incr=True, ext='npz'), 0, fiber_par, report_file=filename)
+    fileio.write_xlsx_row(fileio.get_filename(sub=True, incr=True, ext='npz'), 0, pars, report_file=filename)
     folded_fiber.write2disk(fileio.get_filename(sub=True, ext='npz'))
     print(filename)
     return
 
     w = [1, 1, 1, 10, 10, 10]
-    out = minimize(residual_stack_params, fiber_par, args=(fixed_stack_params, w), method='nelder')
+    out = minimize(residual_stack_params, pars, args=(fixed_stack_params, w), method='nelder')
     print('\n fit stack_params:')
-    fiber_par = out.params
+    pars = out.params
     folded_fiber, _, _ = create_folded_fiber(out.params)
     fileio.plot_dna(folded_fiber, range_nm=50, wait=10, origin_index=dyads[0])
     print(get_stack_pars(folded_fiber.coords, folded_fiber.frames, dyads[0], dyads[1], nucl))
@@ -399,10 +409,10 @@ def main(fiber_par):
     return
 
     iter_vals = np.linspace(20, 100, 11)
-    scan_fiber_param(fiber_par, 'nld_A', iter_vals)
+    scan_fiber_param(pars, 'nld_A', iter_vals)
 
-    unfolded_fiber, dyads, nucl = create_unfolded_fiber(fiber_pars=fiber_par)
-    casted_fiber, dyads, w = create_casted_fiber(fiber_par, nucl)
+    unfolded_fiber, dyads, nucl = create_unfolded_fiber(fiber_pars=pars)
+    casted_fiber, dyads, w = create_casted_fiber(pars, nucl)
     print (fileio.create_pov(fileio.get_filename(incr=True), [casted_fiber.coords], range_A=[1000, 1500],
                              offset_A=[0, 0, 150], show=True))
 
@@ -414,9 +424,8 @@ if __name__ == "__main__":
     fiber_par = Parameters()
     # fiber parameters
     fiber_par.add('L_bp', value=4000, vary=False)
-    fiber_par.add('n_nuc', value=3, vary=False)
+    fiber_par.add('n_nuc', value=4, vary=False)
     fiber_par.add('NRL', value=197, vary=False)
-    fiber_par.add('fiber_start', value=1)
     fiber_par.add('Unwrapped_bp', value=20, min=0, max=60, vary=False)
     # linker DNA parameters
     fiber_par.add('Pitch_bp', value=10.780, min=9.4, max=11.4, vary=True)
@@ -426,9 +435,13 @@ if __name__ == "__main__":
     fiber_par.add('RelFreq', value=1.01, min=0.95, max=1.05, vary=True)
     # stacking parameters
     fiber_par.add('diameter_A', value=330, vary=False)
-    fiber_par.add('rise_A', value=100, vary=False)
-    fiber_par.add('nld_A', value=20, vary=False)
+    fiber_par.add('rise_A', value=90, vary=False)
     fiber_par.add('chirality', value=-1, vary=False)
     fiber_par.add('face', value=1, vary=False)
 
+    fiber_par.add('fiber_start', value=2)
+    if fiber_par['fiber_start'].value is 1:
+        fiber_par.add('nld_A', value=55, vary=False)
+    else:
+        fiber_par.add('nld_A', value=35, vary=False)
     main(fiber_par)

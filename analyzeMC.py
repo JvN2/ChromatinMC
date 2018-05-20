@@ -26,7 +26,7 @@ kT = 41
 
 def plot_gf(filename, calc=False):
     filename = fileio.change_extension(filename, 'xlsx')
-    print('>>> Current file: {}'.format(filename))
+    # print('>>> Current file: {}'.format(filename))
 
     if calc:
         default_params = np.load(default_step_file)
@@ -58,23 +58,28 @@ def plot_gf(filename, calc=False):
             g_nuc_kT, names = rMC.get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl,
                                                    e_wrap_kT, e_stack_kT, fiber_start, p0, k, force)
             g_nuc_kT_all.append(g_nuc_kT)
-            for g, name in zip(g_nuc_kT, names):
-                pars[name].value = g
+            for g_nuc_kT_all, name in zip(g_nuc_kT, names):
+                pars[name].value = g_nuc_kT_all
             i += 1
     else:
-        names = ['g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT']
+        names = ['g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT', 'e_stack_kT']
         g_nuc_kT_all = []
         for name in names:
             g_nuc_kT_all.append(fileio.read_xlsx_collumn(filename, name))
-        g_nuc_kT_all = np.transpose(g_nuc_kT_all)
+        g_nuc_kT_all[2] -= (g_nuc_kT_all[4] + 0)
+        g_nuc_kT_all = np.transpose(g_nuc_kT_all[0:4])
 
     force = fileio.read_xlsx_collumn(filename, 'F_pN')
     plt.close()
     plt.figure(figsize=(4, 3))
     plt.axes([0.15, 0.15, .8, .75])
-    colors = ['steelblue', 'orange', 'g', 'r']
-    for ydata,color in zip(np.asarray(g_nuc_kT_all).T,colors):
-        plt.semilogx(force, ydata, color = color)
+    colors = ['steelblue', 'orange', 'green', 'red']
+    pulling = (np.diff(np.append(0, force), axis=0) > 0)
+    for ydata, color in zip(np.asarray(g_nuc_kT_all).T, colors):
+        plt.semilogx(force[pulling], ydata[pulling], color=color, linewidth=1.5)
+    for ydata, color in zip(np.asarray(g_nuc_kT_all).T, colors):
+        plt.semilogx(force[np.logical_not(pulling)], ydata[np.logical_not(pulling)], color=color, linestyle=':',
+                     linewidth=1.5, markersize=15)
     plt.xlim(0.08, 12)
     plt.xlabel('F (pN)')
     plt.ylim(-75, 75)
@@ -84,7 +89,7 @@ def plot_gf(filename, calc=False):
               fontdict={'fontsize': 10})
     for i, name in enumerate(names):
         names[i] = name.split('_')[1]
-    plt.legend(names)
+    plt.legend(names[:4], fontsize=8, loc='best', frameon=False)
     plt.draw()
     plt.pause(5)
     filename = fileio.change_extension(filename, '_gf.jpg')
@@ -139,7 +144,7 @@ def create_dummy_dna():
     return filename
 
 
-def plot_energy(filename):
+def plot_gi(filename):
     params = np.load(default_step_file)
     p0 = params[0]
     cov = params[1:]
@@ -184,14 +189,14 @@ def plot_energy(filename):
     energy_thermal = np.ones(len(dna.params)) * 3
     plt.plot(i, energy_thermal, color='k', linestyle=':', linewidth=0.8)
 
-    plt.xlim(0, len(dna.params))
-    plt.ylim(-1, 6)
+    plt.xlim(0, len(dna.params) + 1)
+    plt.ylim(-1, 5.5)
     plt.ylabel('G (kT)')
     plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
     plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0], loc='left',
               fontdict={'fontsize': 10})
     plt.xlabel('i (bp)')
-    plt.legend(legend)
+    plt.legend(legend, fontsize=8, loc='best', frameon=False)
     plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
     plt.draw()
     plt.pause(5)
@@ -272,15 +277,14 @@ def plot_fz(filename):
 
 
 def main():
-    filename = (fileio.get_filename(ext='xlsx', current=True, wildcard='*197*'))
-    # filename = 'E:\\users\\noort\\data\\20180517\\1st4x197_007.xlsx'
-    # filename = eg.fileopenbox()
-    # plot_energy(filename)
-    plot_gf(filename)
-    plot_fz(filename)
-    fileio.create_pov_movie(filename, origin_frame=0, fps=5, reverse=False)
+    filenames = fileio.get_filename(ext='xlsx', wildcard='*', date='today', all=True)
+    # filenames = [eg.fileopenbox()]
+    for filename in filenames:
+        # plot_gi(filename)
+        plot_gf(filename)
+        plot_fz(filename)
+        fileio.create_pov_movie(filename, fps=5, reverse=False, octamers=True, overwrite=True, axes=[0,2])
     return
-
 
 if __name__ == "__main__":
     # execute only if run as a script

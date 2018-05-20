@@ -59,20 +59,29 @@ def report_progress(value, title='', init=False):
     return
 
 
-def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False, current=False, wildcard='*'):
+def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False, current=False, wildcard='*', all=False,
+                 date='today'):
     global working_directory, root_name, file_number, sub_number
     if 'root_name' not in globals():
         if root is None:
             root_name = 'data'
     if root is not None:
         root_name = root
+    today = datetime.now().strftime('%Y%m%d')
+    yesterday = (pd.to_datetime('Today') - pd.Timedelta('1 days')).strftime('%Y%m%d')
     if 'working_directory' not in globals():
         user = getpass.getuser()
-        working_directory = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, datetime.now().strftime('%Y%m%d'))
-    if current:
+        working_directory = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, today)
+    if (current or all):
         filename = working_directory + wildcard + '.' + ext
+        if date is 'yesterday':
+            filename = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, yesterday) + wildcard + '.' + ext
+
         list_of_files = glob.glob(filename)  # * means all if need specific format then *.csv
-        filename = max(list_of_files, key=os.path.getctime)
+        if all:
+            return list_of_files
+        else:
+            filename = max(list_of_files, key=os.path.getctime)
         return filename
 
     if 'file_number' not in globals():
@@ -267,7 +276,7 @@ def create_movie(image_files, fps=5.0, delete=True, filename=None, reverse=True,
         for image in image_files:
             os.remove(image)
     out.release()
-    print('>>> Movie saved as: {}'.format(filename))
+    print('>>> Movie saved as: {} \n'.format(filename))
     return filename
 
 
@@ -373,13 +382,16 @@ def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', ra
         scale = range_nm / 2
         plt.title(title, loc='left')
         plt.tight_layout(pad=0.3, w_pad=0.3, h_pad=0.3)
-    pointsize = 0.1 * np.sqrt(scale)
+    pointsize = 1 * np.sqrt(scale)
 
     ax.set_xlabel('x (nm)')
     ax.set_ylabel('y (nm)')
     ax.set_zlabel('z (nm)')
 
-    ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=pointsize, c=color, alpha=0.25)
+    half = len(coords) / 2
+    ax.scatter(coords[:, 0][:half], coords[:, 1][:half], coords[:, 2][:half], s=pointsize, c=color, alpha=0.5)
+    ax.scatter(coords[:, 0][half:], coords[:, 1][half:], coords[:, 2][half:], s=pointsize, c='red', alpha=0.5)
+
     ax.scatter(coords[0, 0], coords[0, 1], coords[0, 2], s=pointsize, c='red', alpha=0.55)
     ax.scatter([0], [0], [0], s=pointsize * 5, c='k', alpha=0.55)
 
@@ -401,24 +413,35 @@ def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', ra
     return
 
 
-def create_pov_movie(filename, origin_frame=0, fps=5, reverse=True):
+def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], octamers=False, overwrite=False) :
     pix = 1500
+    radius = [10, 5, 35]
     sets, filenames, _ = contents_xlsx(filename)
-    r = np.append([10], (np.ones(8) * 4))
-    r = np.append(r, 3)
-    r = np.append(r, 2)
-    c = 'kbbggryrycy'
 
     for i, f in enumerate(filenames):
         filenames[i] = change_extension(f, 'png')
 
-    path = (filename.split('.')[0])
-    existing_files = glob.glob(path + '\\*.png')
+    if overwrite:
+        existing_files=[]
+    else:
+        path = (filename.split('.')[0])
+        existing_files = glob.glob(path + '\\*.png')
     image_files = []
+
+    names = ['n_nuc', 'NRL', 'dyad0']
+    nucs = []
+    for name in names:
+        nucs.append(read_xlsx_collumn(filename, name))
+    nuc = (np.asarray(nucs).T[0])
+
+    nucl = nMC.NucPose()
+    nucl.from_file('1KX5')
+    n_of_coords = []
+    octa_coords = []
 
     j = 0
     print('>>> {}'.format(filename))
-    report_progress(len(filenames) - len(existing_files) - 1, title='create_pov_movie', init=True)
+    report_progress((len(filenames) - len(existing_files) - 1), title='create_pov_movie', init=True)
     for file in filenames:
         if file in existing_files:
             image_files.append(file)
@@ -429,7 +452,30 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=True):
                 origin_of = nMC.get_of(dna, origin_frame)
                 tf = nMC.get_transformation(origin_of)
                 coords = nMC.apply_transformation(dna.coords, tf)
-                file = create_pov(file, [coords], range_A=[1000, 1500], offset_A=[0, 0, 150], show=False, width_pix=pix)
+
+                if len(axes) is not 0:
+                    for n in range(nuc[0]):
+                        dyad = nuc[2] + n * nuc[1]
+                        n_of = nMC.get_nuc_of(dna.coords, dna.frames, dyad, nucl)
+                        if n is 0:
+                            n_of_coords = nMC.of2axis(n_of, length=60, axes=axes)
+                        else:
+                            n_of_coords = np.concatenate((n_of_coords, nMC.of2axis(n_of, length=60, axes=axes)))
+                    n_of_coords = nMC.apply_transformation(n_of_coords, tf)
+
+                if octamers:
+                    for n in range(nuc[0]):
+                        dyad = nuc[2] + n * nuc[1]
+                        n_of = nMC.get_nuc_of(dna.coords, dna.frames, dyad, nucl)
+                        if n is 0:
+                            octa_coords = [n_of[0]]
+                        else:
+                            octa_coords = np.concatenate((octa_coords, [n_of[0]]))
+                    octa_coords = nMC.apply_transformation(octa_coords, tf)
+
+                file = create_pov(file, [coords, n_of_coords, octa_coords], range_A=[1000, 2500], offset_A=[0, 0, 150], show=False,
+                                  width_pix=pix, colors='kcr', radius=radius)
+
                 image_files.append(file)
                 j += 1
             except:
