@@ -8,7 +8,6 @@ except:
 
 import time
 import re
-from datetime import datetime
 import os as os
 import numpy as np
 import pandas as pd
@@ -413,7 +412,7 @@ def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', ra
     return
 
 
-def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], octamers=False, overwrite=False) :
+def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], octamers=False, overwrite=False):
     pix = 1500
     radius = [10, 5, 35]
     sets, filenames, _ = contents_xlsx(filename)
@@ -422,7 +421,7 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], oc
         filenames[i] = change_extension(f, 'png')
 
     if overwrite:
-        existing_files=[]
+        existing_files = []
     else:
         path = (filename.split('.')[0])
         existing_files = glob.glob(path + '\\*.png')
@@ -473,8 +472,8 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], oc
                             octa_coords = np.concatenate((octa_coords, [n_of[0]]))
                     octa_coords = nMC.apply_transformation(octa_coords, tf)
 
-                file = create_pov(file, [coords, n_of_coords, octa_coords], range_A=[1000, 2500], offset_A=[0, 0, 150], show=False,
-                                  width_pix=pix, colors='kcr', radius=radius)
+                file = create_pov(file, [coords, n_of_coords, octa_coords], range_A=[1000, 2500], offset_A=[0, 0, 150],
+                                  show=False, width_pix=pix, colors='kcr', radius=radius)
 
                 image_files.append(file)
                 j += 1

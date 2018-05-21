@@ -277,13 +277,13 @@ def plot_fz(filename):
 
 
 def main():
-    filenames = fileio.get_filename(ext='xlsx', wildcard='*', date='today', all=True)
+    filenames = fileio.get_filename(ext='xlsx', wildcard='*', date='yesterday', all=True)
     # filenames = [eg.fileopenbox()]
     for filename in filenames:
         # plot_gi(filename)
         plot_gf(filename)
         plot_fz(filename)
-        fileio.create_pov_movie(filename, fps=5, reverse=False, octamers=True, overwrite=True, axes=[0,2])
+        fileio.create_pov_movie(filename, fps=5, reverse=False, octamers=True, overwrite=False, axes=[0,2])
     return
 
 if __name__ == "__main__":

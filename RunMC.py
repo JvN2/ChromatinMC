@@ -103,12 +103,6 @@ def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack
         g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
         g = np.clip(g, 0, e_stack_kT * kT)
         # print(dyads[start_dyad], (dyads[start_dyad+ fiber_start]- dyads[start_dyad ])/2 )
-        # second potential
-        sigma = np.asarray([10, 10, 10, 1, 1, 1])
-        sigma *= 1
-        k = kT / sigma ** 2
-        g2 = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
-        # g += g2
     else:
         g = 0
     return g
@@ -316,6 +310,7 @@ if __name__ == '__main__':
     pars.add('g_wrap_kT', value=0)
     pars.add('g_stack_kT', value=0)
     pars.add('g_work_kT', value=0)
+    pars.add('Unwrapped_bp', value=0)
 
     # Parameters that define the nucleosomal array
     pars.add('L_bp', value=1000)
@@ -327,17 +322,12 @@ if __name__ == '__main__':
     pars.add('nld_A', value=25)
     pars.add('chirality', value=1)
     pars.add('face', value=1)
+    pars.add('diameter_A', value=330)
 
     # Parameters that are typically varied between simulations
-    pars.add('diameter_A', value=330)
-    pars.add('NRL', value=167)
-
-    if pars['NRL'].value == 167:
-        pars.add('fiber_start', value=2)
-    else:
-        pars.add('fiber_start', value=1)
-    pars.add('Unwrapped_bp', value=0)
     pars.add('e_wrap_kT', value=2.0)
-    pars.add('e_stack_kT', value=20)
+    pars.add('e_stack_kT', value=0)
+    pars.add('NRL', value=167)
+    pars.add('fiber_start', value=1)
 
-    main(pars, n_steps=1e4)
+    main(pars, n_steps=5e4)
