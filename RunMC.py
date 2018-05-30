@@ -166,8 +166,7 @@ def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_
 
     for dyad1, dyad2 in zip(dyads[:-1], dyads[1:]):
         g_dna += np.sum(g_dna_all[dyad1:dyad2], axis=0)
-        g_stack += score_stacking(dyad1 + 1, dna.
-                                  _coords, dna_frames, dyads, fixed_stack_params, e_stack_kT, nucl,
+        g_stack += score_stacking(dyad1 + 1, dna_coords, dna_frames, dyads, fixed_stack_params, e_stack_kT, nucl,
                                   fiber_start)
         g_work += score_work(dna_coords, force, start_bp=dyad1, end_bp=dyad2, )
         g_wrap += score_wrapping(dyad1 + 2, dna_coords, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
@@ -347,7 +346,7 @@ if __name__ == '__main__':
 
     pars.add('e_wrap_kT', value=2.5)
     pars.add('e_stack_kT', value=21)
-    pars.add('NRL', value=172)
+    pars.add('NRL', value=167)
     pars.add('fiber_start', value=2)
 
     pars.pretty_print(columns=['value'])
