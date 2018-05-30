@@ -1,5 +1,9 @@
 import matplotlib as mpl
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 try:
     mpl.use(u'TkAgg')
     mpl.interactive(False)
@@ -24,9 +28,9 @@ default_folder = 'D:\\users\\'
 kT = 41
 
 
-def plot_gf(filename, calc=False):
+def plot_gf(filename, calc=False, average_over_F=[0, 1e9]):
     filename = fileio.change_extension(filename, 'xlsx')
-    # print('>>> Current file: {}'.format(filename))
+    print('>>> Current file: {}'.format(filename))
 
     if calc:
         default_params = np.load(default_step_file)
@@ -62,38 +66,51 @@ def plot_gf(filename, calc=False):
                 pars[name].value = g_nuc_kT_all
             i += 1
     else:
-        names = ['g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT', 'e_stack_kT']
+        names = ['e_nuc_kT', 'e_wrap_kT', 'e_stack_kT']
+        for name in names:
+            print('{0:12s} = {1:7.1f}'.format(name, fileio.read_xlsx_collumn(filename, name)[0]))
+
+        # e_stack_kT = fileio.read_xlsx_collumn(filename, 'e_stack_kT')
+
+        names = ['g_work_kT', 'g_stack_kT', 'g_wrap_kT', 'g_dna_kT']
+        names += ['g_shift_kT', 'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT']
+
         g_nuc_kT_all = []
         for name in names:
             g_nuc_kT_all.append(fileio.read_xlsx_collumn(filename, name))
-        g_nuc_kT_all[2] -= (g_nuc_kT_all[4] + 0)
-        g_nuc_kT_all = np.transpose(g_nuc_kT_all[0:4])
 
-    force = fileio.read_xlsx_collumn(filename, 'F_pN')
-    plt.close()
-    plt.figure(figsize=(4, 3))
-    plt.axes([0.15, 0.15, .8, .75])
-    colors = ['steelblue', 'orange', 'green', 'red']
-    pulling = (np.diff(np.append(0, force), axis=0) > 0)
-    for ydata, color in zip(np.asarray(g_nuc_kT_all).T, colors):
-        plt.semilogx(force[pulling], ydata[pulling], color=color, linewidth=1.5)
-    for ydata, color in zip(np.asarray(g_nuc_kT_all).T, colors):
-        plt.semilogx(force[np.logical_not(pulling)], ydata[np.logical_not(pulling)], color=color, linestyle=':',
-                     linewidth=1.5, markersize=15)
-    plt.xlim(0.08, 12)
-    plt.xlabel('F (pN)')
-    plt.ylim(-75, 75)
-    plt.ylabel(r'$\Delta$G (kT)')
-    plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
-    plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0], loc='left',
-              fontdict={'fontsize': 10})
-    for i, name in enumerate(names):
-        names[i] = name.split('_')[1]
-    plt.legend(names[:4], fontsize=8, loc='best', frameon=False)
-    plt.draw()
-    plt.pause(5)
-    filename = fileio.change_extension(filename, '_gf.jpg')
-    plt.savefig(filename, dpi=600, format='jpg')
+        force = fileio.read_xlsx_collumn(filename, 'F_pN')
+        pulling = (np.diff(np.append(0, force), axis=0) > 0)
+
+        print('\naverages for F = {} pN:'.format(average_over_F))
+        for name, g in zip(names, np.asarray(g_nuc_kT_all)):
+            selection = g[(force > average_over_F[0]) * (force < average_over_F[1]) * (pulling > 0)]
+            mean = np.mean(selection)
+            sd = np.std(selection)
+            print('{0:12s} = {1:7.1f} +/- {2:3.1f} '.format(name, mean, sd))
+
+        plt.close()
+        plt.figure(figsize=(4, 3))
+        plt.axes([0.15, 0.15, .8, .75])
+        colors = ['red', 'green', 'orange', 'steelblue']
+        for g, color, name in zip(g_nuc_kT_all, colors, names):
+            plt.semilogx(force[pulling], g[pulling], color=color, linewidth=1.5, label=name.split('_')[1])
+        for g, color in zip(g_nuc_kT_all, colors):
+            plt.semilogx(force[np.logical_not(pulling)], g[np.logical_not(pulling)], color=color, linestyle=':',
+                         linewidth=1.5, markersize=15)
+
+        plt.xlim(0.08, 12)
+        plt.xlabel('F (pN)')
+        plt.ylim(-75, 50)
+        plt.ylabel(r'$\Delta$G (kT)')
+        plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
+        plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0] + '\n', loc='left',
+                  fontdict={'fontsize': 8})
+        plt.legend(fontsize=8, loc='lower center', frameon=False)
+        plt.draw()
+        plt.pause(5)
+        filename = fileio.change_extension(filename, '_gf.jpg')
+        plt.savefig(filename, dpi=600, format='jpg')
     return
 
 
@@ -277,14 +294,14 @@ def plot_fz(filename):
 
 
 def main():
-    filenames = fileio.get_filename(ext='xlsx', wildcard='*', date='yesterday', all=True)
-    # filenames = [eg.fileopenbox()]
+    filenames = fileio.get_filename(ext='xlsx', wildcard='2st*', date='today', list='all')
     for filename in filenames:
         # plot_gi(filename)
-        plot_gf(filename)
+        plot_gf(filename, average_over_F=[0.15, 1.5])
         plot_fz(filename)
-        fileio.create_pov_movie(filename, fps=5, reverse=False, octamers=True, overwrite=False, axes=[0,2])
+        fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, -40, -90])
     return
+
 
 if __name__ == "__main__":
     # execute only if run as a script

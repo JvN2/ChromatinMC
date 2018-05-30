@@ -23,11 +23,18 @@ plt.interactive(False)
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
 
-def ofs2params(of1, of2, _3dna=False):
+def ofs2params(of1, of2, _3dna=False, flipx=[0,0]):
     o1 = of1[0]
     f1 = of1[1:, :] - o1
     o2 = of2[0]
     f2 = of2[1:, :] - o2
+
+    if flipx[0]:
+        f1[1] *= -1
+        f1[2] *= -1
+    if flipx[1]:
+        f2[1] *= -1
+        f2[2] *= -1
 
     if _3dna:
         params = frames2params_3dna(o1, o2, f1, f2)
@@ -40,16 +47,17 @@ def find(lst, predicate):
     return (i for i, j in enumerate(lst) if predicate(j)).next()
 
 
-def of2axis(of, length=60, axes=[0, 1, 2]):
+def of2axis(of, length=[60, 90, 120]):
     """
     converts originframe to axis for plotting purposes
     """
-    o = of[0]
-    f = of[1:] - o
+    origin = of[0]
+    frame = of[1:] - origin
     coords_out = []
-    for i in axes:
-        for j in np.linspace(0, (0.5*i + 1) * length, (0.5*i + 1)*length):
-            coords_out.append(o + j * f[i])
+
+    for ax_length, ax_direction in zip(length, frame):
+        for j in np.linspace(0, ax_length, np.abs(ax_length)):
+            coords_out.append(origin + j * ax_direction)
     return np.asarray(coords_out)
 
 
@@ -86,8 +94,6 @@ def get_transformation(start, target=None):
     Q = target
     if Q is None:
         Q = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    # Pc = sum(P) / (1.0 * len(P))
-    # Qc = sum(Q) / (1.0 * len(Q))
     Pc = sum(P) / len(P)
     Qc = sum(Q) / len(Q)
     C = np.dot(np.transpose(P - Pc), Q - Qc)
@@ -412,6 +418,7 @@ def main():
         coords.append(nuc.chains[chain][2])
 
     # tf = get_transformation(nuc.of, target=np.asarray([[0,0,0],[0,0,-1],[0,1,0],[1,0,0]]))
+    # tf = get_transformation(nuc.of, target=np.asarray([[0,0,0],[-1,0,0],[0,1,0],[0,0,-1]]))
     tf = get_transformation(nuc.of)
 
     n_coords = []
@@ -419,10 +426,10 @@ def main():
         n_coords.append(apply_transformation(c, tf))
 
     nuc_ax = apply_transformation(nuc.of, tf)
-    n_coords.append(of2axis(nuc_ax, length=60))
+    n_coords.append(of2axis(nuc_ax))
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
-    fileio.create_pov(filename, n_coords, range_A=[300, 300], offset_A=[0, 0, 150], show=True, width_pix=500)
+    print(fileio.create_pov(filename, n_coords, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
 
 if __name__ == '__main__':

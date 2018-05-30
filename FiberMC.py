@@ -99,19 +99,16 @@ def insert_nucs(dna, dyads, pdb='1KX5'):
     '''
     #    # Get nucleosome
     nucl = nMC.NucPose()
-    nucl.from_file(fileio.change_extension(pdb, '3DNA'))
+    nucl.from_file(pdb)
 
     params = dna.params
-    length = len(nucl.dna.params)
-    new_dyads = []
     for dyad in dyads:
-        start = dyad - nucl.dyad
-        end = start + length
+        start = dyad + nucl.fixed[0]
+        end = dyad + nucl.fixed[-1]
         if (start >= 0 and (end < len(params))):
-            params[start:end] = nucl.dna.params
-            new_dyads.append(dyad)
+            params[start:end] = nucl.dna.params[nucl.dyad + nucl.fixed[0]:nucl.dyad + nucl.fixed[-1]]
     dna = HelixPose(params)
-    return dna, nucl, np.asarray(new_dyads)
+    return dna, nucl, dyads
 
 
 def create_unfolded_fiber(fiber_pars):
@@ -163,7 +160,7 @@ def get_casted_fiber_frames(par):
 
     n_ofs = []
     for cm1, cm2 in zip(cm, cm[fiber_start:]):
-        Nx = par['face'].value * cm1 * [-1, -1, 0]
+        Nx = -par['face'].value * cm1 * [1, 1, 0]
         Nx /= np.linalg.norm(Nx)
         Nz = cm2 - cm1
         Nz /= np.linalg.norm(Nz)
@@ -173,6 +170,7 @@ def get_casted_fiber_frames(par):
         Nx /= np.linalg.norm(Nx)
         frame = np.array([Nx, Ny, -Nz])
         n_ofs.append(nMC.join_o_f(cm1, np.transpose(frame)))
+        # n_ofs.append(nMC.join_o_f(cm1, frame))
 
     # n_coords = []
     # for n_of in n_ofs:
@@ -293,10 +291,10 @@ def residual_stack_params(fiber_par, fixed_stack_params, w):
     return res
 
 
-def get_stack_pars(coords, frames, dyad1, dyad2, nucl):
+def get_stack_pars(coords, frames, dyad1, dyad2, nucl, fiber_start):
     n_of1 = nMC.get_nuc_of(coords, frames, dyad1, nucl)
     n_of2 = nMC.get_nuc_of(coords, frames, dyad2, nucl)
-    stack_params = nMC.ofs2params(n_of2, n_of1, _3dna=True)
+    stack_params = (nMC.ofs2params(n_of2, n_of1, _3dna=True))
     return stack_params
 
 
@@ -370,14 +368,71 @@ def main(pars):
         for i in nucl.fixed[1:-1]:
             bases3.append(casted_fiber.coords[dyad + i])
 
-    print(fileio.create_pov(filename, [bases1, bases2, casted_fiber.coords, bases3], range_A=[500, 500],
-                            offset_A=[0, 0, 150], show=True, width_pix=3000, colors='rbky', radius=[11, 11, 10, 11]))
+    for i, dyad in enumerate(dyads):
+        n_of = nMC.get_nuc_of(casted_fiber.coords, casted_fiber.frames, dyad, nucl)
+
+        if i is 0:
+            n_of_coords = nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])
+        else:
+            n_of_coords = np.concatenate((n_of_coords, nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])))
+
+    print(fileio.create_pov(filename, [bases1, bases2, casted_fiber.coords, bases3, n_of_coords], range_A=[500, 1000],
+                            offset_A=[0, 0, 150], show=True, width_pix=3000, colors='rbkyc',
+                            radius=[11, 11, 10, 11, 5]))
 
     print('\n fixed stack_params:')
-    for dyad0, dyad1 in zip(dyads, dyads[pars['fiber_start'].value:]):
-        fixed_stack_params = get_stack_pars(casted_fiber.coords, casted_fiber.frames, dyad0, dyad1, nucl)
-        print(fixed_stack_params)
+    fiber_start = pars['fiber_start'].value
 
+    fixed_stack_params = get_stack_pars(casted_fiber.coords, casted_fiber.frames, dyads[0], dyads[fiber_start],
+                                        nucl)
+    print(pars['nld_A'].value, fixed_stack_params)
+
+    n_ofs = get_casted_fiber_frames(pars)
+    fixed_stack_params = nMC.ofs2params(n_ofs[fiber_start], n_ofs[0], _3dna=True)
+
+    sigma = np.asarray([1.0, 1.0, 1.0, 0.1, 0.1, 0.1])
+    # sigma = np.asarray([41.673,  3.409,   14.875,   0.074,  0.907,  0.068])
+    sigma *= 100.00
+
+    z = []
+    g_z = []
+    nld0 = pars['nld_A'].value
+    for nld in np.arange(pars['nld_A'].value, pars['rise_A'].value / fiber_start, 10):
+        pars['nld_A'].value = nld
+        n_ofs = get_casted_fiber_frames(pars)
+        stack_params = nMC.ofs2params(n_ofs[fiber_start], n_ofs[0], _3dna=True)
+        k = fileio.kT / sigma ** 2
+
+        g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / fileio.kT
+
+        print(nld, stack_params - fixed_stack_params, g, 2 * g / nld ** 2)
+        z.append(nld - nld0)
+        g_z.append(np.sqrt(g))
+
+    print(stack_params - fixed_stack_params)
+    plt.close()
+
+    # generate some noisy data
+    x = np.asarray(z) / 10.0
+    y = np.asarray(g_z) * fileio.kT
+    y -= np.min(g_z)
+
+    # do fit
+    M = np.column_stack((0.5 * x ** 2,))  # construct design matrix
+    k, _, _, _ = np.linalg.lstsq(M, y)  # least-square fit of M * k = y
+
+    # quick plot
+    plt.plot(x, y, 'x', x, 0.5 * k * x ** 2, 'r', linewidth=3)
+    plt.legend(('measurement', 'fit'), loc=2)
+    plt.title('best fit: y = {:.8f} * x**2'.format(k[0]))
+    plt.show()
+
+    # plt.scatter(z, g_z)
+    # fit = np.polyfit(z, g_z,1)
+    # print
+    # p = np.poly1d(fit)
+    # plt.plot(z, p(z))
+    # plt.show()
     return
 
     # fit linker DNA parameters
@@ -413,7 +468,8 @@ def main(pars):
 
     unfolded_fiber, dyads, nucl = create_unfolded_fiber(fiber_pars=pars)
     casted_fiber, dyads, w = create_casted_fiber(pars, nucl)
-    print (fileio.create_pov(fileio.get_filename(incr=True), [casted_fiber.coords], range_A=[1000, 1500],
+
+    print (fileio.create_pov(fileio.get_filename(incr=True), [casted_fiber.coords, n_of_coords], range_A=[1000, 1500],
                              offset_A=[0, 0, 150], show=True))
 
     return
@@ -424,7 +480,7 @@ if __name__ == "__main__":
     fiber_par = Parameters()
     # fiber parameters
     fiber_par.add('L_bp', value=4000, vary=False)
-    fiber_par.add('n_nuc', value=4, vary=False)
+    fiber_par.add('n_nuc', value=8, vary=False)
     fiber_par.add('NRL', value=197, vary=False)
     fiber_par.add('Unwrapped_bp', value=20, min=0, max=60, vary=False)
     # linker DNA parameters
@@ -435,13 +491,14 @@ if __name__ == "__main__":
     fiber_par.add('RelFreq', value=1.01, min=0.95, max=1.05, vary=True)
     # stacking parameters
     fiber_par.add('diameter_A', value=330, vary=False)
-    fiber_par.add('rise_A', value=90, vary=False)
+    fiber_par.add('rise_A', value=100, vary=False)
     fiber_par.add('chirality', value=-1, vary=False)
     fiber_par.add('face', value=1, vary=False)
 
-    fiber_par.add('fiber_start', value=2)
-    if fiber_par['fiber_start'].value is 1:
-        fiber_par.add('nld_A', value=55, vary=False)
-    else:
-        fiber_par.add('nld_A', value=35, vary=False)
+    fiber_par.add('fiber_start', value=1)
+    fiber_par.add('nld_A', value=17, vary=False)
+    # if fiber_par['fiber_start'].value is 3:
+    #     fiber_par.add('nld_A', value=55, vary=False)
+    # else:
+    #     fiber_par.add('nld_A', value=35, vary=False)
     main(fiber_par)

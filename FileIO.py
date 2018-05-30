@@ -58,30 +58,35 @@ def report_progress(value, title='', init=False):
     return
 
 
-def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False, current=False, wildcard='*', all=False,
-                 date='today'):
+def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False, list='', wildcard='*', date='today'):
     global working_directory, root_name, file_number, sub_number
+
     if 'root_name' not in globals():
         if root is None:
             root_name = 'data'
     if root is not None:
         root_name = root
+
     today = datetime.now().strftime('%Y%m%d')
-    yesterday = (pd.to_datetime('Today') - pd.Timedelta('1 days')).strftime('%Y%m%d')
+    if date is 'today':
+        folder_name = today
+    elif date is 'yesterday':
+        folder_name = (pd.to_datetime('Today') - pd.Timedelta('1 days')).strftime('%Y%m%d')
+    else:
+        foldername = date
     if 'working_directory' not in globals():
         user = getpass.getuser()
         working_directory = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, today)
-    if (current or all):
-        filename = working_directory + wildcard + '.' + ext
-        if date is 'yesterday':
-            filename = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, yesterday) + wildcard + '.' + ext
-
-        list_of_files = glob.glob(filename)  # * means all if need specific format then *.csv
-        if all:
-            return list_of_files
-        else:
-            filename = max(list_of_files, key=os.path.getctime)
-        return filename
+    filename = working_directory + wildcard + '.' + ext
+    if date is not 'today':
+        filename = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, foldername) + wildcard + '.' + ext
+    if list == 'all':
+        list_of_files = glob.glob(filename)
+        return list_of_files
+    if list == 'last':
+        list_of_files = glob.glob(filename)
+        filename = max(list_of_files, key=os.path.getctime)
+        return [filename]
 
     if 'file_number' not in globals():
         try:
@@ -320,8 +325,8 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
     if yrange is not None:
         plt.ylim(yrange)
     plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
-    plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0], loc='left',
-              fontdict={'fontsize': 10})
+    plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0] + '\n', loc='left',
+              fontdict={'fontsize': 8})
     # plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
     plt.draw()
     plt.pause(0.05)
@@ -332,27 +337,28 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
 
 
 def create_pov(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
-               show=False):
+               show=False, transparency=None):
     if radius is None:
         radius = np.append([10], (np.ones(8) * 4))
         radius = np.append(radius, 3)
         radius = np.append(radius, 2)
     if colors is None:
         colors = 'kbbggryrycy'
-
+    if transparency is None:
+        transparency = np.zeros(len(coords))
     filename = change_extension(filename, 'pov')
     aspect_ratio = range_A[1] / float(range_A[0])
     pov_image = pov.init(plt_width=range_A[0], aspect_ratio=aspect_ratio)
     i = 0
     j = 0
     offset = np.asarray(offset_A) - np.asarray((0, 0, range_A[1] / 2.0))
-    for coord in coords:
+    for coord, t in zip(coords, transparency):
         if (i > len(colors) - 1):
             i = 0
         if (j > len(radius) - 1):
             j = 0
         for sphere in coord:
-            pov_image = pov.add_sphere(pov_image, sphere + offset, color=colors[i], radius=radius[j])
+            pov_image = pov.add_sphere(pov_image, sphere + offset, color=colors[i], radius=radius[j], transperancy=t)
         i += 1
         j += 1
     pov.save(pov_image, filename=filename)
@@ -412,9 +418,9 @@ def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', ra
     return
 
 
-def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], octamers=False, overwrite=False):
+def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, frame=[], octamers=False, overwrite=False):
     pix = 1500
-    radius = [10, 5, 35]
+    radius = [10, 7, 7, 35]
     sets, filenames, _ = contents_xlsx(filename)
 
     for i, f in enumerate(filenames):
@@ -435,7 +441,7 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], oc
 
     nucl = nMC.NucPose()
     nucl.from_file('1KX5')
-    n_of_coords = []
+    n_of_coords_even = []
     octa_coords = []
 
     j = 0
@@ -452,15 +458,18 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], oc
                 tf = nMC.get_transformation(origin_of)
                 coords = nMC.apply_transformation(dna.coords, tf)
 
-                if len(axes) is not 0:
+                n_of_coords_odd = np.zeros((1, 3))
+                n_of_coords_even = np.zeros((1, 3))
+                if len(frame) is not 0:
                     for n in range(nuc[0]):
                         dyad = nuc[2] + n * nuc[1]
                         n_of = nMC.get_nuc_of(dna.coords, dna.frames, dyad, nucl)
-                        if n is 0:
-                            n_of_coords = nMC.of2axis(n_of, length=60, axes=axes)
+                        if n % 2 is 0:
+                            n_of_coords_even = np.concatenate((n_of_coords_even, nMC.of2axis(n_of, length=frame)))
                         else:
-                            n_of_coords = np.concatenate((n_of_coords, nMC.of2axis(n_of, length=60, axes=axes)))
-                    n_of_coords = nMC.apply_transformation(n_of_coords, tf)
+                            n_of_coords_odd = np.concatenate((n_of_coords_odd, nMC.of2axis(n_of, length=frame)))
+                    n_of_coords_odd = nMC.apply_transformation(n_of_coords_odd[1:], tf)
+                    n_of_coords_even = nMC.apply_transformation(n_of_coords_even[1:], tf)
 
                 if octamers:
                     for n in range(nuc[0]):
@@ -472,8 +481,9 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, axes=[], oc
                             octa_coords = np.concatenate((octa_coords, [n_of[0]]))
                     octa_coords = nMC.apply_transformation(octa_coords, tf)
 
-                file = create_pov(file, [coords, n_of_coords, octa_coords], range_A=[1000, 2500], offset_A=[0, 0, 150],
-                                  show=False, width_pix=pix, colors='kcr', radius=radius)
+                file = create_pov(file, [coords, n_of_coords_even, n_of_coords_odd, octa_coords], range_A=[1000, 2500],
+                                  offset_A=[0, 0, 150],
+                                  show=False, width_pix=pix, colors='kcyr', radius=radius)
 
                 image_files.append(file)
                 j += 1
