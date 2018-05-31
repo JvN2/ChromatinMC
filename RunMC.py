@@ -332,9 +332,9 @@ def main(pars, n_steps=1e4):
 if __name__ == '__main__':
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=1000)
+    pars.add('L_bp', value=2000)
     pars.add('P_nm', value=50)
-    pars.add('n_nuc', value=4)
+    pars.add('n_nuc', value=8)
     pars.add('e_nuc_kT', value=34.7)
 
     # Parameters that define the folded fiber
@@ -345,7 +345,7 @@ if __name__ == '__main__':
     pars.add('diameter_A', value=330)
 
     pars.add('e_wrap_kT', value=2.5)
-    pars.add('e_stack_kT', value=21)
+    pars.add('e_stack_kT', value=24)
     pars.add('NRL', value=167)
     pars.add('fiber_start', value=2)
 

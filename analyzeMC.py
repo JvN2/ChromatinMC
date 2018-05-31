@@ -294,7 +294,7 @@ def plot_fz(filename):
 
 
 def main():
-    filenames = fileio.get_filename(ext='xlsx', wildcard='2st*', date='today', list='all')
+    filenames = fileio.get_filename(ext='xlsx', wildcard='*', date='20180530', list='all')
     for filename in filenames:
         # plot_gi(filename)
         plot_gf(filename, average_over_F=[0.15, 1.5])
