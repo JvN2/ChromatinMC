@@ -22,13 +22,14 @@ import POVutils as pov
 import FileIO as fileio
 import RunMC as rMC
 import FiberMC as fMC
+import StatPhys as sp
 
 default_step_file = 'C:\\Python27\\Lib\\site-packages\\helixmc\\data\\DNA_gau.npy'
 default_folder = 'D:\\users\\'
 kT = 41
 
 
-def plot_gf(filename, calc=False, average_over_F=[0, 1e9]):
+def plot_gf(filename, calc=False, force_range=[0, 1e9]):
     filename = fileio.change_extension(filename, 'xlsx')
     print('>>> Current file: {}'.format(filename))
 
@@ -82,9 +83,9 @@ def plot_gf(filename, calc=False, average_over_F=[0, 1e9]):
         force = fileio.read_xlsx_collumn(filename, 'F_pN')
         pulling = (np.diff(np.append(0, force), axis=0) > 0)
 
-        print('\naverages for F = {} pN:'.format(average_over_F))
+        print('\naverages for F = {} pN:'.format(force_range))
         for name, g in zip(names, np.asarray(g_nuc_kT_all)):
-            selection = g[(force > average_over_F[0]) * (force < average_over_F[1]) * (pulling > 0)]
+            selection = g[(force > force_range[0]) * (force < force_range[1]) * (pulling > 0)]
             mean = np.mean(selection)
             sd = np.std(selection)
             print('{0:12s} = {1:7.1f} +/- {2:3.1f} '.format(name, mean, sd))
@@ -161,65 +162,130 @@ def create_dummy_dna():
     return filename
 
 
-def plot_gi(filename):
+def entropy_init(n_bps, n_bins=1000):
+    params = np.load(default_step_file)
+    p0 = params[0]
+    sd = np.diag(params[1:])
+    range_sd = 10
+
+    bins = []
+    for mean, sigma in zip(p0, sd):
+        bins.append(np.linspace(mean - range_sd * sigma, mean + range_sd * sigma, n_bins))
+
+    hist = np.zeros((n_bps, 6, len(bins[1]) - 1))
+    return hist, np.asarray(bins)
+
+
+def entropy_add(bp, param, hist, bins):
+    for i, p in enumerate(param):
+        hist[bp, i, :] += np.histogram([p], bins=bins[i])[0]
+    return np.asarray(hist)
+
+
+def entropy_calc(hist):
+    s = np.zeros(len(hist))
+    for bp, pars_hist in enumerate(hist):
+        for par_hist in pars_hist:
+            P = par_hist / par_hist.sum()
+            s[bp] += -np.sum(P[P > 0] * np.log(P[P > 0]))
+    return s
+
+
+def test_entropy():
+    p = np.random.rand(5, 6)
+    p = [0, 1, 3.2, 0, 0, 0.6]
+    hist, bins = entropy_init(5)
+    hist = entropy_add(0, p, hist, bins)
+    s = entropy_calc(hist)
+    print(s)
+
+    return
+
+
+def plot_gi(filename, force_range=[0.15, 1.5]):
+    print('>>> {}'.format(filename))
     params = np.load(default_step_file)
     p0 = params[0]
     cov = params[1:]
     k = np.linalg.inv(cov)
 
-    sets, files, _ = fileio.contents_xlsx(filename)
-    dna = HelixPose.from_file(fileio.change_extension(files[0], 'npz'))
+    sets, filenames, _ = fileio.contents_xlsx(filename)
+    dna = HelixPose.from_file(fileio.change_extension(filenames[0], 'npz'))
 
-    energy_kT = np.empty((len(files), len(dna.params)))
-    i = 0
-    fileio.report_progress(len(files), title='analyze_step_parameters', init=True)
-    for f in files:
-        dna = HelixPose.from_file(fileio.change_extension(f, 'npz'))
+    force = fileio.read_xlsx_collumn(filename, 'F_pN')
+    pulling = (np.diff(np.append(0, force), axis=0) > 0)
+    selection = (force > force_range[0]) * (force <= force_range[1] * (pulling))
+
+    selected_files = []
+    for par_file, selected in zip(filenames, selection):
+        if selected:
+            selected_files.append(par_file)
+    if len(selected_files) == 0:
+        print('>>> No files in force range')
+        return
+
+    hist, bins = entropy_init(len(dna.params))
+    energy_kT = np.zeros(len(dna.params))
+
+    fileio.report_progress(len(selected_files), title='analyze_step_parameters', init=True)
+    for i, par_file in enumerate(selected_files):
         fileio.report_progress(i + 1)
-        j = 0
-        for p in dna.params:
-            energy_kT[i, j] = (np.sum(0.5 * (p - p0) * np.dot(k, p - p0)))
-            j += 1
-        i += 1
+        dna = HelixPose.from_file(fileio.change_extension(par_file, 'npz'))
+        for j, p in enumerate(dna.params):
+            energy_kT[j] += (np.sum(0.5 * (p - p0) * np.dot(k, p - p0)))
+            hist = np.asarray(entropy_add(j, p, hist, bins))
 
-    F_data = fileio.read_xlsx_collumn(filename, 'F_pN')
+    energy_kT /= i + 1
+    entropy_kT = entropy_calc(hist) / kT
 
-    forces = np.linspace(10, 0, 6)
-    energy_F = []
-    legend = []
-    for Fmin, Fmax in zip(forces[1:], forces):
-        selected = (F_data > Fmin) & (F_data <= Fmax)
-        try:
-            energy_F.append(np.mean(energy_kT[selected], axis=0))
-            legend.append('F = {:.1f} pN'.format(((Fmin + Fmax) / 2)))
-        except:
-            pass
+    n_nuc = fileio.read_xlsx_collumn(filename, 'n_nuc')[0]
+    dyad0 = fileio.read_xlsx_collumn(filename, 'dyad0')[0]
+    e_wrap_kT = fileio.read_xlsx_collumn(filename, 'e_wrap_kT')[0] * -14.0
+    e_stack_kT = -fileio.read_xlsx_collumn(filename, 'e_stack_kT')[0]
 
-    energy_F = np.asarray(energy_F)
+    NRL = fileio.read_xlsx_collumn(filename, 'NRL')[0]
+    nuc_range = NRL * (n_nuc - 1)
+
+    TS_kT = np.sum(entropy_kT[dyad0:dyad0 + nuc_range]) / (n_nuc - 1)
+    E_kT = np.sum(energy_kT[dyad0:dyad0 + nuc_range]) / (n_nuc - 1)
+    G_kT = E_kT - TS_kT
+
+    av_title = ', averages for F = {0} pN), per nuc: '.format(force_range)
+    av_title += 'Edna = {0:.1f} kT; '.format(E_kT)
+
+    e_wrap_kT += np.mean(fileio.read_xlsx_collumn(filename, 'g_wrap_kT')[selection])
+    av_title += 'Ewrap = {0:.1f} kT; '.format(e_wrap_kT)
+    e_stack_kT += np.mean(fileio.read_xlsx_collumn(filename, 'g_stack_kT')[selection])
+    av_title += 'Estack = {0:.1f} kT; '.format(e_stack_kT)
+
+    av_title += 'TS = {0:.1f} kT; '.format(TS_kT)
+    G_kT += e_wrap_kT + e_stack_kT
+    av_title += 'G = {0:.1f} kT; '.format(G_kT)
+    print(av_title)
 
     i = range(len(dna.params))
 
     plt.close()
     plt.figure(figsize=(12, 3))
-    # plt.plot(i, energy_kT)
-    plt.plot(i, energy_F.T)
+    plt.plot(i, energy_kT, color='b')
+    plt.plot(i, entropy_kT, color='r')
+
     energy_thermal = np.ones(len(dna.params)) * 3
-    plt.plot(i, energy_thermal, color='k', linestyle=':', linewidth=0.8)
+    plt.plot(i, energy_thermal, color='k', linestyle=':', linewidth=1.2)
+    plt.plot(i, energy_thermal * 0, color='k', linestyle=':', linewidth=1.2)
 
     plt.xlim(0, len(dna.params) + 1)
-    plt.ylim(-1, 5.5)
+    plt.ylim(-0.5, 5.5)
     plt.ylabel('G (kT)')
     plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
-    plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0], loc='left',
-              fontdict={'fontsize': 10})
+    plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0] + av_title + '\n', loc='left',
+              fontdict={'fontsize': 8})
     plt.xlabel('i (bp)')
-    plt.legend(legend, fontsize=8, loc='best', frameon=False)
     plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
     plt.draw()
     plt.pause(5)
     filename = fileio.change_extension(filename, '_Edna.jpg')
     plt.savefig(filename, dpi=600, format='jpg')
-
     return
 
 
@@ -274,32 +340,57 @@ def plot_fz(filename):
     z = fileio.read_xlsx_collumn(filename, 'z_nm')
 
     selected = np.diff(np.append([-1], forces)) > 0
+    if len(selected) == 0:
+        return
 
     pars, datafile = fileio.read_xlsx_row(filename, 0)
 
     forces = np.clip(forces, 1e-3, 1e2)
-    wlc = 1 - 0.5 * np.sqrt(0.1 * kT / (forces * pars['P_nm'])) / selected
+    # wlc = 1 - 0.5 * np.sqrt(0.1 * kT / (forces * pars['P_nm'])) / selected
+    wlc = sp.WLC(forces, 1)[0] / selected
     grid = []
     for i in range(1, pars['n_nuc'] + 1):
-        grid.append(wlc * (pars['L_bp'] - 80 * i) / 3)
-        grid.append(wlc * (pars['L_bp'] - (pars['n_nuc'] * 80 + i * (147 - 80))) / 3)
-    wlc *= pars['L_bp'] / 3
+        grid.append(wlc * (pars['L_bp'] - 80 * i))
+        grid.append(wlc * (pars['L_bp'] - (pars['n_nuc'] * 80 + i * (147 - 80))))
+    grid.append(wlc * pars['L_bp'])
+    wlc *= pars['L_bp']
+
+    g1_kT = pars['e_stack_kT']
+    e_wrap_kt = pars['e_wrap_kT']
+    fiber_start = pars['fiber_start']
+    pars.pretty_print(columns=['value'])
+
+    l2_bp = 85
+    if g1_kT == 0:
+        l1_bp = 147
+    else:
+        l1_bp = 120
+    g2_kT = e_wrap_kt * (l1_bp - l2_bp - 10) / 10.0
+    if e_wrap_kt == 0:
+        n_nuc = 0
+    else:
+        n_nuc = pars['n_nuc']
+
+    fib = sp.tether(forces, pars['L_bp'], pars['NRL'], n_nuc, g1_kT=g1_kT,
+                    g2_kT=g2_kT, l1_bp=l1_bp, l2_bp=85, fiber_start=fiber_start)
 
     filename = fileio.change_extension(filename, '_fz.jpg')
 
-    fileio.save_plot((forces, z, wlc, selected), filename=filename,
+    fileio.save_plot((forces, z, fib, selected), filename=filename,
                      ax_labels=['z (nm)', 'F (pN)'], grid=grid, yrange=[-0.5, 10.5],
                      transpose=True, xrange=[0, 1.1 * pars['L_bp'] / 3])
     return
 
 
 def main():
-    filenames = fileio.get_filename(ext='xlsx', wildcard='*', date='20180530', list='all')
+    # test_entropy()
+    filenames = fileio.get_filename(ext='xlsx', wildcard='*', date='today', list='all')
+    forces = [0.1, 1.5]
     for filename in filenames:
-        # plot_gi(filename)
-        plot_gf(filename, average_over_F=[0.15, 1.5])
+        # plot_gi(filename, force_range=forces)
+        # plot_gf(filename, force_range=forces)
         plot_fz(filename)
-        fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, -40, -90])
+        # fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, 0, -100])
     return
 
 

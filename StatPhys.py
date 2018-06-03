@@ -6,32 +6,33 @@ from matplotlib import pyplot as plt
 kT = 4.1
 
 
-def WLC(f_pN, L_bp, P_nm=50, S_pN=1000):
+def WLC(f_pN, L_bp, P_nm=50, S_pN=1500):
     z = 1 - 0.5 * np.sqrt(kT / (f_pN * P_nm)) + f_pN / S_pN
     g = f_pN ** 2 / (2 * S_pN) + 0.5 * np.sqrt(f_pN * kT / P_nm)
     g *= L_bp * 0.34 / kT
     return z * L_bp * 0.34, g
 
 
-def fiber(f_pN, n_nuc, k_pN_nm=0.3, z0_nm=1.7):
-    z = f_pN / k_pN_nm + z0_nm
+def fiber(f_pN, n_nuc, k_pN_nm=0.3, z0_nm=1.7, fiber_start=1):
+    z = (f_pN / (k_pN_nm * fiber_start) + z0_nm) / fiber_start
     g = (f_pN ** 2) / (2 * k_pN_nm * kT)
     return z * n_nuc, g * n_nuc
 
 
-def tether(f_pN, L_bp, NRL_bp, n_nuc, g1_kT=23, g2_kT=5.5, g3_kT=80, l1_bp=100, l2_bp=80, degeneracy=1):
+def tether(f_pN, L_bp, NRL_bp, n_nuc, k_pN_nm=0.3, g1_kT=23, g2_kT=5.5, g3_kT=80, l1_bp=100, l2_bp=80, fiber_start=1):
     z_nm = []
     d = []
     g = []
+    degeneracy = (fiber_start == 1)
 
     for n3 in range(n_nuc + 1):
         for n2 in range(n_nuc - n3 + 1):
             for n1 in range(n_nuc - n3 - n2 + 1):
                 n0 = n_nuc - (n3 + n2 + n1)
-                lt_bp = L_bp - (n_nuc-n3) * NRL_bp + n1 * (NRL_bp - l1_bp) + n2 * (NRL_bp - l2_bp)
+                lt_bp = L_bp - (n_nuc - n3) * NRL_bp + n1 * (NRL_bp - l1_bp) + n2 * (NRL_bp - l2_bp)
                 zt_nm, gt_kT = WLC(f_pN, lt_bp)
 
-                z_fib, g_fib = fiber(f_pN, n0)
+                z_fib, g_fib = fiber(f_pN, n0, k_pN_nm=k_pN_nm, fiber_start=fiber_start)
                 z_nm.append(zt_nm + z_fib)
 
                 gt_kT += -n0 * (g1_kT + g2_kT + g3_kT) + g_fib
@@ -57,19 +58,22 @@ def tether(f_pN, L_bp, NRL_bp, n_nuc, g1_kT=23, g2_kT=5.5, g3_kT=80, l1_bp=100, 
     return z
 
 
-L_bp = 1000
-f = np.arange(0.01, 10, 0.05)
+if __name__ == "__main__":
+    L_bp = 1000
+    f = np.arange(0.01, 10, 0.05)
 
-plt.close()
-plt.figure(figsize=(4, 3))
-plt.axes([0.15, 0.15, .8, .75])
-plt.xlim([0, 1.1 * L_bp / 3])
-plt.ylim([-0.5, 10.5])
+    plt.close()
+    plt.figure(figsize=(4, 3))
+    plt.axes([0.15, 0.15, .8, .75])
+    plt.xlim([0, 1.1 * L_bp / 3])
+    plt.ylim([-0.5, 10.5])
 
-z, g = WLC(f, L_bp)
-plt.plot(z, f)
+    z, g = WLC(f, L_bp)
+    plt.plot(z, f)
 
-z = tether(f, L_bp, 197, 4)
-plt.plot(z, f)
+    z = tether(f, L_bp, 197, 4, k_pN_nm=0.3, degeneracy=1)
+    plt.plot(z, f)
+    z = tether(f, L_bp, 167, 4, k_pN_nm=1.1, degeneracy=0)
+    plt.plot(z, f)
 
-plt.show()
+    plt.show()

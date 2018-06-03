@@ -105,6 +105,7 @@ def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack
     g_min = 0
 
     sigma = np.asarray([1.0, 1.0, 1.0, 0.01, 0.01, 0.01])
+    sigma *= 2.0
     k = kT / sigma ** 2
 
     if 0 <= left_dyad < len(dyads) - fiber_start:
@@ -243,11 +244,11 @@ def main(pars, n_steps=1e4):
     pars.add('g_twist_kT', value=0)
 
     # Setup files and forces
-    root = '{0}st{1}x{2}s{3}w{4}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
-                                         pars['e_stack_kT'].value, int(pars['e_wrap_kT'].value * 10))
+    root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
+                                             pars['e_stack_kT'].value, pars['e_wrap_kT'].value).replace('.', '-')
+
     filename = fileio.get_filename(incr=True, root=root, ext='xlsx', )
     print('>>> Current file: {}'.format(filename))
-
     n_samples = 250
     fmin_pN = 0.1
     fmax_pN = 10
@@ -258,6 +259,11 @@ def main(pars, n_steps=1e4):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
 
     forces = np.append(forces, forces[::-1])
+
+    dummy_steps = 100
+    sample_indices += dummy_steps
+    sample_indices[0] = 0
+    forces = np.append(np.zeros(dummy_steps), forces)
 
     # Initialize random steps
     random_step = RandomStepSimple.load_gaussian_params(dna_step_file)
@@ -284,7 +290,11 @@ def main(pars, n_steps=1e4):
     fixed_stack_params = nMC.ofs2params(n_ofs[fiber_start], n_ofs[0], _3dna=True)
 
     basepairs = np.asarray(range(pars['L_bp'] - 1))
-    e_stack_kT = 1e6
+    if pars['e_stack_kT'].value == 0:
+        e_stack_kT = 0
+    else:
+        e_stack_kT = 1e3 * kT
+
     g_nuc_kT_all = []
 
     pars['F_pN'].value = 0
@@ -294,6 +304,10 @@ def main(pars, n_steps=1e4):
     fileio.report_progress(n_steps, title='RunMC', init=True)
 
     for i, force in enumerate(forces):
+        if i == dummy_steps:
+            e_stack_kT = pars['e_stack_kT'].value
+            g_nuc_kT_all = []
+
         g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
                                            e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         g_nuc_kT_all.append(g_nuc_kT)
@@ -301,16 +315,14 @@ def main(pars, n_steps=1e4):
         fileio.report_progress(i, title='Force = {0:.1f} pN, g_stack = {1:.1f} kT,'
                                         ' g_dna = {2:.1f} kT'.format(force, g_nuc_kT[2], g_nuc_kT[0]))
 
-        if force > 0.5:
-            e_stack_kT = pars['e_stack_kT'].value
-
         if i in sample_indices:
             g_nuc_kT_all = np.mean(g_nuc_kT_all, axis=0)
             for g, name in zip(g_nuc_kT_all, names):
                 pars[name].value = g
             pars['F_pN'].value = force
             pars['z_nm'].value = dna.coord_terminal[2] / 10
-            fileio.write_xlsx_row(fileio.get_filename(sub=True, incr=True, ext='npz'), i, pars, report_file=filename)
+            fileio.write_xlsx_row(fileio.get_filename(sub=True, incr=True, ext='npz'), i - dummy_steps, pars,
+                                  report_file=filename)
             dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
             g_nuc_kT_all = []
 
@@ -320,33 +332,31 @@ def main(pars, n_steps=1e4):
             previous_bp = bp
         basepairs = basepairs[::-1]
 
-    aMC.plot_fz(fileio.change_extension(filename, 'xlsx'))
-    aMC.plot_gf(fileio.change_extension(filename, 'xlsx'))
-    try:
-        fileio.create_pov_movie(fileio.get_filename(sub=True, folder=True), origin_frame=0, reverse=False)
-    except Exception as e:
-        print(Exception, e)
+    aMC.plot_fz(filename)
+    aMC.plot_gf(filename, force_range=[0.1, 1.5])
+    aMC.plot_gi(filename, force_range=[0.1, 1.5])
+    fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, 0, -90])
     return
 
 
 if __name__ == '__main__':
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=2000)
+    pars.add('L_bp', value=1000)
     pars.add('P_nm', value=50)
-    pars.add('n_nuc', value=8)
+    pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
 
     # Parameters that define the folded fiber
-    pars.add('rise_A', value=90)
+    pars.add('rise_A', value=100)
     pars.add('nld_A', value=17)
     pars.add('chirality', value=1)
     pars.add('face', value=1)
     pars.add('diameter_A', value=330)
 
-    pars.add('e_wrap_kT', value=2.5)
-    pars.add('e_stack_kT', value=24)
-    pars.add('NRL', value=167)
+    pars.add('e_wrap_kT', value=2.0)
+    pars.add('e_stack_kT', value=25)
+    pars.add('NRL', value=197)
     pars.add('fiber_start', value=2)
 
     pars.pretty_print(columns=['value'])

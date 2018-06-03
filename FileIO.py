@@ -46,7 +46,7 @@ def report_progress(value, title='', init=False):
     if init:
         start_time = time.time()
         print(datetime.now().strftime('>>> Start [{0}] @ %Y-%m-%d %H:%M:%S'.format(title)))
-        bar = ProgressBar(value, max_width=100)
+        bar = ProgressBar(value, max_width=80)
     else:
         bar.numerator = value
     elapsed_time = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
@@ -131,6 +131,7 @@ def read_xlsx_row(filename, dataset, pars=None):
     for index in df.index.values:
         if int(index.split(' > ')[0]) == dataset:
             row = index
+
     if pars is None:
         pars = Parameters()
         for par in list(df):
@@ -187,6 +188,7 @@ def write_xlsx_column(filename, param, data, report_file=None):
 
 
 def write_xlsx_row(filename, dataset, pars, report_file=None):
+    dataset = int(np.clip([dataset],0,np.inf)[0])
     if not (report_file):
         report_file = filename
     report_file = change_extension(report_file, 'xlsx')
@@ -308,7 +310,7 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
         yline = data[0]
     plt.scatter(xunsel, yunsel, s=10, facecolors='none', edgecolors='grey')
     plt.scatter(xsel, ysel, s=10, facecolors='none', edgecolors='b')
-    plt.plot(xline, yline, color='k')
+    plt.plot(xline, yline, color='k', linewidth=1.2)
 
     if grid is not None:
         for g in grid:
