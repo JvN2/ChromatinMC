@@ -188,7 +188,7 @@ def write_xlsx_column(filename, param, data, report_file=None):
 
 
 def write_xlsx_row(filename, dataset, pars, report_file=None):
-    dataset = int(np.clip([dataset],0,np.inf)[0])
+    dataset = int(np.clip([dataset], 0, np.inf)[0])
     if not (report_file):
         report_file = filename
     report_file = change_extension(report_file, 'xlsx')
@@ -229,14 +229,20 @@ def write_xlsx_row(filename, dataset, pars, report_file=None):
     return df_index
 
 
-def contents_xlsx(filename):
+def contents_xlsx(filename, update_dir=False):
     filename = change_extension(filename, 'xlsx')
+    directory = '{0}\\'.format(filename.split('.')[0])
+
     df = pd.read_excel(filename, 'Value')
     datasets = []
     files = []
     for txt in list(df.index.values):
         datasets.append(int(txt.split(' > ')[0]))
-        files.append(str(txt.split(' > ')[1]))
+        datafile = os.path.split(str(txt.split(' > ')[1]))[1]
+        if update_dir:
+            files.append('{0}{1}'.format(directory, datafile))
+        else:
+            files.append(os.path.split(str(txt.split(' > ')[1]))[1])
         par_names = []
         for item in list(df):
             par_names.append(str(item))

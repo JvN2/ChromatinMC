@@ -6,6 +6,9 @@ Created on Sat Feb 17 10:07:46 2018
 """
 
 from __future__ import print_function
+import warnings
+warnings.filterwarnings("ignore")
+
 import matplotlib as mpl
 import math
 
@@ -104,8 +107,8 @@ def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack
     right_dyad = left_dyad + fiber_start
     g_min = 0
 
-    sigma = np.asarray([1.0, 1.0, 1.0, 0.01, 0.01, 0.01])
-    sigma *= 2.0
+    sigma = np.asarray([1.0, 1.0, 1.0, 0.1, 0.1, 0.1])
+    # sigma *= 2.0
     k = kT / sigma ** 2
 
     if 0 <= left_dyad < len(dyads) - fiber_start:
@@ -227,7 +230,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
         return False
 
 
-def main(pars, n_steps=1e4):
+def main(pars, n_steps=1e4, root = None):
     # Parameters for reporting results
     pars.add('F_pN', value=0)
     pars.add('z_nm', value=0)
@@ -244,11 +247,12 @@ def main(pars, n_steps=1e4):
     pars.add('g_twist_kT', value=0)
 
     # Setup files and forces
-    root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
+    if root is None:
+        root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
                                              pars['e_stack_kT'].value, pars['e_wrap_kT'].value).replace('.', '-')
 
     filename = fileio.get_filename(incr=True, root=root, ext='xlsx', )
-    print('>>> Current file: {}'.format(filename))
+    print('\n>>> Current file: {}'.format(filename))
     n_samples = 250
     fmin_pN = 0.1
     fmax_pN = 10
@@ -355,9 +359,9 @@ if __name__ == '__main__':
     pars.add('diameter_A', value=330)
 
     pars.add('e_wrap_kT', value=2.0)
-    pars.add('e_stack_kT', value=25)
+    pars.add('e_stack_kT', value=0)
     pars.add('NRL', value=197)
-    pars.add('fiber_start', value=2)
+    pars.add('fiber_start', value=1)
 
     pars.pretty_print(columns=['value'])
 
