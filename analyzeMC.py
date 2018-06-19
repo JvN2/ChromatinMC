@@ -101,7 +101,7 @@ def plot_gf(filename, calc=False, force_range=[0, 1e9]):
         plt.xlim(0.08, 12)
         plt.xlabel('F (pN)')
         plt.ylim(-75, 50)
-        plt.ylabel(r'$\Delta$G (kT)')
+        plt.ylabel(r'$\Delta$E (kT)')
         plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
         plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0] + '\n', loc='left',
                   fontdict={'fontsize': 8})
@@ -203,7 +203,7 @@ def test_entropy():
 def plot_gi(filename, force_range=[0.15, 1.5], row_nr=0, report_file=None):
     dna_pars = Parameters()
 
-    print('>>> {}'.format(filename))
+    # print('>>> {}'.format(filename))
     params = np.load(default_step_file)
     p0 = params[0]
     cov = params[1:]
@@ -239,7 +239,7 @@ def plot_gi(filename, force_range=[0.15, 1.5], row_nr=0, report_file=None):
 
     fileio.report_progress(len(selected_files), title='analyze_step_parameters', init=True)
     for i, par_file in enumerate(selected_files):
-        fileio.report_progress(i + 1)
+        fileio.report_progress(i + 1, title=fileio.change_extension(par_file, 'npz'))
         dna = HelixPose.from_file(fileio.change_extension(par_file, 'npz'))
         for j, p in enumerate(dna.params):
             energy_kT_all[j, :] += (0.5 * (p - p0) * np.dot(k, p - p0))
@@ -266,6 +266,7 @@ def plot_gi(filename, force_range=[0.15, 1.5], row_nr=0, report_file=None):
     dna_pars.add('Edna_kT', value=E_kT)
     dna_pars.add('Ewrap_kT', value=e_wrap_kT)
     dna_pars.add('Estack_kT', value=e_stack_kT)
+    dna_pars.add('dE_kT', value=E_kT - (NRL * 3) + e_stack_kT + e_wrap_kT)
     dna_pars.add('TS_kT', value=TS_kT)
     dna_pars.add('G_kT', value=G_kT)
     dna_pars.add('Fmin_pN', value=np.min(force[selection]))
@@ -286,7 +287,7 @@ def plot_gi(filename, force_range=[0.15, 1.5], row_nr=0, report_file=None):
     plt.close()
     plt.figure(figsize=(12, 3))
     plt.plot(i, energy_kT, color='b')
-    plt.plot(i, entropy_kT, color='r')
+    # plt.plot(i, entropy_kT, color='r')
 
     energy_thermal = np.ones(len(dna.params)) * 3
     plt.plot(i, energy_thermal, color='k', linestyle=':', linewidth=1.2)
@@ -355,12 +356,13 @@ def plot_step_params(filename, dataset, save=False, wait=0, plot_energy=True):
 def plot_fz(filename):
     forces = fileio.read_xlsx_collumn(filename, 'F_pN')
     z = fileio.read_xlsx_collumn(filename, 'z_nm')
-
     selected = np.diff(np.append([-1], forces)) > 0
     if len(selected) == 0:
         return
 
     pars, datafile = fileio.read_xlsx_row(filename, 0)
+    pars['L_bp'].value = 1800
+    pars['n_nuc'].value = 8
 
     forces = np.clip(forces, 1e-3, 1e2)
     # wlc = 1 - 0.5 * np.sqrt(0.1 * kT / (forces * pars['P_nm'])) / selected
@@ -373,6 +375,7 @@ def plot_fz(filename):
     wlc *= pars['L_bp']
 
     g1_kT = pars['e_stack_kT']
+    g1_kT = 25
     e_wrap_kt = pars['e_wrap_kT']
     fiber_start = pars['fiber_start']
     # pars.pretty_print(columns=['value'])
@@ -386,13 +389,24 @@ def plot_fz(filename):
     if e_wrap_kt == 0:
         n_nuc = 0
     else:
-        n_nuc = pars['n_nuc']
+        n_nuc = pars['n_nuc'].value
+    g2_kT = 5.5
 
-    fib = sp.tether(forces, pars['L_bp'], pars['NRL'], n_nuc, g1_kT=g1_kT,
-                    g2_kT=g2_kT, l1_bp=l1_bp, l2_bp=85, fiber_start=fiber_start)
+    if pars['NRL'] == 167:
+        fib = sp.tether(forces, pars['L_bp'].value, pars['NRL'].value, n_nuc, g1_kT=g1_kT,
+                        g2_kT=g2_kT, l1_bp=l1_bp, l2_bp=85, fiber_start=2)
+    else:
+        fib = sp.tether(forces, pars['L_bp'].value, pars['NRL'].value, n_nuc, g1_kT=g1_kT,
+                        g2_kT=g2_kT, l1_bp=l1_bp, l2_bp=85, fiber_start=1)
+    # fib = sp.tether(forces, 1000, 167, 4, g1_kT=20,
+    #                 g2_kT=5.8, l1_bp=98, l2_bp=85, fiber_start=2)
+    # plt.plot(fib, forces)
+    # plt.scatter(z, forces)
+    # plt.show()
+    # return
 
     filename = fileio.change_extension(filename, '_fz.jpg')
-
+    print(filename)
     fileio.save_plot((forces, z, fib, selected), filename=filename,
                      ax_labels=['z (nm)', 'F (pN)'], grid=grid, yrange=[-0.5, 10.5],
                      transpose=True, xrange=[0, 1.1 * pars['L_bp'] / 3])
@@ -403,11 +417,14 @@ def main(filenames):
     report_file = fileio.get_filename(incr=True, root='DNA_analysis', ext='xlsx')
     forces = [0.1, 1.5]
     for row, filename in enumerate(filenames):
-        plot_gi(filename, force_range=forces, row_nr=row, report_file=report_file)
-        plot_gf(filename, force_range=forces)
-        plot_fz(filename)
-        # fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, 0, -100])
-
+        try:
+            print('>>> {0}/{1}'.format(row, len(filenames)))
+            # plot_gi(filename, force_range=forces, row_nr=row, report_file=report_file)
+            # plot_gf(filename, force_range=forces)
+            # plot_fz(filename)
+            fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, 0, -100])
+        except Exception as e:
+            print('>>> Error in file', filename, e)
     if report_file is not None:
         print('Results stored in:')
         print(report_file)
@@ -415,5 +432,12 @@ def main(filenames):
 
 
 if __name__ == "__main__":
-    filenames = fileio.get_filename(ext='xlsx', wildcard='*', date='today', list='all')
+    filenames = fileio.get_filename(ext='xlsx', wildcard='8x*_001', date='20180613', list='all')
+    # filenames += fileio.get_filename(ext='xlsx', wildcard='8x*', date='20180612', list='all')
+    # print(filenames)
+    # filenames.append(fileio.get_filename(ext='xlsx', wildcard='*', date='20180612', list='all'))
+    # filenames = []
+    # filenames.append(eg.fileopenbox(filetypes='*.xlsx'))
+    # filenames.append('D:\\Users\\Noort\\data\\20180530\\2st4x167s0w25.xlsx')
+    # filenames.append('D:\\Users\\Noort\\data\\20180530\\2st4x197s0w25.xlsx')
     main(filenames)

@@ -45,7 +45,7 @@ def report_progress(value, title='', init=False):
     global bar, start_time
     if init:
         start_time = time.time()
-        print(datetime.now().strftime('>>> Start [{0}] @ %Y-%m-%d %H:%M:%S'.format(title)))
+        print(datetime.now().strftime('\n>>> Start [{0}] @ %Y-%m-%d %H:%M:%S'.format(title)))
         bar = ProgressBar(value, max_width=80)
     else:
         bar.numerator = value
@@ -57,6 +57,11 @@ def report_progress(value, title='', init=False):
         print ('\n')
     return
 
+def increment_file_nr(file_in):
+    parts = file_in.split('_')
+    parts[-1] = str(int(parts[-1][:4])+1).zfill(4)+'.'+parts[-1].split('.')[-1]
+    file_out = '_'.join(parts)
+    return file_out
 
 def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False, list='', wildcard='*', date='today'):
     global working_directory, root_name, file_number, sub_number
@@ -74,8 +79,8 @@ def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False, list
         folder_name = (pd.to_datetime('Today') - pd.Timedelta('1 days')).strftime('%Y%m%d')
     else:
         foldername = date
+    user = getpass.getuser()
     if 'working_directory' not in globals():
-        user = getpass.getuser()
         working_directory = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, today)
     filename = working_directory + wildcard + '.' + ext
     if date is not 'today':
@@ -232,7 +237,6 @@ def write_xlsx_row(filename, dataset, pars, report_file=None):
 def contents_xlsx(filename, update_dir=False):
     filename = change_extension(filename, 'xlsx')
     directory = '{0}\\'.format(filename.split('.')[0])
-
     df = pd.read_excel(filename, 'Value')
     datasets = []
     files = []
@@ -314,7 +318,7 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
         yunsel = data[0][data[3] == 0]
         xline = data[2]
         yline = data[0]
-    plt.scatter(xunsel, yunsel, s=10, facecolors='none', edgecolors='grey')
+    # plt.scatter(xunsel, yunsel, s=10, facecolors='none', edgecolors='grey')
     plt.scatter(xsel, ysel, s=10, facecolors='none', edgecolors='b')
     plt.plot(xline, yline, color='k', linewidth=1.2)
 
@@ -429,7 +433,7 @@ def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', ra
 def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, frame=[], octamers=False, overwrite=False):
     pix = 1500
     radius = [10, 7, 7, 35]
-    sets, filenames, _ = contents_xlsx(filename)
+    sets, filenames, _ = contents_xlsx(filename, update_dir='False')
 
     for i, f in enumerate(filenames):
         filenames[i] = change_extension(f, 'png')
@@ -453,6 +457,7 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, frame=[], o
     octa_coords = []
 
     j = 0
+    print ((len(filenames) - len(existing_files) - 1))
     print('>>> {}'.format(filename))
     report_progress((len(filenames) - len(existing_files) - 1), title='create_pov_movie', init=True)
     for file in filenames:
@@ -503,8 +508,13 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, frame=[], o
     for force in forces:
         titles.append('F = {:2.1f} pN'.format(force))
 
+    selected = np.diff(np.append([-1], forces)) > 0
+    if len(selected) == 0:
+        return
+
     create_movie(image_files, fps=fps, delete=False, filename=filename, reverse=reverse,
                  titles=titles)
+    print('Done')
     return
 
 

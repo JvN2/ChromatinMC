@@ -5,11 +5,10 @@ from matplotlib import pyplot as plt
 
 kT = 4.1
 
-
 def WLC(f_pN, L_bp, P_nm=50, S_pN=1500):
     z = 1 - 0.5 * np.sqrt(kT / (f_pN * P_nm)) + f_pN / S_pN
     g = f_pN ** 2 / (2 * S_pN) + 0.5 * np.sqrt(f_pN * kT / P_nm)
-    g *= L_bp * 0.34 / kT
+    g *= L_bp * 0.34
     return z * L_bp * 0.34, g
 
 
@@ -38,7 +37,7 @@ def tether(f_pN, L_bp, NRL_bp, n_nuc, k_pN_nm=0.3, g1_kT=23, g2_kT=5.5, g3_kT=80
                 gt_kT += -n0 * (g1_kT + g2_kT + g3_kT) + g_fib
                 gt_kT += -n1 * (g2_kT + g3_kT)
                 gt_kT += -n2 * (g3_kT)
-                gt_kT -= f_pN * zt_nm / kT
+                gt_kT -= f_pN * zt_nm /kT
                 g.append(gt_kT)
 
                 dt = scipy.special.binom(n0 + n1, n0)

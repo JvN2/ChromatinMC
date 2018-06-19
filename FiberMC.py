@@ -145,6 +145,7 @@ def get_casted_fiber_frames(par):
         The coordinates of the dyad frames
     '''
     fiber_start = par['fiber_start'].value
+    print(fiber_start)
     r = par['diameter_A'].value / 2.0 - 65.0
     nld = par['nld_A'].value
     rise = par['rise_A'].value
@@ -372,19 +373,25 @@ def main(pars):
         n_of = nMC.get_nuc_of(casted_fiber.coords, casted_fiber.frames, dyad, nucl)
 
         if i is 0:
-            n_of_coords = nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])
+            n_of_coords_even = nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])
+        elif i is 1:
+            n_of_coords_odd = nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])
         else:
-            n_of_coords = np.concatenate((n_of_coords, nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])))
+            if i%2:
+                n_of_coords_odd = np.concatenate((n_of_coords_odd, nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])))
+            else:
+                n_of_coords_even = np.concatenate((n_of_coords_even, nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])))
 
-    print(fileio.create_pov(filename, [bases1, bases2, casted_fiber.coords, bases3, n_of_coords], range_A=[500, 1000],
-                            offset_A=[0, 0, 150], show=True, width_pix=3000, colors='rbkyc',
-                            radius=[11, 11, 10, 11, 5]))
+    print(fileio.create_pov(filename, [bases1, bases2, casted_fiber.coords, bases3, n_of_coords_odd, n_of_coords_even], range_A=[500, 1000],
+                            offset_A=[0, 0, 150], show=True, width_pix=3000, colors='rrkrcy',
+                            radius=[10.5, 10.5, 10, 11, 5,5]))
+    return
 
     print('\n fixed stack_params:')
     fiber_start = pars['fiber_start'].value
 
-    fixed_stack_params = get_stack_pars(casted_fiber.coords, casted_fiber.frames, dyads[0], dyads[fiber_start],
-                                        nucl)
+    fixed_stack_params = get_stack_pars(casted_fiber.coords, casted_fiber.frames, dyads[0], dyads[fiber_start],nucl, fiber_start,
+                                        )
     print(pars['nld_A'].value, fixed_stack_params)
 
     n_ofs = get_casted_fiber_frames(pars)
@@ -469,7 +476,7 @@ def main(pars):
     unfolded_fiber, dyads, nucl = create_unfolded_fiber(fiber_pars=pars)
     casted_fiber, dyads, w = create_casted_fiber(pars, nucl)
 
-    print (fileio.create_pov(fileio.get_filename(incr=True), [casted_fiber.coords, n_of_coords], range_A=[1000, 1500],
+    print (fileio.create_pov(fileio.get_filename(incr=True), [casted_fiber.coords, n_of_coords_odd], range_A=[1000, 1500],
                              offset_A=[0, 0, 150], show=True))
 
     return
@@ -495,8 +502,8 @@ if __name__ == "__main__":
     fiber_par.add('chirality', value=-1, vary=False)
     fiber_par.add('face', value=1, vary=False)
 
-    fiber_par.add('fiber_start', value=1)
-    fiber_par.add('nld_A', value=17, vary=False)
+    fiber_par.add('fiber_start', value=2)
+    fiber_par.add('nld_A', value=40, vary=False)
     # if fiber_par['fiber_start'].value is 3:
     #     fiber_par.add('nld_A', value=55, vary=False)
     # else:

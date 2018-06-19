@@ -3,6 +3,7 @@ from lmfit import Parameters
 import time
 import RunMC
 import warnings
+import re
 
 warnings.filterwarnings("ignore")
 
@@ -10,7 +11,7 @@ if __name__ == "__main__":
 
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=1000)
+    pars.add('L_bp', value=1800)
     pars.add('P_nm', value=50)
     pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
@@ -28,21 +29,33 @@ if __name__ == "__main__":
     pars.add('fiber_start', value=1)
 
     iterpars = [
-        [4, 167, 1, 0, 2.5],
-        [4, 167, 1, 25, 2.5],
-        [4, 167, 1, 25, 2.5],
-        [4, 167, 1, 25, 2.5],
-        [4, 167, 2, 25, 2.5],
-        [4, 167, 2, 25, 2.5],
-        [4, 167, 2, 25, 2.5],
-        [4, 197, 1, 0, 2.5],
-        [4, 197, 1, 25, 2.5],
-        [4, 197, 1, 25, 2.5],
-        [4, 197, 1, 25, 2.5],
-        [4, 197, 2, 25, 2.5],
-        [4, 197, 2, 25, 2.5],
-        [4, 197, 2, 25, 2.5],
+       # [4, 197, 2, 22, 2.5],
+        [8, 167, 2, 0, 2.5],
+        [8, 167, 2, 0, 2.5],
+        [8, 167, 2, 0, 2.5],
+        [8, 168, 2, 25, 2.5],
+        [8, 168, 2, 25, 2.5],
+        [8, 168, 2, 25, 2.5],
+        [8, 168, 1, 25, 2.5],
+        [8, 168, 1, 25, 2.5],
+        [8, 168, 1, 25, 2.5],
+        [8, 169, 2, 25, 2.5],
+        [8, 169, 2, 25, 2.5],
+        [8, 169, 2, 25, 2.5],
+        [8, 169, 1, 25, 2.5],
+        [8, 169, 1, 25, 2.5],
+        [8, 169, 1, 25, 2.5],
+        [8, 170, 2, 25, 2.5],
+        [8, 170, 2, 25, 2.5],
+        [8, 170, 2, 25, 2.5],
+        [8, 170, 1, 25, 2.5],
+        [8, 170, 1, 25, 2.5],
+        [8, 170, 1, 25, 2.5],
     ]
+
+    if len(iterpars) > 22:
+        print('>>> More than 22 processes, only the first 22 are executed')
+        iterpars = iterpars[:22]
 
     n_steps = 5e4
 
@@ -53,17 +66,10 @@ if __name__ == "__main__":
     # the job list
     jobs = []
     for i, iterpar in enumerate(iterpars):
-        pars['n_nuc'].value = iterpar[0]
-        pars['NRL'].value = iterpar[1]
-        pars['fiber_start'].value = iterpar[2]
-        pars['e_stack_kT'].value = iterpar[3]
-        pars['e_wrap_kT'].value = iterpar[4]
-
-        root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
-                                                 pars['e_stack_kT'].value, pars['e_wrap_kT'].value).replace('.', '-')
+        root = '{0}x{1}x{2}s{3}w{4:0.1f}'.format(iterpar[0], iterpar[1], iterpar[2], iterpar[3], iterpar[4]).replace('.', '-')
 
         out_list = list()
-        process = multiprocessing.Process(target=RunMC.main, args=(pars, n_steps, root))
+        process = multiprocessing.Process(target=RunMC.main, args=(n_steps, root))
         jobs.append(process)
 
     # Start the processes
