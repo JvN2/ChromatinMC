@@ -2,7 +2,7 @@
 """
 Created on Wed Nov 18 16:43:39 2015
 
-@author: John
+@author: John van Noort
 
 Add functionalities for nucleoosmes to HelixMC
 """
@@ -14,26 +14,32 @@ mpl.interactive(False)
 
 import numpy as np
 from helixmc.pose import HelixPose
-from helixmc.util import frames2params
+from helixmc.util import frames2params_3dna, frames2params
 import matplotlib.pyplot as plt
 # ChromatinMC modules:
 import FileIO as fileio
 
 plt.interactive(False)
-np.set_printoptions(formatter={'float': '{: 0.1f}, '.format})
-
-pdb_source_dir = "E:\\Users\\Noort\\Python\\ChromatinMC_3\\PDBs\\"
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
 
-def ofs2params(of1, of2):
+def ofs2params(of1, of2, _3dna=False, flipx=[0,0]):
     o1 = of1[0]
     f1 = of1[1:, :] - o1
     o2 = of2[0]
     f2 = of2[1:, :] - o2
-    f1 = np.transpose(f1)
-    f2 = np.transpose(f2)
-    params = frames2params(o1, o2, f1, f2)
+
+    if flipx[0]:
+        f1[1] *= -1
+        f1[2] *= -1
+    if flipx[1]:
+        f2[1] *= -1
+        f2[2] *= -1
+
+    if _3dna:
+        params = frames2params_3dna(o1, o2, f1, f2)
+    else:
+        params = frames2params(o1, o2, f1, f2)
     return params
 
 
@@ -41,16 +47,17 @@ def find(lst, predicate):
     return (i for i, j in enumerate(lst) if predicate(j)).next()
 
 
-def of2axis(of, length=60):
+def of2axis(of, length=[60, 90, 120]):
     """
     converts originframe to axis for plotting purposes
     """
-    o = of[0]
-    f = of[1:] - o
+    origin = of[0]
+    frame = of[1:] - origin
     coords_out = []
-    for i in np.arange(0, 3):
-        for j in np.linspace(0, (i + 1) * length, length * 1):
-            coords_out.append(o + j * f[i])
+
+    for ax_length, ax_direction in zip(length, frame):
+        for j in np.linspace(0, ax_length, np.abs(ax_length)):
+            coords_out.append(origin + j * ax_direction)
     return np.asarray(coords_out)
 
 
@@ -87,8 +94,8 @@ def get_transformation(start, target=None):
     Q = target
     if Q is None:
         Q = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    Pc = sum(P) / (1.0 * len(P))
-    Qc = sum(Q) / (1.0 * len(Q))
+    Pc = sum(P) / len(P)
+    Qc = sum(Q) / len(Q)
     C = np.dot(np.transpose(P - Pc), Q - Qc)
     V, S, W = np.linalg.svd(C)
     d = (np.linalg.det(V) * np.linalg.det(W)) < 0.0
@@ -108,30 +115,39 @@ def join_o_f(origin, frame):
     return np.asarray(of)
 
 
-def get_nuc_of(dna, dyad, nucl):
+def get_nuc_of(coords, frames, dyad, nucl):
     """
     Calculate the center of mass and the reference frame (=of) of a nucleosome in dna
     """
-    tf = get_transformation(get_of(nucl.dna, nucl.dyad), get_of(dna, dyad))
+    tf = get_transformation(nucl.dyad_of, target=get_of_2(coords, frames, dyad))
     n_of = apply_transformation(nucl.of, tf)
     return n_of
 
 
 def get_of(dna, i):
-    of = []
-    of.append(dna.coords[i])
-    for f in np.transpose(dna.frames[i]):
-        of.append(dna.coords[i] + f)
-    return np.asarray(of)
+    of = get_of_2(dna.coords, dna.frames, i)
+    return of
 
 
-def get_wrap_params(dna, dyad, fixed):
+def get_of_2(coords, frames, i):
+    return np.concatenate(([coords[i]], frames[i].T+coords[i]), axis = 0)
+
+
+# def get_wrap_params2(dna, dyad, fixed):
+#     fixed_params = []
+#     dyad_of = get_of(dna, dyad)
+#     for i in fixed:
+#         base_of = get_of(dna, dyad + i)
+#         fixed_params.append((dyad_of, base_of))
+#     return np.asarray(fixed_params).reshape((-1, 6))
+
+
+def get_wrap_param(dna_coords, dna_frames, dyad, fixed):
     fixed_params = []
-    dyad_of = get_of(dna, dyad)
     for i in fixed:
-        base_of = get_of(dna, dyad + i)
-        fixed_params.append((dyad_of, base_of))
-    return np.asarray(fixed_params).reshape((-1, 6))
+        params = frames2params(dna_coords[dyad], dna_coords[dyad + i], dna_frames[dyad], dna_frames[dyad + i])
+        fixed_params.append(params)
+    return np.asarray(fixed_params)
 
 
 def seq3_to_1(seq3):
@@ -174,7 +190,7 @@ def read_pdb(pdb_file):
 
     '''
     #    print '###>'+ pdb_file
-    f = open(pdb_file, 'r')
+    f = open('PDBs\\'+pdb_file, 'r')
     pdb = f.readlines()
     f.close()
 
@@ -303,13 +319,13 @@ class NucPose(object):
             input_file = "3LZ0.3DNA"
             print('Default file: ' + input_file)
         #   read protein coords from pdb file
-        filename = pdb_source_dir + input_file
+        filename = input_file
         filename = fileio.change_extension(filename, 'pdb')
         chains = read_pdb(filename)
 
         #   read 3DNA file
         filename = fileio.change_extension(filename, '3DNA')
-        with open(filename) as f:
+        with open('PDBs\\'+filename) as f:
             lines = f.read().splitlines()
 
         #   Basepair step parameters
@@ -373,21 +389,18 @@ class NucPose(object):
             self.dna = HelixPose(params)
 
         # get origin and frame of nucleosome
-        cm = np.mean(self.dna.coords[self.fixed], axis=0)
+        cm = np.mean(self.dna.coords[self.fixed[4:-4]], axis=0)
         Nx = self.dna.coords[self.dyad] - cm
         Nx = Nx / np.linalg.norm(Nx)
         Nz = np.mean(self.dna.coords[self.fixed[:7], :], axis=0) - np.mean(self.dna.coords[self.fixed[7:], :], axis=0)
-        Nz = Nz / np.linalg.norm(Nz)
-
         Ny = np.cross(Nx, Nz)
         Ny = Ny / np.linalg.norm(Nz)
-
         Nz = np.cross(Nx, Ny)
         Nz = Nz / np.linalg.norm(Nz)
         origin = cm
         frame = np.array([Nx, Ny, Nz])
         self.of = join_o_f(origin, np.transpose(frame))
-
+        self.dyad_of = get_of(self.dna, self.dyad)
         #   get link coordinates Glu61 (H2A) and Asp24 (H4)
         # int_dict = {'H2A': 60, 'H2A*': 60, 'H4': 23, 'H4*': 23}
         # self.l_coords = []
@@ -404,6 +417,8 @@ def main():
     for chain in nuc.chains:
         coords.append(nuc.chains[chain][2])
 
+    # tf = get_transformation(nuc.of, target=np.asarray([[0,0,0],[0,0,-1],[0,1,0],[1,0,0]]))
+    # tf = get_transformation(nuc.of, target=np.asarray([[0,0,0],[-1,0,0],[0,1,0],[0,0,-1]]))
     tf = get_transformation(nuc.of)
 
     n_coords = []
@@ -411,10 +426,10 @@ def main():
         n_coords.append(apply_transformation(c, tf))
 
     nuc_ax = apply_transformation(nuc.of, tf)
-    n_coords.append(of2axis(nuc_ax, length=60))
+    n_coords.append(of2axis(nuc_ax))
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
-    fileio.create_pov(filename, n_coords, range_A=[300, 300], offset_A=[0, 0, 60], show=True, width_pix=500)
+    print(fileio.create_pov(filename, n_coords, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
 
 if __name__ == '__main__':

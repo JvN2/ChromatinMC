@@ -8,7 +8,6 @@ except:
 
 import time
 import re
-from datetime import datetime
 import os as os
 import numpy as np
 import pandas as pd
@@ -27,7 +26,7 @@ from helixmc.pose import HelixPose
 import NucleosomeMC as nMC
 import POVutils as pov
 
-default_folder = 'E:\\users\\'
+default_folder = 'D:\\users\\'
 kT = 41
 
 
@@ -46,8 +45,8 @@ def report_progress(value, title='', init=False):
     global bar, start_time
     if init:
         start_time = time.time()
-        print(datetime.now().strftime('>>> Start [{0}] @ %Y-%m-%d %H:%M:%S'.format(title)))
-        bar = ProgressBar(value, max_width=100)
+        print(datetime.now().strftime('\n>>> Start [{0}] @ %Y-%m-%d %H:%M:%S'.format(title)))
+        bar = ProgressBar(value, max_width=80)
     else:
         bar.numerator = value
     elapsed_time = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
@@ -58,17 +57,42 @@ def report_progress(value, title='', init=False):
         print ('\n')
     return
 
+def increment_file_nr(file_in):
+    parts = file_in.split('_')
+    parts[-1] = str(int(parts[-1][:4])+1).zfill(4)+'.'+parts[-1].split('.')[-1]
+    file_out = '_'.join(parts)
+    return file_out
 
-def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False):
+def get_filename(root=None, ext='dat', incr=False, sub=False, folder=False, list='', wildcard='*', date='today'):
     global working_directory, root_name, file_number, sub_number
+
     if 'root_name' not in globals():
         if root is None:
             root_name = 'data'
     if root is not None:
         root_name = root
+
+    today = datetime.now().strftime('%Y%m%d')
+    if date is 'today':
+        folder_name = today
+    elif date is 'yesterday':
+        folder_name = (pd.to_datetime('Today') - pd.Timedelta('1 days')).strftime('%Y%m%d')
+    else:
+        foldername = date
+    user = getpass.getuser()
     if 'working_directory' not in globals():
-        user = getpass.getuser()
-        working_directory = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, datetime.now().strftime('%Y%m%d'))
+        working_directory = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, today)
+    filename = working_directory + wildcard + '.' + ext
+    if date is not 'today':
+        filename = default_folder + '{0:s}\\data\\{1:s}\\'.format(user, foldername) + wildcard + '.' + ext
+    if list == 'all':
+        list_of_files = glob.glob(filename)
+        return list_of_files
+    if list == 'last':
+        list_of_files = glob.glob(filename)
+        filename = max(list_of_files, key=os.path.getctime)
+        return [filename]
+
     if 'file_number' not in globals():
         try:
             filename = working_directory + root_name + '_' + '*.*'
@@ -112,6 +136,7 @@ def read_xlsx_row(filename, dataset, pars=None):
     for index in df.index.values:
         if int(index.split(' > ')[0]) == dataset:
             row = index
+
     if pars is None:
         pars = Parameters()
         for par in list(df):
@@ -155,7 +180,7 @@ def read_xlsx_collumn(filename, param):
     return
 
 
-def write_param_xlsx(filename, param, data, report_file=None):
+def write_xlsx_column(filename, param, data, report_file=None):
     if not (report_file):
         report_file = filename
     filename = change_extension(filename, 'xlsx')
@@ -168,6 +193,7 @@ def write_param_xlsx(filename, param, data, report_file=None):
 
 
 def write_xlsx_row(filename, dataset, pars, report_file=None):
+    dataset = int(np.clip([dataset], 0, np.inf)[0])
     if not (report_file):
         report_file = filename
     report_file = change_extension(report_file, 'xlsx')
@@ -208,14 +234,19 @@ def write_xlsx_row(filename, dataset, pars, report_file=None):
     return df_index
 
 
-def contents_xlsx(filename):
+def contents_xlsx(filename, update_dir=False):
     filename = change_extension(filename, 'xlsx')
+    directory = '{0}\\'.format(filename.split('.')[0])
     df = pd.read_excel(filename, 'Value')
     datasets = []
     files = []
     for txt in list(df.index.values):
         datasets.append(int(txt.split(' > ')[0]))
-        files.append(str(txt.split(' > ')[1]))
+        datafile = os.path.split(str(txt.split(' > ')[1]))[1]
+        if update_dir:
+            files.append('{0}{1}'.format(directory, datafile))
+        else:
+            files.append(os.path.split(str(txt.split(' > ')[1]))[1])
         par_names = []
         for item in list(df):
             par_names.append(str(item))
@@ -223,7 +254,6 @@ def contents_xlsx(filename):
 
 
 def create_movie(image_files, fps=5.0, delete=True, filename=None, reverse=True, titles=None):
-
     image_files = sorted(image_files)
     if reverse:
         image_files.append(reversed(image_files))
@@ -237,7 +267,7 @@ def create_movie(image_files, fps=5.0, delete=True, filename=None, reverse=True,
     height, width, channels = frame.shape
     bottomLeftCornerOfText = (20, height - 20)
     font = cv2.FONT_HERSHEY_DUPLEX
-    fontScale = 1
+    fontScale = 3
     fontColor = (0, 0, 0)
     lineType = 2
 
@@ -262,7 +292,7 @@ def create_movie(image_files, fps=5.0, delete=True, filename=None, reverse=True,
         for image in image_files:
             os.remove(image)
     out.release()
-    print('>>> Movie saved as: {}'.format(filename))
+    print('>>> Movie saved as: {} \n'.format(filename))
     return filename
 
 
@@ -273,6 +303,7 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
         filename = get_filename(incr=True)
     plt.close()
     plt.figure(figsize=(4, 3))
+    plt.axes([0.15, 0.15, .8, .75])
     if not transpose:
         xsel = data[0][data[3] != 0]
         ysel = data[1][data[3] != 0]
@@ -287,9 +318,9 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
         yunsel = data[0][data[3] == 0]
         xline = data[2]
         yline = data[0]
-    plt.scatter(xunsel, yunsel, s=10, facecolors='none', edgecolors='grey')
+    # plt.scatter(xunsel, yunsel, s=10, facecolors='none', edgecolors='grey')
     plt.scatter(xsel, ysel, s=10, facecolors='none', edgecolors='b')
-    plt.plot(xline, yline, color='k')
+    plt.plot(xline, yline, color='k', linewidth=1.2)
 
     if grid is not None:
         for g in grid:
@@ -306,39 +337,40 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
     if yrange is not None:
         plt.ylim(yrange)
     plt.tick_params(axis='both', which='both', direction='in', top=True, right=True)
-    plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0], loc='left',
-              fontdict={'fontsize': 10})
-    plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
+    plt.title(filename.split('\\')[-2] + '\\' + filename.split('\\')[-1].split('.')[0] + '\n', loc='left',
+              fontdict={'fontsize': 8})
+    # plt.tight_layout(pad=0.5, w_pad=0.5, h_pad=0.5)
     plt.draw()
     plt.pause(0.05)
     if save:
-        filename = change_extension(filename, 'png')
-        plt.savefig(filename, dpi=600, format='png')
+        filename = change_extension(filename, 'jpg')
+        plt.savefig(filename, dpi=600, format='jpg')
     return filename
 
 
 def create_pov(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
-               show=False):
+               show=False, transparency=None):
     if radius is None:
         radius = np.append([10], (np.ones(8) * 4))
         radius = np.append(radius, 3)
         radius = np.append(radius, 2)
     if colors is None:
         colors = 'kbbggryrycy'
-
+    if transparency is None:
+        transparency = np.zeros(len(coords))
     filename = change_extension(filename, 'pov')
     aspect_ratio = range_A[1] / float(range_A[0])
     pov_image = pov.init(plt_width=range_A[0], aspect_ratio=aspect_ratio)
     i = 0
     j = 0
     offset = np.asarray(offset_A) - np.asarray((0, 0, range_A[1] / 2.0))
-    for coord in coords:
+    for coord, t in zip(coords, transparency):
         if (i > len(colors) - 1):
             i = 0
         if (j > len(radius) - 1):
             j = 0
         for sphere in coord:
-            pov_image = pov.add_sphere(pov_image, sphere + offset, color=colors[i], radius=radius[j])
+            pov_image = pov.add_sphere(pov_image, sphere + offset, color=colors[i], radius=radius[j], transperancy=t)
         i += 1
         j += 1
     pov.save(pov_image, filename=filename)
@@ -350,13 +382,12 @@ def create_pov(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width
     return filename
 
 
-def plot_dna(pose, tf=None, color='blue', update=False, title='', range_nm=100, save=False, wait=0):
+def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', range_nm=100, save=False, wait=0,
+             dna_pose2=None):
     global ax, fig, scale
 
-    if tf is None:
-        coords = pose.coords / 10.0
-    else:
-        coords = nMC.apply_transformation(pose.coords, tf) / 10.0
+    tf = nMC.get_transformation(nMC.get_of(dna_pose1, origin_index))
+    coords = nMC.apply_transformation(dna_pose1.coords, tf) / 10.0
 
     if update:
         ax.clear()
@@ -368,15 +399,22 @@ def plot_dna(pose, tf=None, color='blue', update=False, title='', range_nm=100, 
         scale = range_nm / 2
         plt.title(title, loc='left')
         plt.tight_layout(pad=0.3, w_pad=0.3, h_pad=0.3)
-    pointsize = 0.1 * np.sqrt(scale)
+    pointsize = 1 * np.sqrt(scale)
 
     ax.set_xlabel('x (nm)')
     ax.set_ylabel('y (nm)')
     ax.set_zlabel('z (nm)')
 
-    ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=pointsize, c=color, alpha=0.25)
+    half = len(coords) / 2
+    ax.scatter(coords[:, 0][:half], coords[:, 1][:half], coords[:, 2][:half], s=pointsize, c=color, alpha=0.5)
+    ax.scatter(coords[:, 0][half:], coords[:, 1][half:], coords[:, 2][half:], s=pointsize, c='red', alpha=0.5)
+
     ax.scatter(coords[0, 0], coords[0, 1], coords[0, 2], s=pointsize, c='red', alpha=0.55)
-    ax.scatter([0], [0], [0], s=pointsize, c='k', alpha=0.55)
+    ax.scatter([0], [0], [0], s=pointsize * 5, c='k', alpha=0.55)
+
+    if dna_pose2 is not None:
+        coords = nMC.apply_transformation(dna_pose2.coords, tf) / 10.0
+        ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=pointsize, c='black', alpha=0.25)
 
     plt.xlim((-scale, scale))
     plt.ylim((-scale, scale))
@@ -387,34 +425,81 @@ def plot_dna(pose, tf=None, color='blue', update=False, title='', range_nm=100, 
     if save:
         filename = get_filename(incr=True, sub=True, ext='png')
         plt.savefig(filename, dpi=600, format='png')
+        print('plot saved in file: ', filename)
     time.sleep(wait)
     return
 
 
-def create_pov_movie(filename, origin_frame=0, fps=5, reverse=True):
-    pix = 500
-    sets, filenames, _ = contents_xlsx(filename)
-    r = np.append([10], (np.ones(8) * 4))
-    r = np.append(r, 3)
-    r = np.append(r, 2)
-    c = 'kbbggryrycy'
+def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, frame=[], octamers=False, overwrite=False):
+    pix = 1500
+    radius = [10, 7, 7, 35]
+    sets, filenames, _ = contents_xlsx(filename, update_dir='False')
 
+    for i, f in enumerate(filenames):
+        filenames[i] = change_extension(f, 'png')
+
+    if overwrite:
+        existing_files = []
+    else:
+        path = (filename.split('.')[0])
+        existing_files = glob.glob(path + '\\*.png')
     image_files = []
+
+    names = ['n_nuc', 'NRL', 'dyad0']
+    nucs = []
+    for name in names:
+        nucs.append(read_xlsx_collumn(filename, name))
+    nuc = (np.asarray(nucs).T[0])
+
+    nucl = nMC.NucPose()
+    nucl.from_file('1KX5')
+    n_of_coords_even = []
+    octa_coords = []
+
     j = 0
+    print ((len(filenames) - len(existing_files) - 1))
     print('>>> {}'.format(filename))
-    report_progress(len(filenames)-1, title='create_pov_movie', init=True)
-    for j, file in enumerate(filenames):
-        report_progress(j, title=file)
-        if os.path.isfile(change_extension(file, 'png')):
-            image_files.append(change_extension(file, 'png'))
+    report_progress((len(filenames) - len(existing_files) - 1), title='create_pov_movie', init=True)
+    for file in filenames:
+        if file in existing_files:
+            image_files.append(file)
         else:
+            report_progress(j, title=file)
             try:
                 dna = HelixPose.from_file(change_extension(file, 'npz'))
                 origin_of = nMC.get_of(dna, origin_frame)
                 tf = nMC.get_transformation(origin_of)
                 coords = nMC.apply_transformation(dna.coords, tf)
-                file = create_pov(file, [coords], range_A=[1000, 1500], offset_A=[0, 0, 150], show=False, width_pix=pix)
+
+                n_of_coords_odd = np.zeros((1, 3))
+                n_of_coords_even = np.zeros((1, 3))
+                if len(frame) is not 0:
+                    for n in range(nuc[0]):
+                        dyad = nuc[2] + n * nuc[1]
+                        n_of = nMC.get_nuc_of(dna.coords, dna.frames, dyad, nucl)
+                        if n % 2 is 0:
+                            n_of_coords_even = np.concatenate((n_of_coords_even, nMC.of2axis(n_of, length=frame)))
+                        else:
+                            n_of_coords_odd = np.concatenate((n_of_coords_odd, nMC.of2axis(n_of, length=frame)))
+                    n_of_coords_odd = nMC.apply_transformation(n_of_coords_odd[1:], tf)
+                    n_of_coords_even = nMC.apply_transformation(n_of_coords_even[1:], tf)
+
+                if octamers:
+                    for n in range(nuc[0]):
+                        dyad = nuc[2] + n * nuc[1]
+                        n_of = nMC.get_nuc_of(dna.coords, dna.frames, dyad, nucl)
+                        if n is 0:
+                            octa_coords = [n_of[0]]
+                        else:
+                            octa_coords = np.concatenate((octa_coords, [n_of[0]]))
+                    octa_coords = nMC.apply_transformation(octa_coords, tf)
+
+                file = create_pov(file, [coords, n_of_coords_even, n_of_coords_odd, octa_coords], range_A=[1000, 2500],
+                                  offset_A=[0, 0, 150],
+                                  show=False, width_pix=pix, colors='kcyr', radius=radius)
+
                 image_files.append(file)
+                j += 1
             except:
                 pass
 
@@ -423,8 +508,13 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=True):
     for force in forces:
         titles.append('F = {:2.1f} pN'.format(force))
 
+    selected = np.diff(np.append([-1], forces)) > 0
+    if len(selected) == 0:
+        return
+
     create_movie(image_files, fps=fps, delete=False, filename=filename, reverse=reverse,
                  titles=titles)
+    print('Done')
     return
 
 
