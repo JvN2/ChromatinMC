@@ -125,7 +125,7 @@ def get_nuc_of(coords, frames, dyad, nucl):
 
 
 def get_of(dna, i):
-    of = get_of_2(dna.coords, dna.frames, i)
+    of = get_of_2(dna.coord, dna.frames, i)
     return of
 
 
@@ -368,13 +368,13 @@ class NucPose(object):
 
         # rotate all coords, such that frame0 = origin
         self.dna = HelixPose(params)
-        tm = get_transformation(chains['DNA'][2][0:100], self.dna.coords[0:100])
+        tm = get_transformation(chains['DNA'][2][0:100], self.dna.coord[0:100])
         for chain in chains:
             chains[chain][2] = apply_transformation(chains[chain][2], tm)
         self.chains = chains
 
         # remove non-nucleosomal DNA
-        if len(self.dna.coords) > 147:
+        if len(self.dna.coord) > 147:
             loose_ends = 147 - (self.fixed_i[-1] - self.fixed_i[0] + 1)
             if loose_ends % 2 == 1:
                 l1 = loose_ends / 2
@@ -389,10 +389,10 @@ class NucPose(object):
             self.dna = HelixPose(params)
 
         # get origin and frame of nucleosome
-        cm = np.mean(self.dna.coords[self.fixed[4:-4]], axis=0)
-        Nx = self.dna.coords[self.dyad] - cm
+        cm = np.mean(self.dna.coord[self.fixed[4:-4]], axis=0)
+        Nx = self.dna.coord[self.dyad] - cm
         Nx = Nx / np.linalg.norm(Nx)
-        Nz = np.mean(self.dna.coords[self.fixed[:7], :], axis=0) - np.mean(self.dna.coords[self.fixed[7:], :], axis=0)
+        Nz = np.mean(self.dna.coord[self.fixed[:7], :], axis=0) - np.mean(self.dna.coord[self.fixed[7:], :], axis=0)
         Ny = np.cross(Nx, Nz)
         Ny = Ny / np.linalg.norm(Nz)
         Nz = np.cross(Nx, Ny)
