@@ -27,13 +27,14 @@ from helixmc import util
 from helixmc.random_step import RandomStepSimple, RandomStepAgg, symmetrize_WC
 from helixmc.score import ScoreTweezers
 from helixmc.pose import HelixPose
+from helixmc.util import locate_data_file
 # ChromatinMC modules:
 import FiberMC as fMC
 import NucleosomeMC as nMC
 import analyzeMC as aMC
 import FileIO as fileio
 
-dna_step_file = 'C:\\Python27\\Lib\\site-packages\\helixmc\\data\\DNA_gau.npy'
+dna_step_file = locate_data_file('DNA_gau.npy')
 kT = 41.0
 np.set_printoptions(formatter={'float': '{: 0.3f}, '.format})
 
@@ -314,6 +315,9 @@ def main(n_steps, root):
     dna, dyads, nucl = fMC.create_unfolded_fiber(fiber_pars=pars)
     pars.add('dyad0', value=dyads[0])
     e_nuc_kT = pars['e_nuc_kT'].value
+
+    nucl.dna.plot_helix(color='rb')
+    return
 
     # Get from file
     if False:
