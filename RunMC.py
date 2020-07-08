@@ -163,7 +163,7 @@ def get_new_step_params(moving_bp, prev_bp, dna, dyads, nucl, random_step):
 
 def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT, e_stack_kT, e_nuc_kT,
                      fiber_start, p0, k, force):
-    dna_coords = dna.coords
+    dna_coords = dna.coord
     dna_params = dna.params
     dna_frames = dna.frames
     g_wrap = 0
@@ -316,8 +316,8 @@ def main(n_steps, root):
     pars.add('dyad0', value=dyads[0])
     e_nuc_kT = pars['e_nuc_kT'].value
 
-    nucl.dna.plot_helix(color='rb')
-    return
+#    nucl.dna.plot_helix(color='rb')
+#    return
 
     # Get from file
     if False:
@@ -325,7 +325,7 @@ def main(n_steps, root):
         dna = HelixPose.from_file(fileio.change_extension(datafile, 'npz'))
 
     # Get stack and wrap parameters
-    fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coords, nucl.dna.frames, nucl.dyad, nucl.fixed)
+    fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coord, nucl.dna.frames, nucl.dyad, nucl.fixed)
     e_wrap_kT = pars['e_wrap_kT'].value
 
     fiber_start = pars['fiber_start'].value
