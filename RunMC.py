@@ -50,17 +50,17 @@ def score_dna(dna_params, p0, k, start_bp=0, end_bp=None, w=None):
     return np.asarray(g)
 
 
-def score_work(dna_coords, force, start_bp=0, end_bp=None):
+def score_work(dna_coord, force, start_bp=0, end_bp=None):
     if end_bp is None:
-        end_bp = len(dna_coords) - 1
-    g_work = -(dna_coords[end_bp, 2] - dna_coords[start_bp, 2]) * force
+        end_bp = len(dna_coord) - 1
+    g_work = -(dna_coord[end_bp, 2] - dna_coord[start_bp, 2]) * force
     return g_work
 
 
-def score_exclusion(dna_coords, dna_frames, dyads, nucl):
+def score_exclusion(dna_coord, dna_frames, dyads, nucl):
     nuc_cms = []
     for dyad in dyads:
-        nuc_cms.append(nMC.get_nuc_of(dna_coords, dna_frames, dyad, nucl)[0])
+        nuc_cms.append(nMC.get_nuc_of(dna_coord, dna_frames, dyad, nucl)[0])
     r_excl = 55
     g_excl = 0
     for i, cm1 in enumerate(nuc_cms[:-1]):
@@ -85,13 +85,13 @@ def get_unwrap_energy(wrap_params, fixed_wrap_params, e_wrap_kT):
     return np.sum(G_unwrap), G_unwrap
 
 
-def score_wrapping(moving_bp, dna_coords, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT, half_nuc=False):
+def score_wrapping(moving_bp, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT, half_nuc=False):
     closest_dyad = dyads[np.abs(dyads - moving_bp).argmin()]
     start_bp = closest_dyad - nucl.dyad
     end_bp = start_bp + len(nucl.dna.params)
 
     if start_bp <= moving_bp < end_bp:
-        wrap_params = nMC.get_wrap_param(dna_coords, dna_frames, closest_dyad, nucl.fixed)
+        wrap_params = nMC.get_wrap_param(dna_coord, dna_frames, closest_dyad, nucl.fixed)
         g, g_wrap_all = get_unwrap_energy(wrap_params, fixed_wrap_params, e_wrap_kT)
 
         if e_wrap_kT is 0:
@@ -112,7 +112,7 @@ def score_wrapping(moving_bp, dna_coords, dna_frames, dyads, nucl, fixed_wrap_pa
     return g, fixed_bps
 
 
-def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start=1):
+def score_stacking(moving_bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start=1):
     left_dyad = np.argmax(dyads > moving_bp) - 1
     right_dyad = left_dyad + fiber_start
     g_min = 0
@@ -122,14 +122,14 @@ def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack
     k = kT / sigma ** 2
 
     if 0 <= left_dyad < len(dyads) - fiber_start:
-        stack_params = fMC.get_stack_pars(coords, frames, dyads[left_dyad], dyads[right_dyad],
+        stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad], dyads[right_dyad],
                                           nucl, fiber_start)
         g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
         g += 0.01 * g * g
         g_min += np.clip(g, 0, e_stack_kT * kT)
 
     if fiber_start is 2 and left_dyad >= 1:
-        stack_params = fMC.get_stack_pars(coords, frames, dyads[left_dyad - 1], dyads[right_dyad - 1],
+        stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad - 1], dyads[right_dyad - 1],
                                           nucl, fiber_start)
         g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
         g += 0.01 * g * g
@@ -138,9 +138,9 @@ def score_stacking(moving_bp, coords, frames, dyads, fixed_stack_params, e_stack
     return g_min
 
 
-def score_surface(dna_coords):
-    surface = dna_coords[:, 2] < 0
-    bead = dna_coords[:, 2] > dna_coords[-1, 2]
+def score_surface(dna_coord):
+    surface = dna_coord[:, 2] < 0
+    bead = dna_coord[:, 2] > dna_coord[-1, 2]
     if np.sum(surface + bead) > 0:
         return 1e7
     else:
@@ -163,7 +163,7 @@ def get_new_step_params(moving_bp, prev_bp, dna, dyads, nucl, random_step):
 
 def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT, e_stack_kT, e_nuc_kT,
                      fiber_start, p0, k, force):
-    dna_coords = dna.coord
+    dna_coord = dna.coord
     dna_params = dna.params
     dna_frames = dna.frames
     g_wrap = 0
@@ -174,7 +174,7 @@ def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_
 
     w = np.ones(len(dna_params))
     for dyad in dyads:
-        fixed_bps = score_wrapping(dyad + 1, dna_coords, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+        fixed_bps = score_wrapping(dyad + 1, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
                                    half_nuc=True)[1]
         if len(fixed_bps) > 0:
             w[fixed_bps[0]:fixed_bps[1]] = 0
@@ -184,12 +184,12 @@ def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_
 
     for dyad1, dyad2 in zip(dyads[:-1], dyads[1:]):
         g_dna += np.sum(g_dna_all[dyad1:dyad2], axis=0)
-        g_stack += score_stacking(dyad1 + 1, dna_coords, dna_frames, dyads, fixed_stack_params, e_stack_kT, nucl,
+        g_stack += score_stacking(dyad1 + 1, dna_coord, dna_frames, dyads, fixed_stack_params, e_stack_kT, nucl,
                                   fiber_start)
-        g_work += score_work(dna_coords, force, start_bp=dyad1, end_bp=dyad2, )
-        g_wrap += score_wrapping(dyad1 + 2, dna_coords, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+        g_work += score_work(dna_coord, force, start_bp=dyad1, end_bp=dyad2, )
+        g_wrap += score_wrapping(dyad1 + 2, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
                                  half_nuc=True)[0]
-        g_wrap += score_wrapping(dyad2 - 2, dna_coords, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+        g_wrap += score_wrapping(dyad2 - 2, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
                                  half_nuc=True)[0]
 
     g_dna /= (n_nucs - 1)
@@ -212,24 +212,24 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
     if np.array_equal(old_step_params, new_step_params):
         return False
     else:
-        coords = dna.coords
+        coord = dna.coord
         frames = dna.frames
         old_score = [
-            score_wrapping(bp, coords, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            score_stacking(bp, coords, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
-            score_exclusion(coords, frames, dyads, nucl),
-            score_work(coords, force),
-            score_surface(coords),
+            score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
+            score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            score_exclusion(coord, frames, dyads, nucl),
+            score_work(coord, force),
+            score_surface(coord),
             0]
         dna.update(bp, new_step_params)
-        coords = dna.coords
+        coord = dna.coord
         frames = dna.frames
         new_score = [
-            score_wrapping(bp, coords, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            score_stacking(bp, coords, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
-            score_exclusion(coords, frames, dyads, nucl),
-            score_work(coords, force),
-            score_surface(coords),
+            score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
+            score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            score_exclusion(coord, frames, dyads, nucl),
+            score_work(coord, force),
+            score_surface(coord),
             0]
     if util.MC_acpt_rej(np.sum(old_score), np.sum(new_score)):
         return True

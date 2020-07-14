@@ -348,7 +348,7 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
     return filename
 
 
-def create_pov(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
+def create_pov(filename, coord, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
                show=False, transparency=None):
     if radius is None:
         radius = np.append([10], (np.ones(8) * 4))
@@ -357,14 +357,14 @@ def create_pov(filename, coords, range_A=[1000, 1000], offset_A=[0, 0, 0], width
     if colors is None:
         colors = 'kbbggryrycy'
     if transparency is None:
-        transparency = np.zeros(len(coords))
+        transparency = np.zeros(len(coord))
     filename = change_extension(filename, 'pov')
     aspect_ratio = range_A[1] / float(range_A[0])
     pov_image = pov.init(plt_width=range_A[0], aspect_ratio=aspect_ratio)
     i = 0
     j = 0
     offset = np.asarray(offset_A) - np.asarray((0, 0, range_A[1] / 2.0))
-    for coord, t in zip(coords, transparency):
+    for coord, t in zip(coord, transparency):
         if (i > len(colors) - 1):
             i = 0
         if (j > len(radius) - 1):
@@ -387,7 +387,7 @@ def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', ra
     global ax, fig, scale
 
     tf = nMC.get_transformation(nMC.get_of(dna_pose1, origin_index))
-    coords = nMC.apply_transformation(dna_pose1.coords, tf) / 10.0
+    coord = nMC.apply_transformation(dna_pose1.coord, tf) / 10.0
 
     if update:
         ax.clear()
@@ -405,16 +405,16 @@ def plot_dna(dna_pose1, origin_index=0, color='blue', update=False, title='', ra
     ax.set_ylabel('y (nm)')
     ax.set_zlabel('z (nm)')
 
-    half = len(coords) / 2
-    ax.scatter(coords[:, 0][:half], coords[:, 1][:half], coords[:, 2][:half], s=pointsize, c=color, alpha=0.5)
-    ax.scatter(coords[:, 0][half:], coords[:, 1][half:], coords[:, 2][half:], s=pointsize, c='red', alpha=0.5)
+    half = len(coord) / 2
+    ax.scatter(coord[:, 0][:half], coord[:, 1][:half], coord[:, 2][:half], s=pointsize, c=color, alpha=0.5)
+    ax.scatter(coord[:, 0][half:], coord[:, 1][half:], coord[:, 2][half:], s=pointsize, c='red', alpha=0.5)
 
-    ax.scatter(coords[0, 0], coords[0, 1], coords[0, 2], s=pointsize, c='red', alpha=0.55)
+    ax.scatter(coord[0, 0], coord[0, 1], coord[0, 2], s=pointsize, c='red', alpha=0.55)
     ax.scatter([0], [0], [0], s=pointsize * 5, c='k', alpha=0.55)
 
     if dna_pose2 is not None:
-        coords = nMC.apply_transformation(dna_pose2.coords, tf) / 10.0
-        ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=pointsize, c='black', alpha=0.25)
+        coord = nMC.apply_transformation(dna_pose2.coord, tf) / 10.0
+        ax.scatter(coord[:, 0], coord[:, 1], coord[:, 2], s=pointsize, c='black', alpha=0.25)
 
     plt.xlim((-scale, scale))
     plt.ylim((-scale, scale))
@@ -453,8 +453,8 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, frame=[], o
 
     nucl = nMC.NucPose()
     nucl.from_file('1KX5')
-    n_of_coords_even = []
-    octa_coords = []
+    n_of_coord_even = []
+    octa_coord = []
 
     j = 0
     print ((len(filenames) - len(existing_files) - 1))
@@ -469,32 +469,32 @@ def create_pov_movie(filename, origin_frame=0, fps=5, reverse=False, frame=[], o
                 dna = HelixPose.from_file(change_extension(file, 'npz'))
                 origin_of = nMC.get_of(dna, origin_frame)
                 tf = nMC.get_transformation(origin_of)
-                coords = nMC.apply_transformation(dna.coords, tf)
+                coord = nMC.apply_transformation(dna.coord, tf)
 
-                n_of_coords_odd = np.zeros((1, 3))
-                n_of_coords_even = np.zeros((1, 3))
+                n_of_coord_odd = np.zeros((1, 3))
+                n_of_coord_even = np.zeros((1, 3))
                 if len(frame) is not 0:
                     for n in range(nuc[0]):
                         dyad = nuc[2] + n * nuc[1]
-                        n_of = nMC.get_nuc_of(dna.coords, dna.frames, dyad, nucl)
+                        n_of = nMC.get_nuc_of(dna.coord, dna.frames, dyad, nucl)
                         if n % 2 is 0:
-                            n_of_coords_even = np.concatenate((n_of_coords_even, nMC.of2axis(n_of, length=frame)))
+                            n_of_coord_even = np.concatenate((n_of_coord_even, nMC.of2axis(n_of, length=frame)))
                         else:
-                            n_of_coords_odd = np.concatenate((n_of_coords_odd, nMC.of2axis(n_of, length=frame)))
-                    n_of_coords_odd = nMC.apply_transformation(n_of_coords_odd[1:], tf)
-                    n_of_coords_even = nMC.apply_transformation(n_of_coords_even[1:], tf)
+                            n_of_coord_odd = np.concatenate((n_of_coord_odd, nMC.of2axis(n_of, length=frame)))
+                    n_of_coord_odd = nMC.apply_transformation(n_of_coord_odd[1:], tf)
+                    n_of_coord_even = nMC.apply_transformation(n_of_coord_even[1:], tf)
 
                 if octamers:
                     for n in range(nuc[0]):
                         dyad = nuc[2] + n * nuc[1]
-                        n_of = nMC.get_nuc_of(dna.coords, dna.frames, dyad, nucl)
+                        n_of = nMC.get_nuc_of(dna.coord, dna.frames, dyad, nucl)
                         if n is 0:
-                            octa_coords = [n_of[0]]
+                            octa_coord = [n_of[0]]
                         else:
-                            octa_coords = np.concatenate((octa_coords, [n_of[0]]))
-                    octa_coords = nMC.apply_transformation(octa_coords, tf)
+                            octa_coord = np.concatenate((octa_coord, [n_of[0]]))
+                    octa_coord = nMC.apply_transformation(octa_coord, tf)
 
-                file = create_pov(file, [coords, n_of_coords_even, n_of_coords_odd, octa_coords], range_A=[1000, 2500],
+                file = create_pov(file, [coord, n_of_coord_even, n_of_coord_odd, octa_coord], range_A=[1000, 2500],
                                   offset_A=[0, 0, 150],
                                   show=False, width_pix=pix, colors='kcyr', radius=radius)
 

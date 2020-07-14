@@ -53,35 +53,35 @@ def of2axis(of, length=[60, 90, 120]):
     """
     origin = of[0]
     frame = of[1:] - origin
-    coords_out = []
+    coord_out = []
 
     for ax_length, ax_direction in zip(length, frame):
         for j in np.linspace(0, ax_length, np.abs(ax_length)):
-            coords_out.append(origin + j * ax_direction)
-    return np.asarray(coords_out)
+            coord_out.append(origin + j * ax_direction)
+    return np.asarray(coord_out)
 
 
-def apply_transformation(coords, trans_def):
+def apply_transformation(coord, trans_def):
     """
-    Apply rigid transformation to coords using transformation
+    Apply rigid transformation to coord using transformation
     parameters obtained with Kabsch algorithm
     
     Parameters
     ----------
-    coords : ndarray of (N,3)
+    coord : ndarray of (N,3)
     trans_def : list containing center of rotation, rotation matrix and
                 center after rotation
     
     Returns
     -------
-    coords_out: ndarray of (N,3)    
+    coord_out: ndarray of (N,3)    
     """
-    N = coords.shape[0]
-    coords_out = coords - np.tile(trans_def[0], (N, 1))
-    coords_out = np.dot(coords_out, trans_def[1])
-    coords_out = coords_out + np.tile(trans_def[2], (N, 1))
+    N = coord.shape[0]
+    coord_out = coord - np.tile(trans_def[0], (N, 1))
+    coord_out = np.dot(coord_out, trans_def[1])
+    coord_out = coord_out + np.tile(trans_def[2], (N, 1))
 
-    return np.asarray(coords_out)
+    return np.asarray(coord_out)
 
 
 def get_transformation(start, target=None):
@@ -115,11 +115,11 @@ def join_o_f(origin, frame):
     return np.asarray(of)
 
 
-def get_nuc_of(coords, frames, dyad, nucl):
+def get_nuc_of(coord, frames, dyad, nucl):
     """
     Calculate the center of mass and the reference frame (=of) of a nucleosome in dna
     """
-    tf = get_transformation(nucl.dyad_of, target=get_of_2(coords, frames, dyad))
+    tf = get_transformation(nucl.dyad_of, target=get_of_2(coord, frames, dyad))
     n_of = apply_transformation(nucl.of, tf)
     return n_of
 
@@ -129,8 +129,8 @@ def get_of(dna, i):
     return of
 
 
-def get_of_2(coords, frames, i):
-    return np.concatenate(([coords[i]], frames[i].T+coords[i]), axis = 0)
+def get_of_2(coord, frames, i):
+    return np.concatenate(([coord[i]], frames[i].T+coord[i]), axis = 0)
 
 
 # def get_wrap_params2(dna, dyad, fixed):
@@ -142,10 +142,10 @@ def get_of_2(coords, frames, i):
 #     return np.asarray(fixed_params).reshape((-1, 6))
 
 
-def get_wrap_param(dna_coords, dna_frames, dyad, fixed):
+def get_wrap_param(dna_coord, dna_frames, dyad, fixed):
     fixed_params = []
     for i in fixed:
-        params = frames2params(dna_coords[dyad], dna_coords[dyad + i], dna_frames[dyad], dna_frames[dyad + i])
+        params = frames2params(dna_coord[dyad], dna_coord[dyad + i], dna_frames[dyad], dna_frames[dyad + i])
         fixed_params.append(params)
     return np.asarray(fixed_params)
 
@@ -178,7 +178,7 @@ def seq3_to_1(seq3):
 
 def read_pdb(pdb_file):
     '''
-    Get Chains, Chain type and coords of proteins from pdb file 
+    Get Chains, Chain type and coord of proteins from pdb file 
 
     Parameters
     ----------
@@ -186,7 +186,7 @@ def read_pdb(pdb_file):
     
     Returns
     -------
-    chain_dict: {chain, type, coords}
+    chain_dict: {chain, type, coord}
 
     '''
     #    print '###>'+ pdb_file
@@ -292,10 +292,10 @@ class NucPose(object):
     dyad : int
         index of dyad bp
     chains : dictionary
-        dictionary of all chains {name, sequence, coords}
+        dictionary of all chains {name, sequence, coord}
     fixed_i : list
         indices of fixed basepairs relative to dyad
-    l_coords : ndarray of (4,3)
+    l_coord : ndarray of (4,3)
         The coordinates of Glu61 (H2A) and Asp24 (H4) that mediate nucleosome-
         nucleosome interactions through the tail of H4
     '''
@@ -318,7 +318,7 @@ class NucPose(object):
         if input_file == None:
             input_file = "3LZ0.3DNA"
             print('Default file: ' + input_file)
-        #   read protein coords from pdb file
+        #   read protein coord from pdb file
         filename = input_file
         filename = fileio.change_extension(filename, 'pdb')
         chains = read_pdb(filename)
@@ -358,15 +358,15 @@ class NucPose(object):
         '      bp        Ox        Oy        Oz        Nx        Ny        Nz'
         in x) + 1
 
-        coords = np.zeros((j, 3))
+        coord = np.zeros((j, 3))
         frames = np.zeros((j, 3, 3))
         for k in range(0, j):
             tmp = np.asarray(map(float, lines[i + k].split()[2:]))
-            coords[k, :] = tmp[0:3]
+            coord[k, :] = tmp[0:3]
             frames[k][0] = tmp[3:6] / np.linalg.norm(tmp[3:6])
-        chains['DNA'][2] = np.asarray(coords)
+        chains['DNA'][2] = np.asarray(coord)
 
-        # rotate all coords, such that frame0 = origin
+        # rotate all coord, such that frame0 = origin
         self.dna = HelixPose(params)
         tm = get_transformation(chains['DNA'][2][0:100], self.dna.coord[0:100])
         for chain in chains:
@@ -403,33 +403,33 @@ class NucPose(object):
         self.dyad_of = get_of(self.dna, self.dyad)
         #   get link coordinates Glu61 (H2A) and Asp24 (H4)
         # int_dict = {'H2A': 60, 'H2A*': 60, 'H4': 23, 'H4*': 23}
-        # self.l_coords = []
+        # self.l_coord = []
         # for locus in int_dict:
-        #     self.l_coords.append(chains[locus][2][int_dict[locus]])
-        # self.l_coords = np.asarray(self.l_coords)
+        #     self.l_coord.append(chains[locus][2][int_dict[locus]])
+        # self.l_coord = np.asarray(self.l_coord)
 
 
 def main():
     nuc = NucPose()
     nuc.from_file('1KX5.3DNA')
 
-    coords = []
+    coord = []
     for chain in nuc.chains:
-        coords.append(nuc.chains[chain][2])
+        coord.append(nuc.chains[chain][2])
 
     # tf = get_transformation(nuc.of, target=np.asarray([[0,0,0],[0,0,-1],[0,1,0],[1,0,0]]))
     # tf = get_transformation(nuc.of, target=np.asarray([[0,0,0],[-1,0,0],[0,1,0],[0,0,-1]]))
     tf = get_transformation(nuc.of)
 
-    n_coords = []
-    for c in coords:
-        n_coords.append(apply_transformation(c, tf))
+    n_coord = []
+    for c in coord:
+        n_coord.append(apply_transformation(c, tf))
 
     nuc_ax = apply_transformation(nuc.of, tf)
-    n_coords.append(of2axis(nuc_ax))
+    n_coord.append(of2axis(nuc_ax))
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
-    print(fileio.create_pov(filename, n_coords, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
+    print(fileio.create_pov(filename, n_coord, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
 
 if __name__ == '__main__':

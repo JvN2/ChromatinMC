@@ -39,11 +39,11 @@ def plot_gf(filename, calc=False, force_range=[0, 1e9]):
         dna, dyads, nucl = fMC.create_unfolded_fiber(fiber_pars=pars)
 
         # Get stack and wrap parameters
-        fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coords, nucl.dna.frames, nucl.dyad, nucl.fixed)
+        fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coord, nucl.dna.frames, nucl.dyad, nucl.fixed)
 
         fiber_start = pars['fiber_start'].value
         fiber_dna, dyads, w = fMC.create_casted_fiber(pars, nucl)
-        fixed_stack_params = fMC.get_stack_pars(fiber_dna.coords, fiber_dna.frames, dyads[0], dyads[fiber_start])
+        fixed_stack_params = fMC.get_stack_pars(fiber_dna.coord, fiber_dna.frames, dyads[0], dyads[fiber_start])
 
         e_stack_kT = pars['e_stack_kT'].value
         e_wrap_kT = pars['e_wrap_kT'].value

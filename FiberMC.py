@@ -173,19 +173,19 @@ def get_casted_fiber_frames(par):
         n_ofs.append(nMC.join_o_f(cm1, np.transpose(frame)))
         # n_ofs.append(nMC.join_o_f(cm1, frame))
 
-    # n_coords = []
+    # n_coord = []
     # for n_of in n_ofs:
-    #     n_coords.append(nMC.of2axis(n_of, length=20))
+    #     n_coord.append(nMC.of2axis(n_of, length=20))
     #
     # filename = fileio.get_filename(root='array', ext='pov', incr=True)
-    # fileio.create_pov(filename, n_coords, range_A=[500, 800], offset_A=[0, 0, 60], show=True, width_pix=500)
+    # fileio.create_pov(filename, n_coord, range_A=[500, 800], offset_A=[0, 0, 60], show=True, width_pix=500)
 
     return n_ofs
 
 
 def init_fixed_stack_params2(par, nucl, plot=True):
     n_ofs = get_casted_fiber_frames(par)
-    nucl_dyad_of = nMC.join_o_f(nucl.dna.coords[nucl.dyad], nucl.dna.frames[nucl.dyad])
+    nucl_dyad_of = nMC.join_o_f(nucl.dna.coord[nucl.dyad], nucl.dna.frames[nucl.dyad])
     new_nucl_dyad_ofs = []
     for n_of in n_ofs:
         tf = nMC.get_transformation(nucl.of, target=n_of)
@@ -200,8 +200,8 @@ def init_fixed_stack_params2(par, nucl, plot=True):
         for n_of, dyad in zip(n_ofs, dyads):
             tf = nMC.get_transformation(nucl.of, target=n_of)
 
-            dna_coords = (nMC.apply_transformation(nucl.dna.coords, tf))
-            ax.scatter(dna_coords[:, 0], dna_coords[:, 1], dna_coords[:, 2])
+            dna_coord = (nMC.apply_transformation(nucl.dna.coord, tf))
+            ax.scatter(dna_coord[:, 0], dna_coord[:, 1], dna_coord[:, 2])
         plt.show()
 
     return stack_params
@@ -209,14 +209,14 @@ def init_fixed_stack_params2(par, nucl, plot=True):
 
 def init_fixed_stack_params(par, nucl, plot=True):
     folded_fiber_dna, dyads, _ = create_casted_fiber(par, nucl)
-    stack_params = get_stack_pars(folded_fiber_dna.coords, folded_fiber_dna.frames, dyads[0], dyads[1])
+    stack_params = get_stack_pars(folded_fiber_dna.coord, folded_fiber_dna.frames, dyads[0], dyads[1])
     return stack_params
 
 
 def create_casted_fiber(par, nucl):
     dna, dyads, _ = create_unfolded_fiber(fiber_pars=par)
     params = dna.params * 0
-    w = np.zeros(len(dna.coords))
+    w = np.zeros(len(dna.coord))
     n_ofs = get_casted_fiber_frames(par)
     origin_of = np.concatenate(([np.zeros(3)], np.eye(3)))
     length = len(nucl.dna.params)
@@ -226,17 +226,17 @@ def create_casted_fiber(par, nucl):
     # fig = plt.figure()
     # ax = fig.add_subplot(111, projection='3d')
     #
-    # n_coords = []
-    # n_coords.append(nMC.of2axis(nucl.of, length=30))
-    # start_coords = []
+    # n_coord = []
+    # n_coord.append(nMC.of2axis(nucl.of, length=30))
+    # start_coord = []
 
     for n_of, dyad in zip(n_ofs, dyads):
         tf = nMC.get_transformation(nucl.of, target=n_of)
 
-        # dna_coords = (nMC.apply_transformation(nucl.dna.coords, tf))
-        # n_coords.append(dna_coords)
-        # start_coords.append(dna_coords[0])
-        # ax.scatter(dna_coords[:, 0], dna_coords[:, 1], dna_coords[:, 2])
+        # dna_coord = (nMC.apply_transformation(nucl.dna.coord, tf))
+        # n_coord.append(dna_coord)
+        # start_coord.append(dna_coord[0])
+        # ax.scatter(dna_coord[:, 0], dna_coord[:, 1], dna_coord[:, 2])
 
         start_bp = dyad - nucl.dyad
         params[start_bp:start_bp + length] = nucl.dna.params
@@ -251,17 +251,17 @@ def create_casted_fiber(par, nucl):
         params[start_bp + length] = nMC.ofs2params(end_of, origin_of, _3dna=True)
 
         w[start_bp + unwrapped:start_bp + length - unwrapped] += 1
-        # ax_coords = nMC.of2axis(nucl.of, length=30)
-        # n_coords.append(nMC.apply_transformation(nucl.dna.coords, tf))
-        # n_coords.append(ax_coords)
+        # ax_coord = nMC.of2axis(nucl.of, length=30)
+        # n_coord.append(nMC.apply_transformation(nucl.dna.coord, tf))
+        # n_coord.append(ax_coord)
     w = np.transpose(np.asarray([w, w, w]))
 
-    # n_coords.insert(0, start_coords)
+    # n_coord.insert(0, start_coord)
     # filename = fileio.get_filename(root='cast_array', ext='pov', incr=True)
-    # fileio.create_pov(filename, n_coords, range_A=[500, 800], offset_A=[0, 0, 60], show=True, width_pix=500)
+    # fileio.create_pov(filename, n_coord, range_A=[500, 800], offset_A=[0, 0, 60], show=True, width_pix=500)
 
-    # fiber_dna_coords = HelixPose(params).coords*w
-    # ax.scatter(fiber_dna_coords[:, 0], fiber_dna_coords[:, 1], fiber_dna_coords[:, 2], color='k', s=1)
+    # fiber_dna_coord = HelixPose(params).coord*w
+    # ax.scatter(fiber_dna_coord[:, 0], fiber_dna_coord[:, 1], fiber_dna_coord[:, 2], color='k', s=1)
     # r = 300
     # ax.set_xlim(-r / 2, r / 2)
     # ax.set_ylim(-r / 2, r / 2)
@@ -271,13 +271,13 @@ def create_casted_fiber(par, nucl):
     return dna, dyads, w
 
 
-def residual_stack_coords(fiber_par, dyad0_of, cast_coords, w):
+def residual_stack_coord(fiber_par, dyad0_of, cast_coord, w):
     dna, dyads, _ = create_folded_fiber(fiber_par)
 
     tf = nMC.get_transformation(nMC.get_of(dna, dyads[0]), target=dyad0_of)
-    coords = nMC.apply_transformation(dna.coords, tf)
+    coord = nMC.apply_transformation(dna.coord, tf)
 
-    res = (coords - cast_coords) * w
+    res = (coord - cast_coord) * w
     sys.stdout.write('.')
     return res
 
@@ -285,16 +285,16 @@ def residual_stack_coords(fiber_par, dyad0_of, cast_coords, w):
 def residual_stack_params(fiber_par, fixed_stack_params, w):
     folded_fiber, dyads, nucl = create_folded_fiber(fiber_par)
 
-    stack_params = get_stack_pars(folded_fiber.coords, folded_fiber.frames, dyads[0], dyads[1], nucl)
+    stack_params = get_stack_pars(folded_fiber.coord, folded_fiber.frames, dyads[0], dyads[1], nucl)
 
     res = (stack_params - fixed_stack_params) * w
     sys.stdout.write('.')
     return res
 
 
-def get_stack_pars(coords, frames, dyad1, dyad2, nucl, fiber_start):
-    n_of1 = nMC.get_nuc_of(coords, frames, dyad1, nucl)
-    n_of2 = nMC.get_nuc_of(coords, frames, dyad2, nucl)
+def get_stack_pars(coord, frames, dyad1, dyad2, nucl, fiber_start):
+    n_of1 = nMC.get_nuc_of(coord, frames, dyad1, nucl)
+    n_of2 = nMC.get_nuc_of(coord, frames, dyad2, nucl)
     stack_params = (nMC.ofs2params(n_of2, n_of1, _3dna=True))
     return stack_params
 
@@ -326,19 +326,19 @@ def scan_fiber_param(fiber_pars, iter_param, iter_vals):
         dna, dyads, nucl = create_unfolded_fiber(fiber_pars=fiber_pars)
         fiber_dna, dyads, w = create_casted_fiber(fiber_pars, nucl)
 
-        # ax.scatter(fiber_dna.coords[:, 0], fiber_dna.coords[:, 1], fiber_dna.coords[:, 2])
+        # ax.scatter(fiber_dna.coord[:, 0], fiber_dna.coord[:, 1], fiber_dna.coord[:, 2])
         # plt.show()
 
         fiber_pars['ref_frame'].value = dyads[0]
         ref_of = nMC.get_of(fiber_dna, fiber_pars['ref_frame'].value)
 
         try:
-            out = minimize(residual_stack_coords, fiber_pars, args=(ref_of, fiber_dna.coords, w), method='nelder')
+            out = minimize(residual_stack_coord, fiber_pars, args=(ref_of, fiber_dna.coord, w), method='nelder')
             report_fit(out)
             fiber_pars = out.params
-            coords, dna, tf = create_folded_fiber(fiber_pars, ref_of)
+            coord, dna, tf = create_folded_fiber(fiber_pars, ref_of)
             image_files.append(
-                fileio.create_pov(filename, [dna.coords], range_A=[400, 400], offset_A=[0, 0, 150], show=True))
+                fileio.create_pov(filename, [dna.coord], range_A=[400, 400], offset_A=[0, 0, 150], show=True))
             fileio.write_xlsx_row(filename, str(setnr), fiber_pars, report_file=report_file)
             dna.write2disk(fileio.get_filename(sub=True, ext='npz'))
         except:
@@ -364,25 +364,25 @@ def main(pars):
     bases1 = []
     bases3 = []
     for dyad in dyads:
-        bases1.append(casted_fiber.coords[dyad + nucl.fixed[0]])
-        bases2.append(casted_fiber.coords[dyad + nucl.fixed[-1]])
+        bases1.append(casted_fiber.coord[dyad + nucl.fixed[0]])
+        bases2.append(casted_fiber.coord[dyad + nucl.fixed[-1]])
         for i in nucl.fixed[1:-1]:
-            bases3.append(casted_fiber.coords[dyad + i])
+            bases3.append(casted_fiber.coord[dyad + i])
 
     for i, dyad in enumerate(dyads):
-        n_of = nMC.get_nuc_of(casted_fiber.coords, casted_fiber.frames, dyad, nucl)
+        n_of = nMC.get_nuc_of(casted_fiber.coord, casted_fiber.frames, dyad, nucl)
 
         if i is 0:
-            n_of_coords_even = nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])
+            n_of_coord_even = nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])
         elif i is 1:
-            n_of_coords_odd = nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])
+            n_of_coord_odd = nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])
         else:
             if i%2:
-                n_of_coords_odd = np.concatenate((n_of_coords_odd, nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])))
+                n_of_coord_odd = np.concatenate((n_of_coord_odd, nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])))
             else:
-                n_of_coords_even = np.concatenate((n_of_coords_even, nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])))
+                n_of_coord_even = np.concatenate((n_of_coord_even, nMC.of2axis(n_of, length=[60, 0, -pars['rise_A'].value])))
 
-    print(fileio.create_pov(filename, [bases1, bases2, casted_fiber.coords, bases3, n_of_coords_odd, n_of_coords_even], range_A=[500, 1000],
+    print(fileio.create_pov(filename, [bases1, bases2, casted_fiber.coord, bases3, n_of_coord_odd, n_of_coord_even], range_A=[500, 1000],
                             offset_A=[0, 0, 150], show=True, width_pix=3000, colors='rrkrcy',
                             radius=[10.5, 10.5, 10, 11, 5,5]))
     return
@@ -390,7 +390,7 @@ def main(pars):
     print('\n fixed stack_params:')
     fiber_start = pars['fiber_start'].value
 
-    fixed_stack_params = get_stack_pars(casted_fiber.coords, casted_fiber.frames, dyads[0], dyads[fiber_start],nucl, fiber_start,
+    fixed_stack_params = get_stack_pars(casted_fiber.coord, casted_fiber.frames, dyads[0], dyads[fiber_start],nucl, fiber_start,
                                         )
     print(pars['nld_A'].value, fixed_stack_params)
 
@@ -443,16 +443,16 @@ def main(pars):
     return
 
     # fit linker DNA parameters
-    dyad0_of = nMC.get_of_2(casted_fiber.coords, casted_fiber.frames, dyads[0])
-    out = minimize(residual_stack_coords, pars, args=(dyad0_of, casted_fiber.coords, w), method='nelder')
+    dyad0_of = nMC.get_of_2(casted_fiber.coord, casted_fiber.frames, dyads[0])
+    out = minimize(residual_stack_coord, pars, args=(dyad0_of, casted_fiber.coord, w), method='nelder')
     # report_fit(out)
-    print('\n fit stack_coords:')
+    print('\n fit stack_coord:')
     pars = out.params
 
     # create folded fiber with bent linker DNA
     folded_fiber, _, _ = create_folded_fiber(pars)
     fileio.plot_dna(folded_fiber, range_nm=50, wait=1, origin_index=dyads[0], save=True)
-    print(get_stack_pars(folded_fiber.coords, folded_fiber.frames, dyads[0], dyads[1], nucl))
+    print(get_stack_pars(folded_fiber.coord, folded_fiber.frames, dyads[0], dyads[1], nucl))
 
     # write to file
     fileio.write_xlsx_row(fileio.get_filename(sub=True, incr=True, ext='npz'), 0, pars, report_file=filename)
@@ -466,7 +466,7 @@ def main(pars):
     pars = out.params
     folded_fiber, _, _ = create_folded_fiber(out.params)
     fileio.plot_dna(folded_fiber, range_nm=50, wait=10, origin_index=dyads[0])
-    print(get_stack_pars(folded_fiber.coords, folded_fiber.frames, dyads[0], dyads[1], nucl))
+    print(get_stack_pars(folded_fiber.coord, folded_fiber.frames, dyads[0], dyads[1], nucl))
 
     return
 
@@ -476,7 +476,7 @@ def main(pars):
     unfolded_fiber, dyads, nucl = create_unfolded_fiber(fiber_pars=pars)
     casted_fiber, dyads, w = create_casted_fiber(pars, nucl)
 
-    print (fileio.create_pov(fileio.get_filename(incr=True), [casted_fiber.coords, n_of_coords_odd], range_A=[1000, 1500],
+    print (fileio.create_pov(fileio.get_filename(incr=True), [casted_fiber.coord, n_of_coord_odd], range_A=[1000, 1500],
                              offset_A=[0, 0, 150], show=True))
 
     return
