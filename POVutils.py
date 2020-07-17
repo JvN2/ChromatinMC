@@ -15,6 +15,7 @@ import subprocess
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 from scipy import misc
+import Tkinter
 # ChromatinMC modules:
 import FileIO as fileio
 
@@ -183,6 +184,7 @@ def show(filename):
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
     plt.draw()
     plt.pause(0.05)
+    Tkinter.mainloop()      # keep show window open in pycharm
     return
 
 
