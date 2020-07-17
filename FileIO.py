@@ -370,9 +370,6 @@ def create_pov(filename, coord, range_A=[1000, 1000], offset_A=[0, 0, 0], width_
         if (j > len(radius) - 1):
             j = 0
         for sphere in coord:
-            print('sphere: ', sphere)
-            print('colors: ', colors[i])
-            print('radius: ', radius[i])
             pov_image = pov.add_sphere(pov_image, sphere + offset, color=colors[i], radius=radius[j], transperancy=t)
         i += 1
         j += 1

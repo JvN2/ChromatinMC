@@ -316,9 +316,6 @@ def main(n_steps, root):
     pars.add('dyad0', value=dyads[0])
     e_nuc_kT = pars['e_nuc_kT'].value
 
-#    nucl.dna.plot_helix(color='rb')
-#    return
-
     # Get from file
     if False:
         datafile = 'E:\\Users\\noort\\data\\20180513\\2x197_006\\2x197_006_0001.npz'
@@ -375,6 +372,25 @@ def main(n_steps, root):
                     dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
             previous_bp = bp
         basepairs = basepairs[::-1]
+
+    coord = [dna.coord]
+    # create dyads, coordinates and origin frame
+    coord_d = []
+    coord_d_of = []
+    for d in dyads:
+        coord_d_of.append(np.concatenate(([dna.coord[d]], dna.frames[d].T + dna.coord[d]), axis=0))
+        coord_d.append(dna.coord[d])
+
+    # transform dyad origin frame into axis
+    for i, f in enumerate(coord_d_of):
+        coord_d_of[i] = nMC.of2axis(f)
+
+    # create a list of lists
+    coord_d_of = np.vstack(coord_d_of)
+    coord_d = np.vstack(coord_d)
+    coord.append(coord_d_of)
+    # return
+    print(fileio.create_pov(filename, coord, radius=[10, 3], colors='oc', range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])
