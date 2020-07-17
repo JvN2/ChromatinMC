@@ -348,14 +348,14 @@ def save_plot(data, ax_labels=None, grid=None, xrange=None, yrange=None, save=Tr
     return filename
 
 
-def create_pov(filename, coord, link, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
+def create_pov(filename, coord, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
                show=False, transparency=None):
     if radius is None:
         radius = np.append([10], (np.ones(8) * 4))
         radius = np.append(radius, 3)
-        radius = np.append(radius, 2)
+        radius = np.append(radius, 28)
     if colors is None:
-        colors = 'kbbggryrycy'
+        colors = 'kbbggryrycm'
     if transparency is None:
         transparency = np.zeros(len(coord))
     filename = change_extension(filename, 'pov')
@@ -370,17 +370,17 @@ def create_pov(filename, coord, link, range_A=[1000, 1000], offset_A=[0, 0, 0], 
         if (j > len(radius) - 1):
             j = 0
         for sphere in coord:
-            print('spere: ', spere)
-            print('color: ', colors[i])
+            print('sphere: ', sphere)
+            print('colors: ', colors[i])
             print('radius: ', radius[i])
             pov_image = pov.add_sphere(pov_image, sphere + offset, color=colors[i], radius=radius[j], transperancy=t)
         i += 1
         j += 1
-    linkcolor = 'momo'
-    i = 0
-    for l in link:
-        pov_image = pov.add_sphere(pov_image, l + offset, color=linkcolor[i], radius=20)
-        i += 1
+    # linkcolor = 'momo'
+    # i = 0
+    # for l in link:
+    #     pov_image = pov.add_sphere(pov_image, l + offset, color=linkcolor[i], radius=20)
+    #     i += 1
     pov.save(pov_image, filename=filename)
     pov.render(filename, height=width_pix * aspect_ratio, width=width_pix)
     if show:

@@ -430,17 +430,16 @@ def main():
 
     nuc_ax = apply_transformation(nuc.of, tf)
     n_coord.append(of2axis(nuc_ax))
+    print(len(n_coord))
 
     # add link coordinates to n_coords
-    # n_coord.append(apply_transformation(nuc.l_coord, tf))
-
-    nuc.l_coord = apply_transformation(nuc.l_coord, tf)
+    n_coord.append(apply_transformation(nuc.l_coord, tf))
+    print(len(n_coord))
+    # return
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
-    print(fileio.create_pov(filename, n_coord, nuc.l_coord, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
+    print(fileio.create_pov(filename, n_coord, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
-    # Wait seconds, before phycharm closes pov.png window
-    time.sleep(10)
 
 if __name__ == '__main__':
     main()
