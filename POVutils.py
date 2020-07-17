@@ -97,19 +97,21 @@ object {
            }
        }
 """
-    if color == 'r':
+    if color == 'r':    # red
         rgb = [1, 0, 0]
-    elif color == 'g':
+    elif color == 'g':  # green
         rgb = [0, 1, 0]
-    elif color == 'b':
+    elif color == 'b':  # blue
         rgb = [0, 0, 1]
-    elif color == 'm':
+    elif color == 'm':  # magenta
         rgb = [1, 0, 1]
-    elif color == 'y':
+    elif color == 'y':  # yellow
         rgb = [1, 1, 0]
-    elif color == 'c':
+    elif color == 'c':  # cyan
         rgb = [0, 1, 1]
-    else:
+    elif color == 'o' : # orange
+        rgb = [1, 0.65, 0]
+    else:               # grey
         rgb = [0.7, 0.7, 0.7]
     rgb = np.array(rgb)
 
