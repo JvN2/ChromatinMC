@@ -373,24 +373,43 @@ def main(n_steps, root):
             previous_bp = bp
         basepairs = basepairs[::-1]
 
+
+    # coordinates of basepairs in dna string
     coord = [dna.coord]
-    # create dyads, coordinates and origin frame
-    coord_d = []
-    coord_d_of = []
-    for d in dyads:
-        coord_d_of.append(np.concatenate(([dna.coord[d]], dna.frames[d].T + dna.coord[d]), axis=0))
-        coord_d.append(dna.coord[d])
+    # coordinates of histone proteins
+    p_coord = []
+    for chain in nucl.chains:
+        if chain == 'DNA':
+            pass
+        else:
+            p_coord.append(nucl.chains[chain][2])
 
-    # transform dyad origin frame into axis
-    for i, f in enumerate(coord_d_of):
-        coord_d_of[i] = nMC.of2axis(f)
+    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)             # origin frame dyad in nucl pose
+    of_d_fiber = []                                         # origin fram of dyad in fiber
+    tf = []                                                 # transformation matrix
+    radius = [10]                                           # radius of basepairs in POVray
+    colors = 'o'                                            # color of basepairs
+    for i, d in enumerate(dyads):
+        # define origin frame of dyad in fiber
+        of_d_fiber.append((nMC.get_of(dna, d)))
+        # get transformation matrix of nucleosome dyad onto fiber dyad
+        tf.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
+        # apply transformation on coordinates of histone proteins
+        for c in p_coord:
+            coord.append(nMC.apply_transformation(c, tf[i]))
+        # add link coordinates to coord
+        coord.append(nMC.apply_transformation(nucl.l_coord, tf[i]))
+        # radius of histone proteins
+        radius = np.append(radius, np.ones(8) * 4)
+        # radius of linker-amino-acids
+        radius = np.append(radius, 15)
+        # colors of histone proteins and linker-amino-acids
+        colors += 'bbggryrym'           # color of DNA, histone proteins + linker-amino-acids
 
-    # create a list of lists
-    coord_d_of = np.vstack(coord_d_of)
-    coord_d = np.vstack(coord_d)
-    coord.append(coord_d_of)
-    # return
-    print(fileio.create_pov(filename, coord, radius=[10, 3], colors='oc', range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
+    print('colors: ', colors)
+    print('radius: ', radius)
+
+    print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])
