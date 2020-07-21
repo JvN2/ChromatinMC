@@ -274,6 +274,58 @@ def crossproduct(u, v):
     w3 = u[0] * v[1] - u[1] * v[0]
     return np.array([w1, w2, w3])
 
+def get_histones(coord, dyads, dna, nucl):
+    '''
+    projects histones coordinates onto every
+    nucleosome in fiber pose, appends these
+    coordinates to coord
+
+    Parameters
+    ----------
+    coord:  coordinates of helixPose
+    dyads:  indices of dyads in fiber
+    dna:    HelixPose
+    nucl:   nucleosome pose
+
+    Returns
+    -------
+    coord:  [[DNA], n*[histones],[linker-coord]] n = number of nucleosomes
+    radius: list
+    color:  string
+
+    '''
+    # coordinates of histone proteins
+    p_coord = []
+    for chain in nucl.chains:
+        if chain == 'DNA':
+            pass
+        else:
+            p_coord.append(nucl.chains[chain][2])
+
+    of_d_nucl = get_of(nucl.dna, nucl.dyad)                 # origin frame dyad in nucl pose
+    of_d_fiber = []                                         # origin frame of dyad in fiber
+    tf = []                                                 # transformation matrix
+    radius = [10]                                           # radius of DNA in POVray
+    colors = 'o'                                            # color of DNA
+    coord = [coord]
+    for i, d in enumerate(dyads):
+        # define origin frame of dyad in fiber
+        of_d_fiber.append((get_of(dna, d)))
+        # get transformation matrix of nucleosome dyad onto fiber dyad
+        tf.append(get_transformation(of_d_nucl, of_d_fiber[i]))
+        # apply transformation on coordinates of histone proteins
+        for c in p_coord:
+            coord.append(apply_transformation(c, tf[i]))
+        # add link coordinates to coord
+        coord.append(apply_transformation(nucl.l_coord, tf[i]))
+        # radius of histone proteins
+        radius = np.append(radius, np.ones(8) * 4)
+        # radius of linker-amino-acids
+        radius = np.append(radius, 15)
+        # colors of histone proteins and linker-amino-acids
+        colors += 'bbggryrym'           # color of DNA, histone proteins + linker-amino-acids
+
+    return coord, radius, colors
 
 class NucPose(object):
     '''
