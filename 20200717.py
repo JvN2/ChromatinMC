@@ -4,4 +4,4 @@
 
 import RunMC as runmc
 
-runmc.main(2, '4x189x1s25w2-1')
+runmc.main(2, '2x189x1s25w2-1')

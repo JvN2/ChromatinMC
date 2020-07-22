@@ -111,8 +111,10 @@ object {
         rgb = [1, 1, 0]
     elif color == 'c':  # cyan
         rgb = [0, 1, 1]
-    elif color == 'o' : # orange
+    elif color == 'o':  # orange
         rgb = [1, 0.65, 0]
+    elif color == 'z':  # black
+        rgb = [0, 0, 0]
     else:               # grey
         rgb = [0.7, 0.7, 0.7]
     rgb = np.array(rgb)

@@ -241,7 +241,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
 def main(n_steps, root):
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=1000)         # total number of basebairs in DNA string
+    pars.add('L_bp', value=500)         # total number of basebairs in DNA string
     pars.add('P_nm', value=50)          # Persistence length
     pars.add('n_nuc', value=4)          # number of nucleosomes in fiber
     pars.add('e_nuc_kT', value=34.7)
@@ -376,54 +376,52 @@ def main(n_steps, root):
 
     coord, radius, colors = nMC.get_histones(dna.coord, dyads, dna, nucl)
 
-    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)                 # origin frame dyad in nucl pose
-    of_d_fiber = []                                         # origin frame of dyad in fiber
-    tf = []                                                 # transformation matrix
+
     n_l_coord = []                                          # new coordinates of linker coordinates after transformation
-    for i, d in enumerate(dyads):
-        # define origin frame of dyad in fiber
-        of_d_fiber.append((nMC.get_of(dna, d)))
-        # get transformation matrix of nucleosome dyad onto fiber dyad
-        tf.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
+
+    tf_matrix = nMC.tf_dyad(dyads, dna, nucl)
+
+    for tf in tf_matrix:
         # apply transformation on coordinates of linker coordinates
-        n_l_coord.append(nMC.apply_transformation(nucl.l_coord, tf[i]))
+        for l in nucl.l_coord:
+            n_l_coord.append(nMC.apply_transformation(l, tf))
 
-    dyad_1 = 2
-    dyad_2 = 3
-    # orientation of tails and patches
-    # * (star) and - (no star) refers to hist_int
-    # '*-': top dyad 1 connects to bottom dyad 2
-    # '-*': top dyad 2 connects to bottom dyad 1
-    # '**': top dyad 1 connects to top dyad 2
-    # '--': bottom dyad 1 connects to bottom dyad 2
+    # dyad_1 = 0
+    # dyad_2 = 1
+    # # orientation of tails and patches
+    # # * (star) and - (no star) refers to hist_int
+    # # '*-': top dyad 1 connects to bottom dyad 2
+    # # '-*': top dyad 2 connects to bottom dyad 1
+    # # '**': top dyad 1 connects to top dyad 2
+    # # '--': bottom dyad 1 connects to bottom dyad 2
+    #
+    # orientation = '*-'
+    # hist_int = {'H2A': 0, 'H2A*': 1, 'H4': 2, 'H4*': 3}
+    # tail_star_1 = n_l_coord[dyad_1][hist_int['H4*']]
+    # tail_stripe_1 = n_l_coord[dyad_1][hist_int['H4']]
+    # tail_star_2 = n_l_coord[dyad_2][hist_int['H4*']]
+    # tail_stripe_2 = n_l_coord[dyad_2][hist_int['H4']]
+    #
+    # patch_star_1 = n_l_coord[dyad_1][hist_int['H2A*']]
+    # patch_stripe_1 = n_l_coord[dyad_1][hist_int['H2A']]
+    # patch_star_2 = n_l_coord[dyad_2][hist_int['H2A*']]
+    # patch_stripe_2 = n_l_coord[dyad_2][hist_int['H2A']]
+    #
+    # if orientation == '*-':
+    #     d_up = np.sqrt(np.sum((tail_star_1-patch_stripe_2)**2))
+    #     d_down = np.sqrt(np.sum((tail_stripe_2-patch_star_1)**2))
+    # elif orientation == '-*':
+    #     d_up = np.sqrt(np.sum((tail_stripe_1-patch_star_2)**2))
+    #     d_down = np.sqrt(np.sum((tail_star_2-patch_stripe_1)**2))
+    # elif orientation == '**':
+    #     d_up = np.sqrt(np.sum((tail_star_1-patch_star_2)**2))
+    #     d_down = np.sqrt(np.sum((tail_star_2-patch_star_1)**2))
+    # elif orientation == '--':
+    #     d_up = np.sqrt(np.sum((tail_stripe_1-patch_stripe_2)**2))
+    #     d_down = np.sqrt(np.sum((tail_stripe_2-patch_stripe_1)**2))
 
-    orientation = '*-'
-    hist_int = {'H2A': 0, 'H2A*': 1, 'H4': 2, 'H4*': 3}
-    tail_star_1 = n_l_coord[dyad_1][hist_int['H4*']]
-    tail_stripe_1 = n_l_coord[dyad_1][hist_int['H4']]
-    tail_star_2 = n_l_coord[dyad_2][hist_int['H4*']]
-    tail_stripe_2 = n_l_coord[dyad_2][hist_int['H4']]
-
-    patch_star_1 = n_l_coord[dyad_1][hist_int['H2A*']]
-    patch_stripe_1 = n_l_coord[dyad_1][hist_int['H2A']]
-    patch_star_2 = n_l_coord[dyad_2][hist_int['H2A*']]
-    patch_stripe_2 = n_l_coord[dyad_2][hist_int['H2A']]
-
-    if orientation == '*-':
-        d_up = np.sqrt(np.sum((tail_star_1-patch_stripe_2)**2))
-        d_down = np.sqrt(np.sum((tail_stripe_2-patch_star_1)**2))
-    elif orientation == '-*':
-        d_up = np.sqrt(np.sum((tail_stripe_1-patch_star_2)**2))
-        d_down = np.sqrt(np.sum((tail_star_2-patch_stripe_1)**2))
-    elif orientation == '**':
-        d_up = np.sqrt(np.sum((tail_star_1-patch_star_2)**2))
-        d_down = np.sqrt(np.sum((tail_star_2-patch_star_1)**2))
-    elif orientation == '--':
-        d_up = np.sqrt(np.sum((tail_stripe_1-patch_stripe_2)**2))
-        d_down = np.sqrt(np.sum((tail_stripe_2-patch_stripe_1)**2))
-
-    print('d up: ', d_up)
-    print('d down: ', d_down)
+    # print('d up: ', d_up)
+    # print('d down: ', d_down)
     # return
 
     print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
