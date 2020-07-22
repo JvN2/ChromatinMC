@@ -241,7 +241,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
 def main(n_steps, root):
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=1800)
+    pars.add('L_bp', value=500)
     pars.add('P_nm', value=50)
     pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
@@ -294,6 +294,7 @@ def main(n_steps, root):
     fmin_pN = 0.1
     fmax_pN = 10
     forces = np.linspace(fmin_pN, fmax_pN, n_steps / 2)
+    forces = [0]
 
     sample_forces = np.logspace(np.log10(fmin_pN), np.log10(fmax_pN), n_samples / 2)
     sample_indices = np.searchsorted(forces, sample_forces)
@@ -301,7 +302,7 @@ def main(n_steps, root):
 
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 100
+    dummy_steps = 10
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -376,8 +377,11 @@ def main(n_steps, root):
             previous_bp = bp
         basepairs = basepairs[::-1]
 
-    aMC.plot_fz(filename)
-    aMC.plot_gi(filename, force_range=[0.1, 1.5])
+    # aMC.plot_fz(filename)
+    # aMC.plot_gi(filename, force_range=[0.1, 1.5])
+    coord, radius, colors = nMC.get_histones(dna.coord, dyads, dna, nucl)
+    print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
+                            show=True, width_pix=1500))
     # fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, 0, -90])
     return
 

@@ -353,9 +353,9 @@ def create_pov(filename, coord, range_A=[1000, 1000], offset_A=[0, 0, 0], width_
     if radius is None:
         radius = np.append([10], (np.ones(8) * 4)) # radius of DNA and 8 histone proteins
         radius = np.append(radius, 3)   # radius of axis
-        radius = np.append(radius, 28)   # radius of link coordinates
+        radius = np.append(radius, (np.ones(4) * 28))   # radius of link coordinates
     if colors is None:
-        colors = 'kbbggryrycm'          # Color of DNA, H3*, H3, H4*, H4, H2A*, H2B, H2A, H2B, Axis, link_C
+        colors = 'kbbggryrycmomo'          # Color of DNA, H3*, H3, H4*, H4, H2A*, H2B, H2A, H2B, Axis, link_C
     if transparency is None:
         transparency = np.zeros(len(coord))
     filename = change_extension(filename, 'pov')
