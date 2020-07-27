@@ -273,81 +273,6 @@ def crossproduct(u, v):
     w3 = u[0] * v[1] - u[1] * v[0]
     return np.array([w1, w2, w3])
 
-def tf_dyad(dyads, dna, nucl):
-    '''
-    get transformation matrix for every dyad
-
-    Parameters
-    ----------
-    dyads:  indices of dyads in fiber
-    dna:    HelixPose
-    nucl:   nucleosome pose
-
-    Returns
-    -------
-    tf: transformation matrix, for each dyad
-
-    '''
-    of_d_nucl = get_of(nucl.dna, nucl.dyad)                 # origin frame dyad in nucl pose
-    of_d_fiber = []                                         # origin frame of dyad in fiber
-    tf = []                                                 # transformation matrix
-    for i, d in enumerate(dyads):
-        # define origin frame of dyad in fiber
-        of_d_fiber.append((get_of(dna, d)))
-        # get transformation matrix of nucleosome dyad onto fiber dyad
-        tf.append(get_transformation(of_d_nucl, of_d_fiber[i]))
-
-    return tf
-
-def get_histones(coord, dyads, dna, nucl):
-    '''
-    projects histones coordinates onto every
-    nucleosome in fiber pose, appends these
-    coordinates to coord
-
-    Parameters
-    ----------
-    coord:  coordinates of helixPose
-    dyads:  indices of dyads in fiber
-    dna:    HelixPose
-    nucl:   nucleosome pose
-
-    Returns
-    -------
-    coord:  [[DNA], n*[histones],[linker-coord]] n = number of nucleosomes
-    radius: list
-    color:  string
-
-    '''
-    # coordinates of histone proteins
-    p_coord = []
-    for chain in nucl.chains:
-        if chain == 'DNA':
-            pass
-        else:
-            p_coord.append(nucl.chains[chain][2])
-
-    radius = [10]                                           # radius of DNA in POVray
-    colors = 'o'                                            # color of DNA
-    coord = [coord]
-    tf = tf_dyad(dyads, dna, nucl)                          # transformation matrix for every dyad
-
-    for tfm in tf:
-        # apply transformation on coordinates of histone proteins
-        for c in p_coord:
-            coord.append(apply_transformation(c, tfm))
-        # add link coordinates to coord
-        for l in nucl.l_coord:
-            coord.append(apply_transformation(l, tfm))
-        # radius of histone proteins
-        radius = np.append(radius, np.ones(8) * 4)
-        # radius of linker-amino-acids
-        radius = np.append(radius, np.ones(4) * 15)
-        # colors of histone proteins and linker-amino-acids
-        colors += 'bbggryrymzmz'           # color of DNA, 8 histone proteins + linker-amino-acids (-,*,-,*)
-
-    return coord, radius, colors
-
 class NucPose(object):
     '''
     NucPose object storing the state info of the nucleosome.
@@ -504,8 +429,9 @@ def main():
     nuc_ax = apply_transformation(nuc.of, tf)
     n_coord.append(of2axis(nuc_ax))
 
-    # add link coordinates to n_coord
+    # add link coordinates to n_coords
     for l in nuc.l_coord:
+        l.resize(1,3)
         n_coord.append(apply_transformation(l, tf))
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
