@@ -33,6 +33,7 @@ import FiberMC as fMC
 import NucleosomeMC as nMC
 import analyzeMC as aMC
 import FileIO as fileio
+import Tails as tMC
 
 dna_step_file = locate_data_file('DNA_gau.npy')
 kT = 41.0
@@ -374,55 +375,9 @@ def main(n_steps, root):
         basepairs = basepairs[::-1]
 
 
-    coord, radius, colors = nMC.get_histones(dna.coord, dyads, dna, nucl)
+    coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
 
-
-    n_l_coord = []                                          # new coordinates of linker coordinates after transformation
-
-    tf_matrix = nMC.tf_dyad(dyads, dna, nucl)
-
-    for tf in tf_matrix:
-        # apply transformation on coordinates of linker coordinates
-        for l in nucl.l_coord:
-            n_l_coord.append(nMC.apply_transformation(l, tf))
-
-    # dyad_1 = 0
-    # dyad_2 = 1
-    # # orientation of tails and patches
-    # # * (star) and - (no star) refers to hist_int
-    # # '*-': top dyad 1 connects to bottom dyad 2
-    # # '-*': top dyad 2 connects to bottom dyad 1
-    # # '**': top dyad 1 connects to top dyad 2
-    # # '--': bottom dyad 1 connects to bottom dyad 2
-    #
-    # orientation = '*-'
-    # hist_int = {'H2A': 0, 'H2A*': 1, 'H4': 2, 'H4*': 3}
-    # tail_star_1 = n_l_coord[dyad_1][hist_int['H4*']]
-    # tail_stripe_1 = n_l_coord[dyad_1][hist_int['H4']]
-    # tail_star_2 = n_l_coord[dyad_2][hist_int['H4*']]
-    # tail_stripe_2 = n_l_coord[dyad_2][hist_int['H4']]
-    #
-    # patch_star_1 = n_l_coord[dyad_1][hist_int['H2A*']]
-    # patch_stripe_1 = n_l_coord[dyad_1][hist_int['H2A']]
-    # patch_star_2 = n_l_coord[dyad_2][hist_int['H2A*']]
-    # patch_stripe_2 = n_l_coord[dyad_2][hist_int['H2A']]
-    #
-    # if orientation == '*-':
-    #     d_up = np.sqrt(np.sum((tail_star_1-patch_stripe_2)**2))
-    #     d_down = np.sqrt(np.sum((tail_stripe_2-patch_star_1)**2))
-    # elif orientation == '-*':
-    #     d_up = np.sqrt(np.sum((tail_stripe_1-patch_star_2)**2))
-    #     d_down = np.sqrt(np.sum((tail_star_2-patch_stripe_1)**2))
-    # elif orientation == '**':
-    #     d_up = np.sqrt(np.sum((tail_star_1-patch_star_2)**2))
-    #     d_down = np.sqrt(np.sum((tail_star_2-patch_star_1)**2))
-    # elif orientation == '--':
-    #     d_up = np.sqrt(np.sum((tail_stripe_1-patch_stripe_2)**2))
-    #     d_down = np.sqrt(np.sum((tail_stripe_2-patch_stripe_1)**2))
-
-    # print('d up: ', d_up)
-    # print('d down: ', d_down)
-    # return
+    tMC.tail_dist(0,1,dyads,dna,nucl)
 
     print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
