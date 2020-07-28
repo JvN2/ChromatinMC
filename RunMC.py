@@ -242,9 +242,9 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
 def main(n_steps, root):
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=500)         # total number of basebairs in DNA string
-    pars.add('P_nm', value=50)          # Persistence length
-    pars.add('n_nuc', value=4)          # number of nucleosomes in fiber
+    pars.add('L_bp', value=1800)
+    pars.add('P_nm', value=50)
+    pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
 
     # Parameters that define the folded fiber
@@ -302,7 +302,7 @@ def main(n_steps, root):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 10       # was 100
+    dummy_steps = 100
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -351,8 +351,6 @@ def main(n_steps, root):
         if i == dummy_steps:
             e_stack_kT = pars['e_stack_kT'].value
             g_nuc_kT_all = []
-
-
 
         g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
                                            e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)

@@ -16,7 +16,6 @@ import numpy as np
 from helixmc.pose import HelixPose
 from helixmc.util import frames2params_3dna, frames2params
 import matplotlib.pyplot as plt
-import time
 # ChromatinMC modules:
 import FileIO as fileio
 
@@ -402,16 +401,14 @@ class NucPose(object):
         self.of = join_o_f(origin, np.transpose(frame))
         self.dyad_of = get_of(self.dna, self.dyad)
 
-        # get link coordinates Glu61 (H2A) and Asp24 (H4)
-        # make dictionary with locations of Glu61 and Asp24
+        #   get link coordinates Glu61 (H2A) and Asp24 (H4)
         int_dict = {'H2A': 60, 'H2A*': 60, 'H4': 23, 'H4*': 23}
         self.l_coord = []
         for locus in int_dict:
             self.l_coord.append(chains[locus][2][int_dict[locus]])
-        # print('before: ', self.l_coord)
-        # convert list into array
+        # #   make one list of linker coordinates
         # self.l_coord = np.asarray(self.l_coord)
-        # print('after: ', self.l_coord)
+
 
 def main():
     nuc = NucPose()
@@ -439,6 +436,7 @@ def main():
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
     print(fileio.create_pov(filename, n_coord, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
+
 
 if __name__ == '__main__':
     main()
