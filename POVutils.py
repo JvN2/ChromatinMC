@@ -112,6 +112,8 @@ object {
         rgb = [0, 1, 1]
     elif color == 'o':  # orange
         rgb = [1, 0.65, 0]
+    elif color == 'p':  # pink
+        rgb = [0.75,0,0.25]
     elif color == 'z':  # black
         rgb = [0, 0, 0]
     else:               # grey
