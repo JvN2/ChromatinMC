@@ -162,9 +162,12 @@ def tail_plot(tails):
     plt.rcParams.update({'font.size': 22})
 
     fig, ax = plt.subplots()
-    ax.plot(dist_up_nm, color=(1,0,1), marker='o', label='tail up', markersize=12, linestyle='')
-    ax.plot(dist_down_nm, color=(0.75,0,0.25), marker='o', label='tail down', markersize=12, linestyle='')
-
+    # # if orientation is '*-':
+    # ax.plot(dist_up_nm, color=(1,0,1), marker='o', label='tail up', markersize=12, linestyle='')
+    # ax.plot(dist_down_nm, color=(0.75,0,0.25), marker='o', label='tail down', markersize=12, linestyle='')
+    # if orientation is '-*':
+    ax.plot(dist_up_nm, color=(0.75,0,0.25), marker='o', label='tail up', markersize=12, linestyle='')
+    ax.plot(dist_down_nm, color=(1,0,1), marker='o', label='tail down', markersize=12, linestyle='')
     # default plot parameters
 
     # ax.spines['top'].set_visible(False)
