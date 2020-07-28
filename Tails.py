@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 # ChromatinMC modules:
 import NucleosomeMC as nMC
@@ -75,7 +76,7 @@ def get_histones(coord, dyads, dna, nucl):
         # radius of linker-amino-acids
         radius = np.append(radius, np.ones(4) * 15)
         # colors of histone proteins and linker-amino-acids
-        colors += 'bbggryrymzmz'           # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
+        colors += 'bbggryrypmpm'           # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
 
     return coord, radius, colors
 
@@ -139,7 +140,36 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
         d_up = np.sqrt(np.sum((tail_stripe_1-patch_stripe_2)**2))
         d_down = np.sqrt(np.sum((tail_stripe_2-patch_stripe_1)**2))
 
-    print('d up: ', d_up)
-    print('d down: ', d_down)
+    # print('d up: ', d_up)
+    # print('d down: ', d_down)
 
     return d_up, d_down
+
+def tail_plot(tails):
+
+    dist_up_nm = [d[0]/10 for d in tails]
+    dist_down_nm = [d[1]/10 for d in tails]
+
+    plt.rcParams.update({'font.size': 22})
+
+    fig, ax = plt.subplots()
+    ax.plot(dist_up_nm, color=(1,0,1), marker='o', label='tail up', markersize=12, linestyle='')
+    ax.plot(dist_down_nm, color=(0.75,0,0.25), marker='o', label='tail down', markersize=12, linestyle='')
+
+    # default plot parameters
+
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
+    # spines = ax.spines
+    # [i.set_linewidth(2) for i in spines.values()]
+    plt.setp(ax.spines.values(), linewidth=2)
+    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
+    # ax.xaxis.set_tick_params(width=5, size=5)
+    # ax.yaxis.set_tick_params(width=5, size=10)
+    ax.set_ylim(bottom=0)
+
+    plt.legend(frameon=False)
+    plt.ylabel('Distance (nm)')
+    plt.xlabel('Iteration (#)')
+    plt.show()
+    return
