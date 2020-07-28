@@ -242,7 +242,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
 def main(n_steps, root):
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=1800)
+    pars.add('L_bp', value=500)
     pars.add('P_nm', value=50)
     pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
@@ -302,7 +302,7 @@ def main(n_steps, root):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 100
+    dummy_steps = 10
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)

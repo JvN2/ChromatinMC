@@ -175,9 +175,9 @@ def tail_plot(tails):
     ax.tick_params(which='both', width=2, length=5, top=True, right=True)
     # ax.xaxis.set_tick_params(width=5, size=5)
     # ax.yaxis.set_tick_params(width=5, size=10)
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(bottom=0, top=(max(dist_down_nm)+5))
 
-    plt.legend(frameon=False)
+    plt.legend(frameon=False, loc=3)
     plt.ylabel('Distance (nm)')
     plt.xlabel('Iteration (#)')
     plt.show()
