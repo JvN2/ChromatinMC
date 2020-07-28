@@ -338,6 +338,7 @@ def main(n_steps, root):
         e_stack_kT = 1e3 * kT
 
     g_nuc_kT_all = []
+    tails = []
 
     pars['F_pN'].value = 0
     pars['z_nm'].value = dna.coord_terminal[2] / 10
@@ -351,9 +352,13 @@ def main(n_steps, root):
             e_stack_kT = pars['e_stack_kT'].value
             g_nuc_kT_all = []
 
+
+
         g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
                                            e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         g_nuc_kT_all.append(g_nuc_kT)
+
+        tails.append(tMC.tail_dist(0, 1, dyads, dna, nucl))
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
 
@@ -374,12 +379,10 @@ def main(n_steps, root):
             previous_bp = bp
         basepairs = basepairs[::-1]
 
-
     coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
-
-    tMC.tail_dist(0,1,dyads,dna,nucl)
-
     print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
+
+    tMC.tail_plot(tails)
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])

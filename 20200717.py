@@ -1,7 +1,7 @@
-import NucleosomeMC as nmc
-
-nmc.main()
-
-# import RunMC as runmc
+# import NucleosomeMC as nmc
 #
-# runmc.main(2, '2x189x1s25w2-1')
+# nmc.main()
+
+import RunMC as runmc
+
+runmc.main(2, '2x189x1s25w2-1')
