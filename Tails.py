@@ -146,7 +146,16 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
     return d_up, d_down
 
 def tail_plot(tails):
+    """
 
+    Parameters
+    ----------
+    tails: distance between tails of two nucleosomes
+
+    Returns
+    -------
+
+    """
     dist_up_nm = [d[0]/10 for d in tails]
     dist_down_nm = [d[1]/10 for d in tails]
 
