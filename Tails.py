@@ -1,8 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os as os
+import pandas as pd
 
 # ChromatinMC modules:
 import NucleosomeMC as nMC
+import FileIO as fileio
 
 def tf_dyad(dyads, dna, nucl):
     '''
@@ -145,7 +148,7 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
 
     return d_up, d_down
 
-def tail_plot(tails):
+def tail_plot(filename, tails, save=False):
     """
 
     Parameters
@@ -166,8 +169,8 @@ def tail_plot(tails):
     # ax.plot(dist_up_nm, color=(1,0,1), marker='o', label='tail up', markersize=12, linestyle='')
     # ax.plot(dist_down_nm, color=(0.75,0,0.25), marker='o', label='tail down', markersize=12, linestyle='')
     # if orientation is '-*':
-    ax.plot(dist_up_nm, color=(0.75,0,0.25), marker='o', label='tail up', markersize=12, linestyle='')
-    ax.plot(dist_down_nm, color=(1,0,1), marker='o', label='tail down', markersize=12, linestyle='')
+    ax.plot(dist_up_nm, color=(0.75,0,0.25), marker='o', label='tail up', markersize=2, linestyle='')
+    ax.plot(dist_down_nm, color=(1,0,1), marker='o', label='tail down', markersize=2, linestyle='')
     # default plot parameters
 
     # ax.spines['top'].set_visible(False)
@@ -180,8 +183,18 @@ def tail_plot(tails):
     # ax.yaxis.set_tick_params(width=5, size=10)
     ax.set_ylim(bottom=0, top=(max(dist_down_nm)+5))
 
-    plt.legend(frameon=False, loc=3)
+    plt.legend(frameon=False, loc=3, markerscale=6)
     plt.ylabel('Distance (nm)')
     plt.xlabel('Iteration (#)')
+
+    if save:
+        # save plot
+        fig.set_size_inches(16, 9)
+        fig.savefig(fileio.change_extension(filename, 'tails.png'), dpi=300)
+        # # save tails in xlsx
+        df = pd.DataFrame(np.array(tails)/10, columns = ['Tail up (nm)', 'Tail down (nm)'])
+        df.to_excel(fileio.change_extension(filename, 'tails.xlsx'), index = False, header=True)
+
     plt.show()
+
     return

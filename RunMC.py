@@ -292,17 +292,17 @@ def main(n_steps, root):
     filename = fileio.get_filename(incr=True, root=root, ext='xlsx', )
     # print('\n>>> Current file: {}'.format(filename))
     n_samples = 250
-    fmin_pN = 0.1
-    fmax_pN = 10
+    fmin_pN = 0
+    fmax_pN = 0
     forces = np.linspace(fmin_pN, fmax_pN, n_steps / 2)
-    forces = [0]
+    # forces = [0]
 
     sample_forces = np.logspace(np.log10(fmin_pN), np.log10(fmax_pN), n_samples / 2)
     sample_indices = np.searchsorted(forces, sample_forces)
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 10
+    dummy_steps = 100
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -357,9 +357,7 @@ def main(n_steps, root):
         g_nuc_kT_all.append(g_nuc_kT)
 
         tails.append(tMC.tail_dist(0, 1, dyads, dna, nucl, orientation='-*'))
-        coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
-        print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
-                                show=True, width_pix=1500))
+
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
 
         if i in sample_indices:
@@ -383,7 +381,7 @@ def main(n_steps, root):
     coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
     print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
-    tMC.tail_plot(tails)
+    tMC.tail_plot(filename, tails, save=True)
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])
