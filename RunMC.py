@@ -242,7 +242,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
 def main(n_steps, root):
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=600)
+    pars.add('L_bp', value=500)
     pars.add('P_nm', value=50)
     pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
@@ -295,7 +295,6 @@ def main(n_steps, root):
     fmin_pN = 0
     fmax_pN = 0
     forces = np.linspace(fmin_pN, fmax_pN, n_steps / 2)
-    # forces = [0]
 
     sample_forces = np.logspace(np.log10(fmin_pN), np.log10(fmax_pN), n_samples / 2)
     sample_indices = np.searchsorted(forces, sample_forces)
@@ -378,10 +377,13 @@ def main(n_steps, root):
         basepairs = basepairs[::-1]
 
 
-    coord, radius, colors = tMC.get_histones(dna.coord, dyads[0:1], dna, nucl)
+    coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
     print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
 
     tMC.tail_plot(filename, tails, save=True)
+
+    for dyad in dyads:
+        nuc_cms.append(nMC.get_nuc_of(dna_coord, dna_frames, dyad, nucl)[0])
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])

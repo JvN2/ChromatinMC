@@ -68,7 +68,8 @@ def get_histones(coord, dyads, dna, nucl):
             p_coord.append(nucl.chains[chain][2])
 
     radius = [10]  # radius of DNA in POVray
-    colors = 'o'  # color of DNA
+    # colors = 'o'  # color of DNA
+    colors = 'k'
     coord = [coord]
     tf = tf_dyad(dyads, dna, nucl)  # transformation matrix for every dyad
 
@@ -82,9 +83,11 @@ def get_histones(coord, dyads, dna, nucl):
         # radius of histone proteins
         radius = np.append(radius, np.ones(8) * 4)
         # radius of linker-amino-acids
-        radius = np.append(radius, np.ones(4) * 15)
+        # radius = np.append(radius, np.ones(4) * 15)
+        radius = np.append(radius, np.ones(4) * 5)
         # colors of histone proteins and linker-amino-acids
-        colors += 'bbggryrypmpm'  # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
+        # colors += 'bbggryrypmpm'  # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
+        colors += 'zzzzzzzzpmpm'
 
     return coord, radius, colors
 
