@@ -2,10 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os as os
 import pandas as pd
+from pynverse import inversefunc
 
 # ChromatinMC modules:
 import NucleosomeMC as nMC
 import FileIO as fileio
+
+kT = 41.0
+
 
 def tf_dyad(dyads, dna, nucl):
     '''
@@ -22,9 +26,9 @@ def tf_dyad(dyads, dna, nucl):
     tf: transformation matrix, for each dyad
 
     '''
-    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)             # origin frame dyad in nucl pose
-    of_d_fiber = []                                         # origin frame of dyad in fiber
-    tf = []                                                 # transformation matrix
+    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)  # origin frame dyad in nucl pose
+    of_d_fiber = []  # origin frame of dyad in fiber
+    tf = []  # transformation matrix
     for i, d in enumerate(dyads):
         # define origin frame of dyad in fiber
         of_d_fiber.append((nMC.get_of(dna, d)))
@@ -32,6 +36,7 @@ def tf_dyad(dyads, dna, nucl):
         tf.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
 
     return tf
+
 
 def get_histones(coord, dyads, dna, nucl):
     # type: (numpy.ndarray, numpy.ndarray, helixmc.pose.HelixPose, NucleosomeMC.NucPose) -> object
@@ -62,10 +67,10 @@ def get_histones(coord, dyads, dna, nucl):
         else:
             p_coord.append(nucl.chains[chain][2])
 
-    radius = [10]                                           # radius of DNA in POVray
-    colors = 'o'                                            # color of DNA
+    radius = [10]  # radius of DNA in POVray
+    colors = 'o'  # color of DNA
     coord = [coord]
-    tf = tf_dyad(dyads, dna, nucl)                          # transformation matrix for every dyad
+    tf = tf_dyad(dyads, dna, nucl)  # transformation matrix for every dyad
 
     for tfm in tf:
         # apply transformation on coordinates of histone proteins
@@ -79,9 +84,10 @@ def get_histones(coord, dyads, dna, nucl):
         # radius of linker-amino-acids
         radius = np.append(radius, np.ones(4) * 15)
         # colors of histone proteins and linker-amino-acids
-        colors += 'bbggryrypmpm'           # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
+        colors += 'bbggryrypmpm'  # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
 
     return coord, radius, colors
+
 
 def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
     """
@@ -104,7 +110,7 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
     if orientation == None:
         orientation = '*-'
     l_coord = np.asarray(nucl.l_coord)
-    n_l_coord = []                                          # new coordinates of linker coordinates after transformation
+    n_l_coord = []  # new coordinates of linker coordinates after transformation
     tf_matrix = tf_dyad(dyads, dna, nucl)
 
     for tf in tf_matrix:
@@ -131,22 +137,23 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
     patch_stripe_2 = n_l_coord[dyad_2][hist_int['H2A']]
 
     if orientation == '*-':
-        d_up = np.sqrt(np.sum((tail_star_1-patch_stripe_2)**2))
-        d_down = np.sqrt(np.sum((tail_stripe_2-patch_star_1)**2))
+        d_up = np.sqrt(np.sum((tail_star_1 - patch_stripe_2) ** 2))
+        d_down = np.sqrt(np.sum((tail_stripe_2 - patch_star_1) ** 2))
     elif orientation == '-*':
-        d_up = np.sqrt(np.sum((tail_stripe_1-patch_star_2)**2))
-        d_down = np.sqrt(np.sum((tail_star_2-patch_stripe_1)**2))
+        d_up = np.sqrt(np.sum((tail_stripe_1 - patch_star_2) ** 2))
+        d_down = np.sqrt(np.sum((tail_star_2 - patch_stripe_1) ** 2))
     elif orientation == '**':
-        d_up = np.sqrt(np.sum((tail_star_1-patch_star_2)**2))
-        d_down = np.sqrt(np.sum((tail_star_2-patch_star_1)**2))
+        d_up = np.sqrt(np.sum((tail_star_1 - patch_star_2) ** 2))
+        d_down = np.sqrt(np.sum((tail_star_2 - patch_star_1) ** 2))
     elif orientation == '--':
-        d_up = np.sqrt(np.sum((tail_stripe_1-patch_stripe_2)**2))
-        d_down = np.sqrt(np.sum((tail_stripe_2-patch_stripe_1)**2))
+        d_up = np.sqrt(np.sum((tail_stripe_1 - patch_stripe_2) ** 2))
+        d_down = np.sqrt(np.sum((tail_stripe_2 - patch_stripe_1) ** 2))
 
     # print('d up: ', d_up)
     # print('d down: ', d_down)
 
     return d_up, d_down
+
 
 def tail_plot(filename, tails, save=False):
     """
@@ -159,8 +166,8 @@ def tail_plot(filename, tails, save=False):
     -------
 
     """
-    dist_up_nm = [d[0]/10 for d in tails]
-    dist_down_nm = [d[1]/10 for d in tails]
+    dist_up_nm = [d[0] / 10 for d in tails]
+    dist_down_nm = [d[1] / 10 for d in tails]
 
     plt.rcParams.update({'font.size': 22})
 
@@ -169,8 +176,8 @@ def tail_plot(filename, tails, save=False):
     # ax.plot(dist_up_nm, color=(1,0,1), marker='o', label='tail up', markersize=12, linestyle='')
     # ax.plot(dist_down_nm, color=(0.75,0,0.25), marker='o', label='tail down', markersize=12, linestyle='')
     # if orientation is '-*':
-    ax.plot(dist_up_nm, color=(0.75,0,0.25), marker='o', label='tail up', markersize=2, linestyle='')
-    ax.plot(dist_down_nm, color=(1,0,1), marker='o', label='tail down', markersize=2, linestyle='')
+    ax.plot(dist_up_nm, color=(0.75, 0, 0.25), marker='o', label='tail up', markersize=2, linestyle='')
+    ax.plot(dist_down_nm, color=(1, 0, 1), marker='o', label='tail down', markersize=2, linestyle='')
     # default plot parameters
 
     # ax.spines['top'].set_visible(False)
@@ -181,9 +188,9 @@ def tail_plot(filename, tails, save=False):
     ax.tick_params(which='both', width=2, length=5, top=True, right=True)
     # ax.xaxis.set_tick_params(width=5, size=5)
     # ax.yaxis.set_tick_params(width=5, size=10)
-    ax.set_ylim(bottom=0, top=(max(dist_down_nm)+5))
+    ax.set_ylim(bottom=0, top=(max(dist_down_nm) + 5))
 
-    plt.legend(frameon=False, loc=3, markerscale=6)
+    plt.legend(frameon=False, loc=1, markerscale=6)
     plt.ylabel('Distance (nm)')
     plt.xlabel('Iteration (#)')
 
@@ -192,9 +199,66 @@ def tail_plot(filename, tails, save=False):
         fig.set_size_inches(16, 9)
         fig.savefig(fileio.change_extension(filename, 'tails.png'), dpi=300)
         # # save tails in xlsx
-        df = pd.DataFrame(np.array(tails)/10, columns = ['Tail up (nm)', 'Tail down (nm)'])
-        df.to_excel(fileio.change_extension(filename, 'tails.xlsx'), index = False, header=True)
+        df = pd.DataFrame(np.array(tails) / 10, columns=['Tail up (nm)', 'Tail down (nm)'])
+        df.to_excel(fileio.change_extension(filename, 'tails.xlsx'), index=False, header=True)
 
     plt.show()
 
     return
+
+
+def coth(x):
+    return np.cosh(x) / np.sinh(x)
+
+
+def Langevin(x):
+    return (coth(x) - 1.0 / x)
+
+
+def fFJC(z_nm, L_nm=6.8, b_nm=0.22, S_pN=630.0):
+    """
+
+    Parameters
+    ----------
+    z_nm:   Distance (nm)
+    L_nm:   Contour length (nm)
+    b_nm:   Kuhn length (nm)
+    S_pN:   elastic constant (k) * b_nm
+
+    Returns
+    -------
+    f_pN
+
+    """
+    kT = 41.0
+    z = lambda f_pN: L_nm * (Langevin(b_nm*f_pN/kT)+f_pN/S_pN)
+    f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7),1e4], image=[0,1e4])
+
+    return f_pN
+
+
+def gFJC(f_pN, L_nm=6.8, b_nm=0.22, S_pN=630.0):
+    """
+
+    Parameters
+    ----------
+    f_pN:       force
+    k_pN__nm:   stiffness(pN/nm)
+    L_nm:       contour length
+    b_nm:       Kuhnlength
+    S_pN:       Stretch modulus (pN)
+    EFJC:       extended freely jointed chain
+
+    Returns
+    -------
+
+    """
+    g_pNnm = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
+        np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
+
+    # Remove offset at f = 0
+    f_pN = 1e-9
+    g_pNnm -= -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
+        np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
+
+    return g_pNnm / kT
