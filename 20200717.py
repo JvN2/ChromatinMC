@@ -4,8 +4,8 @@
 #
 import RunMC as runmc
 
-runmc.main(200, '2x167x1s25w2-1')
-#
+runmc.main(28, '3x197x1s25w2-1')
+
 # import numpy as np
 # import matplotlib.pyplot as plt
 # from pynverse import inversefunc

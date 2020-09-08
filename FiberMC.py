@@ -145,7 +145,6 @@ def get_casted_fiber_frames(par):
         The coordinates of the dyad frames
     '''
     fiber_start = par['fiber_start'].value
-    print(fiber_start)
     r = par['diameter_A'].value / 2.0 - 65.0
     nld = par['nld_A'].value
     rise = par['rise_A'].value

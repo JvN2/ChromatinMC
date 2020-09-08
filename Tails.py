@@ -39,7 +39,7 @@ def tf_dyad(dyads, dna, nucl):
 
 
 def get_histones(coord, dyads, dna, nucl):
-    # type: (numpy.ndarray, numpy.ndarray, helixmc.pose.HelixPose, NucleosomeMC.NucPose) -> object
+
     '''
     projects histones coordinates onto every
     nucleosome in fiber pose, appends these
@@ -54,7 +54,7 @@ def get_histones(coord, dyads, dna, nucl):
 
     Returns
     -------
-    coord:  [[DNA], n*[histones],[linker-coord]] n = number of nucleosomes
+    coord:  [[DNA], n*[[histones],[linker-coord]]] n = number of nucleosomes
     radius: list
     color:  string
 
@@ -68,8 +68,7 @@ def get_histones(coord, dyads, dna, nucl):
             p_coord.append(nucl.chains[chain][2])
 
     radius = [10]  # radius of DNA in POVray
-    # colors = 'o'  # color of DNA
-    colors = 'k'
+    colors = 'v'  # color of DNA
     coord = [coord]
     tf = tf_dyad(dyads, dna, nucl)  # transformation matrix for every dyad
 
@@ -84,10 +83,10 @@ def get_histones(coord, dyads, dna, nucl):
         radius = np.append(radius, np.ones(8) * 4)
         # radius of linker-amino-acids
         # radius = np.append(radius, np.ones(4) * 15)
-        radius = np.append(radius, np.ones(4) * 5)
+        radius = np.append(radius, np.ones(4) * 13)
         # colors of histone proteins and linker-amino-acids
         # colors += 'bbggryrypmpm'  # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
-        colors += 'zzzzzzzzpmpm'
+        colors += 'kkggrkrkpmpm'
 
     return coord, radius, colors
 
@@ -111,7 +110,7 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
 
     """
     if orientation == None:
-        orientation = '*-'
+        orientation = '-*'
     l_coord = np.asarray(nucl.l_coord)
     n_l_coord = []  # new coordinates of linker coordinates after transformation
     tf_matrix = tf_dyad(dyads, dna, nucl)
@@ -209,6 +208,55 @@ def tail_plot(filename, tails, save=False):
 
     return
 
+def dist_plot(filename, dist, save=False):
+    """
+
+    Parameters
+    ----------
+    dist: distance between center of mass of two nucleosomes
+
+    Returns
+    -------
+
+    """
+    dist = [d / 10 for d in dist]
+
+    plt.rcParams.update({'font.size': 22})
+
+    fig, ax = plt.subplots()
+    # # if orientation is '*-':
+    # ax.plot(dist_up_nm, color=(1,0,1), marker='o', label='tail up', markersize=12, linestyle='')
+    # ax.plot(dist_down_nm, color=(0.75,0,0.25), marker='o', label='tail down', markersize=12, linestyle='')
+    # if orientation is '-*':
+    ax.plot(dist, color=(1, 0, 1), marker='o', label='distance', markersize=5, linestyle='')
+    # default plot parameters
+
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
+    # spines = ax.spines
+    # [i.set_linewidth(2) for i in spines.values()]
+    plt.setp(ax.spines.values(), linewidth=2)
+    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
+    # ax.xaxis.set_tick_params(width=5, size=5)
+    # ax.yaxis.set_tick_params(width=5, size=10)
+    # ax.set_ylim(bottom=0, top=(max(dist) + 5))
+
+    # plt.legend(frameon=False, loc=0, markerscale=6)
+    plt.ylabel('Distance (nm)')
+    plt.xlabel('Iteration (#)')
+
+    if save:
+        # save plot
+        fig.set_size_inches(16, 9)
+        fig.savefig(fileio.change_extension(filename, 'cms_dist.png'), dpi=300)
+        # # save tails in xlsx
+        df = pd.DataFrame(np.array(dist), columns=['cms distance (nm)'])
+        df.to_excel(fileio.change_extension(filename, 'cms_dist.xlsx'), index=False, header=True)
+
+    plt.show()
+
+    return
+
 
 def coth(x):
     return np.cosh(x) / np.sinh(x)
@@ -218,34 +266,12 @@ def Langevin(x):
     return (coth(x) - 1.0 / x)
 
 
-def fFJC(z_nm, L_nm=6.8, b_nm=0.22, S_pN=630.0):
+def gFJC(z_nm, L_nm=6.8, b_nm=0.22, S_pN=630.0):
     """
 
     Parameters
     ----------
-    z_nm:   Distance (nm)
-    L_nm:   Contour length (nm)
-    b_nm:   Kuhn length (nm)
-    S_pN:   elastic constant (k) * b_nm
-
-    Returns
-    -------
-    f_pN
-
-    """
-    kT = 41.0
-    z = lambda f_pN: L_nm * (Langevin(b_nm*f_pN/kT)+f_pN/S_pN)
-    f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7),1e4], image=[0,1e4])
-
-    return f_pN
-
-
-def gFJC(f_pN, L_nm=6.8, b_nm=0.22, S_pN=630.0):
-    """
-
-    Parameters
-    ----------
-    f_pN:       force
+    z_nm:       distance
     k_pN__nm:   stiffness(pN/nm)
     L_nm:       contour length
     b_nm:       Kuhnlength
@@ -256,6 +282,10 @@ def gFJC(f_pN, L_nm=6.8, b_nm=0.22, S_pN=630.0):
     -------
 
     """
+    kT = 41.0
+    z = lambda f_pN: L_nm * (Langevin(b_nm * f_pN / kT) + f_pN / S_pN)
+    f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 1e4], image=[0, 1e4])
+
     g_pNnm = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
 
@@ -265,3 +295,67 @@ def gFJC(f_pN, L_nm=6.8, b_nm=0.22, S_pN=630.0):
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
 
     return g_pNnm / kT
+
+def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
+    left_dyad = np.argmax(dyads > moving_bp) - 1
+    right_dyad = left_dyad + fiber_start
+    g = 0
+
+    if 0 <= left_dyad < len(dyads) - fiber_start:
+        t_up, t_down = tail_dist(left_dyad, right_dyad, dyads, dna, nucl)
+        g += gFJC(t_up)
+        g += gFJC(t_down)
+
+    if fiber_start is 2 and left_dyad >= 1:
+        left_dyad -= 1
+        right_dyad -= 1
+        t_up, t_down = tail_dist(left_dyad, right_dyad, dyads, dna, nucl)
+        g += gFJC(t_up)
+        g += gFJC(t_down)
+
+    return g
+
+def dist_cms(dna,dyads,nucl):
+    """
+
+    Parameters
+    ----------
+    dna:    helixpose
+    dyads:  indices of all dyads
+    nucl:   nucleosomepose
+
+    Returns
+    -------
+    distance between center of masses of nucleosomes
+    """
+    nuc_cms = []
+    for dyad in dyads:
+        nuc_cms.append(nMC.get_nuc_of(dna.coord, dna.frames, dyad, nucl)[0])
+
+    dist = np.sqrt(np.sum((nuc_cms[0] - nuc_cms[1]) ** 2))
+
+    return dist
+
+def origin(dna, dyads, nucl, coord):
+    """
+    first nucleosome is positioned in origin after transformation
+
+    Parameters
+    ----------
+    dna:    Helixpose
+    dyads:  indices of all dyads
+    nucl:   Nucleosomepose
+    coord:  coordinates of basepairs (and histones)
+
+    Returns
+    -------
+    f_coord: transformed coordinates
+    """
+    nuc_cms = nMC.get_nuc_of(dna.coord, dna.frames, dyads[0], nucl)
+    # coord.append(nMC.of2axis(nuc_cms))
+    f_coord = []
+    tf = nMC.get_transformation(nuc_cms, target=np.asarray([[0, 0, 0], [-1, 0, 0], [0, 1, 0], [0, 0, -1]]))
+    for c in coord:
+        f_coord.append(nMC.apply_transformation(c, tf))
+
+    return f_coord

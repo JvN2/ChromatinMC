@@ -217,20 +217,22 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
         frames = dna.frames
         old_score = [
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            # score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
             score_work(coord, force),
-            score_surface(coord),
+            # score_surface(coord),
             0]
         dna.update(bp, new_step_params)
         coord = dna.coord
         frames = dna.frames
         new_score = [
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            # score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
             score_work(coord, force),
-            score_surface(coord),
+            # score_surface(coord),
             0]
     if util.MC_acpt_rej(np.sum(old_score), np.sum(new_score)):
         return True
@@ -242,7 +244,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
 def main(n_steps, root):
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=500)
+    pars.add('L_bp', value=428)
     pars.add('P_nm', value=50)
     pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
@@ -288,6 +290,10 @@ def main(n_steps, root):
         pars['fiber_start'].value = int(iterpar[2])
         pars['e_stack_kT'].value = iterpar[3]
         pars['e_wrap_kT'].value = iterpar[4]
+
+    # create optimal fiber length for each NRL, with 14 bp handles
+    pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
+    print('L_bp: ', pars['L_bp'].value)
 
     filename = fileio.get_filename(incr=True, root=root, ext='xlsx', )
     # print('\n>>> Current file: {}'.format(filename))
@@ -338,6 +344,8 @@ def main(n_steps, root):
 
     g_nuc_kT_all = []
     tails = []
+    dist = []
+
 
     pars['F_pN'].value = 0
     pars['z_nm'].value = dna.coord_terminal[2] / 10
@@ -356,6 +364,7 @@ def main(n_steps, root):
         g_nuc_kT_all.append(g_nuc_kT)
 
         tails.append(tMC.tail_dist(0, 1, dyads, dna, nucl, orientation='-*'))
+        dist.append(tMC.dist_cms(dna, dyads, nucl))
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
 
@@ -377,13 +386,17 @@ def main(n_steps, root):
         basepairs = basepairs[::-1]
 
 
+
     coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
-    print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150], show=True, width_pix=1500))
+    print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
+                            show=True, width_pix=1500))
 
+    f_coord = tMC.origin(dna, dyads, nucl, coord)
+    print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
+                            range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
+
+    tMC.dist_plot(filename, dist, save=True)
     tMC.tail_plot(filename, tails, save=True)
-
-    for dyad in dyads:
-        nuc_cms.append(nMC.get_nuc_of(dna_coord, dna_frames, dyad, nucl)[0])
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])

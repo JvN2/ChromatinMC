@@ -88,7 +88,7 @@ union {
     return HeaderTxt
 
 
-def add_sphere(pov_image, coord, radius=4, color='k', transperancy=0.0):
+def add_sphere(pov_image, coord, radius=4, color='k', transperancy=0.5):
     POVTxt = """
 object {
    sphere { < #xyz# > #R# }
@@ -116,8 +116,10 @@ object {
         rgb = [0.75,0,0.25]
     elif color == 'z':  # black
         rgb = [0, 0, 0]
+    elif color == 'v': # pale grey
+        rgb = [0.6, 0.6, 0.6]
     else:               # grey
-        rgb = [0.7, 0.7, 0.7]
+        rgb = [0.8, 0.8, 0.8]
     rgb = np.array(rgb)
 
     POVTxt = POVTxt.replace('#xyz#', '%f, %f, %f' % (coord[0], coord[1], coord[2]))
