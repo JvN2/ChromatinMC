@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os as os
 import pandas as pd
 from pynverse import inversefunc
+from helixmc import util
+import glob
 
 # ChromatinMC modules:
 import NucleosomeMC as nMC
@@ -359,3 +361,25 @@ def origin(dna, dyads, nucl, coord):
         f_coord.append(nMC.apply_transformation(c, tf))
 
     return f_coord
+
+
+def get_npz(filename):
+    files = glob.glob(fileio.change_extension(filename, '\*.npz'))
+    print(files[2])
+    return
+
+
+def npz2params(file):
+
+    data = np.load(file)
+    params = data['params']
+
+    return params
+
+def params2coords(params):
+
+    dr, frames = util.params2data(params)
+    coords = [util.dr2coords(dr)]
+
+    return coords
+

@@ -384,19 +384,20 @@ def main(n_steps, root):
                     dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
             previous_bp = bp
         basepairs = basepairs[::-1]
-
-
-
-    coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
-    print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
-                            show=True, width_pix=1500))
-
-    f_coord = tMC.origin(dna, dyads, nucl, coord)
-    print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
-                            range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
-
-    tMC.dist_plot(filename, dist, save=True)
-    tMC.tail_plot(filename, tails, save=True)
+    #
+    tMC.get_npz(filename)
+    #
+    #
+    # coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
+    # print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
+    #                         show=True, width_pix=1500))
+    #
+    # f_coord = tMC.origin(dna, dyads, nucl, coord)
+    # print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
+    #                         range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
+    #
+    # tMC.dist_plot(filename, dist, save=True)
+    # tMC.tail_plot(filename, tails, save=True)
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])
