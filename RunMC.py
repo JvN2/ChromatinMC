@@ -12,6 +12,7 @@ warnings.filterwarnings("ignore")
 
 import matplotlib as mpl
 import math
+import pandas as pd
 
 try:
     mpl.use(u'TkAgg')
@@ -307,7 +308,7 @@ def main(n_steps, root):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 10
+    dummy_steps = 100
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -397,6 +398,10 @@ def main(n_steps, root):
 
     tMC.dist_plot(filename, dist, save=True)
     tMC.tail_plot(filename, tails, save=True)
+    # tMC.tail_plot2(filename, tails[:100], save=True)
+
+    df = pd.DataFrame(np.array(dna.coord) / 10)
+    df.to_excel(fileio.change_extension(filename, 'coord.xlsx'), index=False, header=True)
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])
