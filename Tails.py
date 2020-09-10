@@ -338,7 +338,7 @@ def dist_cms(dna,dyads,nucl):
 
     return dist
 
-def origin(dna, dyads, nucl, coord):
+def origin(dna, dyads, nucl, coord, axis=False):
     """
     first nucleosome is positioned in origin after transformation
 
@@ -354,9 +354,10 @@ def origin(dna, dyads, nucl, coord):
     f_coord: transformed coordinates
     """
     nuc_cms = nMC.get_nuc_of(dna.coord, dna.frames, dyads[0], nucl)
-    # coord.append(nMC.of2axis(nuc_cms))
+    if axis == True:
+        coord.append(nMC.of2axis(nuc_cms))
     f_coord = []
-    tf = nMC.get_transformation(nuc_cms, target=np.asarray([[0, 0, 0], [-1, 0, 0], [0, 1, 0], [0, 0, -1]]))
+    tf = nMC.get_transformation(nuc_cms, target=np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]))
     for c in coord:
         f_coord.append(nMC.apply_transformation(c, tf))
 

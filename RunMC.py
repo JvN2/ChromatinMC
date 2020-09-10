@@ -345,13 +345,15 @@ def main(n_steps, root):
     g_nuc_kT_all = []
     tails = []
     dist = []
-
+    numElems = 5
+    idx = np.round(np.linspace(0, len(forces) - 1, numElems))
 
     pars['F_pN'].value = 0
     pars['z_nm'].value = dna.coord_terminal[2] / 10
 
     previous_bp = 0
     datafile = fileio.get_filename(sub=True, incr=True, ext='npz')
+    paramsfile = datafile
 
     fileio.report_progress(n_steps, title='RunMC', init=True)
     for i, force in enumerate(forces):
@@ -375,9 +377,13 @@ def main(n_steps, root):
             pars['F_pN'].value = force
             pars['z_nm'].value = dna.coord_terminal[2] / 10
             fileio.write_xlsx_row(datafile, i - dummy_steps, pars, report_file=filename)
-            dna.write2disk(datafile)
+            # dna.write2disk(datafile)
             g_nuc_kT_all = []
-            datafile = fileio.increment_file_nr(datafile)
+            # datafile = fileio.increment_file_nr(datafile)
+
+        if i in idx:
+            dna.write2disk(paramsfile)
+            paramsfile = fileio.increment_file_nr(paramsfile)
 
         for bp in basepairs:
             MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params,
@@ -385,16 +391,19 @@ def main(n_steps, root):
             previous_bp = bp
         basepairs = basepairs[::-1]
     #
-    tMC.get_npz(filename)
+    # tMC.get_npz(filename)
     #
     #
-    # coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
+    coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
     # print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
     #                         show=True, width_pix=1500))
-    #
-    # f_coord = tMC.origin(dna, dyads, nucl, coord)
-    # print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
-    #                         range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
+
+    f_coord = tMC.origin(dna, dyads, nucl, coord, axis=True)
+    colors += 'z'
+    radius = np.append(radius, 10)
+    print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
+                            range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
+
     #
     # tMC.dist_plot(filename, dist, save=True)
     # tMC.tail_plot(filename, tails, save=True)
