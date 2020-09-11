@@ -334,7 +334,7 @@ def dist_cms(dna,dyads,nucl):
     for dyad in dyads:
         nuc_cms.append(nMC.get_nuc_of(dna.coord, dna.frames, dyad, nucl)[0])
 
-    dist = np.sqrt(np.sum((nuc_cms[0] - nuc_cms[1]) ** 2))
+    dist = np.sqrt(np.sum((nuc_cms[2] - nuc_cms[4]) ** 2))
 
     return dist
 
@@ -366,8 +366,8 @@ def origin(dna, dyads, nucl, coord, axis=False):
 
 def get_npz(filename):
     files = glob.glob(fileio.change_extension(filename, '\*.npz'))
-    print(files[2])
-    return
+
+    return files
 
 
 def npz2params(file):
