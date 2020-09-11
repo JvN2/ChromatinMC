@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os as os
 import pandas as pd
 from pynverse import inversefunc
+from helixmc import util
+import glob
 
 # ChromatinMC modules:
 import NucleosomeMC as nMC
@@ -332,11 +334,11 @@ def dist_cms(dna,dyads,nucl):
     for dyad in dyads:
         nuc_cms.append(nMC.get_nuc_of(dna.coord, dna.frames, dyad, nucl)[0])
 
-    dist = np.sqrt(np.sum((nuc_cms[0] - nuc_cms[1]) ** 2))
+    dist = np.sqrt(np.sum((nuc_cms[2] - nuc_cms[4]) ** 2))
 
     return dist
 
-def origin(dna, dyads, nucl, coord):
+def origin(dna, dyads, nucl, coord, axis=False):
     """
     first nucleosome is positioned in origin after transformation
 
@@ -352,10 +354,33 @@ def origin(dna, dyads, nucl, coord):
     f_coord: transformed coordinates
     """
     nuc_cms = nMC.get_nuc_of(dna.coord, dna.frames, dyads[0], nucl)
-    # coord.append(nMC.of2axis(nuc_cms))
+    if axis == True:
+        coord.append(nMC.of2axis(nuc_cms))
     f_coord = []
-    tf = nMC.get_transformation(nuc_cms, target=np.asarray([[0, 0, 0], [-1, 0, 0], [0, 1, 0], [0, 0, -1]]))
+    tf = nMC.get_transformation(nuc_cms, target=np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]))
     for c in coord:
         f_coord.append(nMC.apply_transformation(c, tf))
 
     return f_coord
+
+
+def get_npz(filename):
+    files = glob.glob(fileio.change_extension(filename, '\*.npz'))
+
+    return files
+
+
+def npz2params(file):
+
+    data = np.load(file)
+    params = data['params']
+
+    return params
+
+def params2coords(params):
+
+    dr, frames = util.params2data(params)
+    coords = [util.dr2coords(dr)]
+
+    return coords
+

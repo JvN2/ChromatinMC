@@ -346,13 +346,16 @@ def main(n_steps, root):
     g_nuc_kT_all = []
     tails = []
     dist = []
-
+    # number of npz files that will be stored during simulation
+    num_npz = 8
+    idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
 
     pars['F_pN'].value = 0
     pars['z_nm'].value = dna.coord_terminal[2] / 10
 
     previous_bp = 0
     datafile = fileio.get_filename(sub=True, incr=True, ext='npz')
+    paramsfile = fileio.change_extension(datafile, 'parms_0001.npz')
 
     fileio.report_progress(n_steps, title='RunMC', init=True)
     for i, force in enumerate(forces):
@@ -364,7 +367,7 @@ def main(n_steps, root):
                                            e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         g_nuc_kT_all.append(g_nuc_kT)
 
-        tails.append(tMC.tail_dist(0, 1, dyads, dna, nucl, orientation='-*'))
+        tails.append(tMC.tail_dist(1, 3, dyads, dna, nucl, orientation='-*'))
         dist.append(tMC.dist_cms(dna, dyads, nucl))
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
@@ -376,23 +379,40 @@ def main(n_steps, root):
             pars['F_pN'].value = force
             pars['z_nm'].value = dna.coord_terminal[2] / 10
             fileio.write_xlsx_row(datafile, i - dummy_steps, pars, report_file=filename)
-            dna.write2disk(datafile)
+            # dna.write2disk(datafile)
             g_nuc_kT_all = []
             datafile = fileio.increment_file_nr(datafile)
+
+        if i in idx:
+            dna.write2disk(paramsfile)
+            paramsfile = fileio.increment_file_nr(paramsfile)
 
         for bp in basepairs:
             MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params,
                     dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
             previous_bp = bp
         basepairs = basepairs[::-1]
+    #
+    npz_f = tMC.get_npz(filename)
+    params = []
+    for f, file in enumerate(npz_f):
+        params.append(tMC.npz2params(file))
 
 
+    params_m = np.mean(params,axis=0)
+    coord_mean = tMC.origin(dna, dyads, nucl, tMC.params2coords(params_m), axis=False)
 
-    coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
-    print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
+    print(fileio.create_pov(filename, coord_mean, radius=[10], colors='p', range_A=[750, 750], offset_A=[0, 0, 150],
                             show=True, width_pix=1500))
 
-    f_coord = tMC.origin(dna, dyads, nucl, coord)
+    #
+    coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
+    # print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
+    #                         show=True, width_pix=1500))
+
+    f_coord = tMC.origin(dna, dyads, nucl, coord, axis=False)
+    colors += 'z'
+    radius = np.append(radius, 10)
     print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
                             range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
 
