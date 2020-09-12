@@ -116,7 +116,7 @@ object {
         rgb = [0.75,0,0.25]
     elif color == 'z':  # black
         rgb = [0, 0, 0]
-    elif color == 'v': # pale grey
+    elif color == 'v': # earl grey
         rgb = [0.6, 0.6, 0.6]
     else:               # grey
         rgb = [0.8, 0.8, 0.8]

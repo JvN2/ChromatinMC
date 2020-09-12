@@ -353,7 +353,7 @@ def create_pov(filename, coord, range_A=[1000, 1000], offset_A=[0, 0, 0], width_
     if radius is None:
         radius = np.append([10], (np.ones(8) * 4))
         radius = np.append(radius, 3)
-        radius = np.append(radius, (np.ones(4) * 28))
+        radius = np.append(radius, (np.ones(4) * 14))
     if colors is None:
         colors = 'kbbggryrycpmpm'
     if transparency is None:

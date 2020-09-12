@@ -345,10 +345,11 @@ def main(n_steps, root):
 
     g_nuc_kT_all = []
     tails = []
-    dist = []
+    cms_dist = []
     # number of npz files that will be stored during simulation
-    num_npz = 8
+    num_npz = 50
     idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
+
 
     pars['F_pN'].value = 0
     pars['z_nm'].value = dna.coord_terminal[2] / 10
@@ -368,7 +369,7 @@ def main(n_steps, root):
         g_nuc_kT_all.append(g_nuc_kT)
 
         tails.append(tMC.tail_dist(1, 3, dyads, dna, nucl, orientation='-*'))
-        dist.append(tMC.dist_cms(dna, dyads, nucl))
+        cms_dist.append(tMC.dist_cms(dna, dyads, nucl))
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
 
@@ -400,9 +401,9 @@ def main(n_steps, root):
 
 
     params_m = np.mean(params,axis=0)
-    coord_mean = tMC.origin(dna, dyads, nucl, tMC.params2coords(params_m), axis=False)
+    coord_mean = tMC.origin(dna, dyads, nucl, tMC.params2coords(params_m), filename, axis=False)
 
-    print(fileio.create_pov(filename, coord_mean, radius=[10], colors='p', range_A=[750, 750], offset_A=[0, 0, 150],
+    print(fileio.create_pov(filename, coord_mean, radius=[10], colors='v', range_A=[750, 750], offset_A=[0, 0, 150],
                             show=True, width_pix=1500))
 
     #
@@ -410,18 +411,15 @@ def main(n_steps, root):
     # print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
     #                         show=True, width_pix=1500))
 
-    f_coord = tMC.origin(dna, dyads, nucl, coord, axis=False)
-    colors += 'z'
-    radius = np.append(radius, 10)
+    f_coord = tMC.origin(dna, dyads, nucl, coord, filename, axis=False)
+    # colors += 'z'
+    # radius = np.append(radius, 10)
     print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
                             range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
 
-    tMC.dist_plot(filename, dist, save=True)
-    tMC.tail_plot(filename, tails, save=True)
+    tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
+    tMC.tail_plot(filename, tails[:][dummy_steps:], save=True)
     # tMC.tail_plot2(filename, tails[:100], save=True)
-
-    df = pd.DataFrame(np.array(dna.coord) / 10)
-    df.to_excel(fileio.change_extension(filename, 'coord.xlsx'), index=False, header=True)
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])

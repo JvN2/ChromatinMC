@@ -87,8 +87,7 @@ def get_histones(coord, dyads, dna, nucl):
         # radius = np.append(radius, np.ones(4) * 15)
         radius = np.append(radius, np.ones(4) * 13)
         # colors of histone proteins and linker-amino-acids
-        # colors += 'bbggryrypmpm'  # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
-        colors += 'kkggrkrkpmpm'
+        colors += 'bbggryrypmpm'  # color of DNA, 8 histone proteins + H2A, H2A*, H4, H4*
 
     return coord, radius, colors
 
@@ -192,7 +191,7 @@ def tail_plot(filename, tails, save=False):
     ax.tick_params(which='both', width=2, length=5, top=True, right=True)
     # ax.xaxis.set_tick_params(width=5, size=5)
     # ax.yaxis.set_tick_params(width=5, size=10)
-    ax.set_ylim(bottom=0, top=(max(dist_down_nm) + 5))
+    # ax.set_ylim(bottom=0, top=(max(dist_down_nm) + 5))
 
     plt.legend(frameon=False, loc=1, markerscale=6)
     plt.ylabel('Distance (nm)')
@@ -338,7 +337,7 @@ def dist_cms(dna,dyads,nucl):
 
     return dist
 
-def origin(dna, dyads, nucl, coord, axis=False):
+def origin(dna, dyads, nucl, coord, filename, axis=False):
     """
     first nucleosome is positioned in origin after transformation
 
@@ -353,13 +352,30 @@ def origin(dna, dyads, nucl, coord, axis=False):
     -------
     f_coord: transformed coordinates
     """
-    nuc_cms = nMC.get_nuc_of(dna.coord, dna.frames, dyads[0], nucl)
+
+    nuc_cms = []
+    for d, dyad in enumerate(dyads):
+        nuc_cms.append(nMC.get_nuc_of(dna.coord, dna.frames, dyads[d], nucl))
+
     if axis == True:
-        coord.append(nMC.of2axis(nuc_cms))
+        coord.append(nMC.of2axis(nuc_cms[0]))
+
     f_coord = []
-    tf = nMC.get_transformation(nuc_cms, target=np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]))
+    tf = nMC.get_transformation(nuc_cms[0], target=np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]))
     for c in coord:
         f_coord.append(nMC.apply_transformation(c, tf))
+
+    # save dna coords to s_coord
+    s_coord = f_coord[0]
+    df = pd.DataFrame(np.array(s_coord) / 10)
+    df.to_excel(fileio.change_extension(filename, 'coord.xlsx'), index=False, header=True)
+
+    nuc_cms_c = []
+    for n, cms in enumerate(nuc_cms):
+        nuc_cms_c.append(nMC.apply_transformation(nuc_cms[n][0], tf)[0])
+
+    dfc = pd.DataFrame(np.array(nuc_cms_c) / 10)
+    dfc.to_excel(fileio.change_extension(filename, 'coord_cms.xlsx'), index=False, header=True)
 
     return f_coord
 
