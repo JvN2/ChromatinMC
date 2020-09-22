@@ -2,10 +2,9 @@
 #
 # nmc.main()
 #
-# import RunMC as runmc
-#
-# runmc.main(20, '6x167x2s25w2-1')
+import RunMC as runmc
 
-import Tails as tMC
+runmc.main(2, '2x197x1s25w2-1')
 
-tMC.expected_value()
+
+

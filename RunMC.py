@@ -308,7 +308,7 @@ def main(n_steps, root):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 100
+    dummy_steps = 10
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -347,7 +347,7 @@ def main(n_steps, root):
     tails = []
     cms_dist = []
     # number of npz files that will be stored during simulation
-    num_npz = 50
+    num_npz = 5
     idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
 
 
@@ -368,7 +368,7 @@ def main(n_steps, root):
                                            e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         g_nuc_kT_all.append(g_nuc_kT)
 
-        tails.append(tMC.tail_dist(1, 3, dyads, dna, nucl, orientation='-*'))
+        tails.append(tMC.tail_dist(0, 1, dyads, dna, nucl, orientation='-*'))
         cms_dist.append(tMC.dist_cms(dna, dyads, nucl))
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
@@ -394,32 +394,27 @@ def main(n_steps, root):
             previous_bp = bp
         basepairs = basepairs[::-1]
     #
-    npz_f = tMC.get_npz(filename)
-    params = []
-    for f, file in enumerate(npz_f):
-        params.append(tMC.npz2params(file))
 
-
-    params_m = np.mean(params,axis=0)
-    coord_mean = tMC.origin(dna, dyads, nucl, tMC.params2coords(params_m), filename, axis=False)
+    coord_mean = tMC.coord_mean(filename, dyads, nucl)
+    # coord_mean, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
 
     print(fileio.create_pov(filename, coord_mean, radius=[10], colors='v', range_A=[750, 750], offset_A=[0, 0, 150],
                             show=True, width_pix=1500))
 
+    # #
+    # coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
+    # # print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
+    # #                         show=True, width_pix=1500))
     #
-    coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
-    # print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
-    #                         show=True, width_pix=1500))
-
-    f_coord = tMC.origin(dna, dyads, nucl, coord, filename, axis=False)
-    # colors += 'z'
-    # radius = np.append(radius, 10)
-    print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
-                            range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
-
-    tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
-    tMC.tail_plot(filename, tails[:][dummy_steps:], save=True)
-    # tMC.tail_plot2(filename, tails[:100], save=True)
+    # f_coord = tMC.origin(dna, dyads, nucl, coord, filename, axis=False)
+    # # colors += 'z'
+    # # radius = np.append(radius, 10)
+    # print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
+    #                         range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
+    #
+    # tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
+    # tMC.tail_plot(filename, tails[:][dummy_steps:], save=True)
+    # # tMC.tail_plot2(filename, tails[:100], save=True)
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])

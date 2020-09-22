@@ -370,7 +370,7 @@ def dist_cms(dna,dyads,nucl):
     for dyad in dyads:
         nuc_cms.append(nMC.get_nuc_of(dna.coord, dna.frames, dyad, nucl)[0])
 
-    dist = np.sqrt(np.sum((nuc_cms[2] - nuc_cms[4]) ** 2))
+    dist = np.sqrt(np.sum((nuc_cms[0] - nuc_cms[1]) ** 2))
 
     return dist
 
@@ -417,19 +417,6 @@ def origin(dna, dyads, nucl, coord, filename, axis=False):
     return f_coord
 
 
-def get_npz(filename):
-    files = glob.glob(fileio.change_extension(filename, '\*.npz'))
-
-    return files
-
-
-def npz2params(file):
-
-    data = np.load(file)
-    params = data['params']
-
-    return params
-
 def params2coords(params):
 
     dr, frames = util.params2data(params)
@@ -437,3 +424,58 @@ def params2coords(params):
 
     return coords
 
+
+def coord_mean(filename, dyads, nucl):
+    # get list of npz files in filename folder
+    npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+    params = []
+    # params contains all 6 parameters for each basepair out of every npz file
+    for f, file in enumerate(npz_f):
+        data = np.load(file)
+        params.append(data['params'])
+
+    # get mean value of every parameter for each basepair
+    params_m = np.mean(params,axis=0)
+
+    # get cms of nucleosomes
+    dr, frame = util.params2data(params_m)
+    coords = params2coords(params_m)
+
+    dyad_coord = coords[0][dyads[0]]
+    dyad_frame = frame[dyads[0]]
+
+    dyad_of = np.concatenate(([dyad_coord], dyad_frame.T+dyad_coord), axis=0)
+    target = np.concatenate(([dyad_coord], dyad_frame.T+dyad_coord), axis=0)
+    tf = nMC.get_transformation(dyad_of, target)
+
+    ori = np.mean(coords[0][nucl.fixed[4:-4]], axis=0)
+    Nx = dyad_coord - ori
+    Nx = Nx / np.linalg.norm(Nx)
+    Nz = np.mean(coords[0][nucl.fixed[:7], :], axis=0) - np.mean(coords[0][nucl.fixed[7:], :], axis=0)
+    Ny = np.cross(Nx, Nz)
+    Ny = Ny / np.linalg.norm(Nz)
+    Nz = np.cross(Nx, Ny)
+    Nz = Nz / np.linalg.norm(Nz)
+    frame = np.array([Nx, Ny, Nz])
+    nucl_of = nMC.join_o_f(ori, np.transpose(frame))
+    nuc_cms = nMC.apply_transformation(nucl_of, tf)
+
+    f_coord = []
+    tf2 = nMC.get_transformation(nuc_cms,
+                                target=np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]))
+    for c in coords[0]:
+        f_coord.append(nMC.apply_transformation(c, tf2))
+
+    # save dna coords to s_coord
+    s_coord = f_coord[0]
+    df = pd.DataFrame(np.array(s_coord) / 10)
+    df.to_excel(fileio.change_extension(filename, 'coord.xlsx'), index=False, header=True)
+
+    # nuc_cms_c = []
+    # for n, cms in enumerate(nuc_cms):
+    #     nuc_cms_c.append(nMC.apply_transformation(nuc_cms[n][0], tf)[0])
+    #
+    # dfc = pd.DataFrame(np.array(nuc_cms_c) / 10)
+    # dfc.to_excel(fileio.change_extension(filename, 'coord_cms.xlsx'), index=False, header=True)
+
+    return f_coord
