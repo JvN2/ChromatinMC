@@ -266,6 +266,43 @@ def coth(x):
 def Langevin(x):
     return (coth(x) - 1.0 / x)
 
+def expected_value():
+
+    z = np.linspace(0, 10, 1000)
+    force = np.linspace(1e-9, 100, 100)
+    z_m = []
+    L_nm = 6.8
+    b_nm = 0.22
+    S_pN = 630
+
+    for f in force:
+
+        g_f = -(kT * L_nm / b_nm) * (np.log((b_nm * f) / (kT)) - np.log(
+            np.sinh((b_nm * f) / (kT)))) + L_nm * f ** 2 / (2 * S_pN)
+
+        # Remove offset at f = 0
+        f_pN = 1e-9
+        g_f -= -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
+            np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
+
+        g_f /= kT
+
+        p_f_z = np.exp(-(g_f - f * z) / kT)
+        p_f_z /= sum(p_f_z)
+        z_m.append(sum(z * p_f_z))
+
+    plt.rcParams.update({'font.size': 22})
+
+    fig, ax = plt.subplots()
+    ax.plot(z_m, force, color=(0.75, 0, 0.25), linewidth=5)
+
+    plt.setp(ax.spines.values(), linewidth=2)
+    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
+
+    plt.ylabel('Force (pN)')
+    plt.xlabel('<z>')
+
+    plt.show()
 
 def gFJC(z_nm, L_nm=6.8, b_nm=0.22, S_pN=630.0):
     """
