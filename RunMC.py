@@ -349,7 +349,9 @@ def main(n_steps, root):
     # number of npz files that will be stored during simulation
     num_npz = 50
     idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
-
+    # index of nucleosomes that will be tracked
+    nuc_1 = 0
+    nuc_2 = 2
 
     pars['F_pN'].value = 0
     pars['z_nm'].value = dna.coord_terminal[2] / 10
@@ -368,8 +370,8 @@ def main(n_steps, root):
                                            e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         g_nuc_kT_all.append(g_nuc_kT)
 
-        tails.append(tMC.tail_dist(1, 3, dyads, dna, nucl, orientation='-*'))
-        cms_dist.append(tMC.dist_cms(dna, dyads, nucl))
+        tails.append(tMC.tail_dist(nuc_1, nuc_2, dyads, dna, nucl, orientation='-*'))
+        cms_dist.append(tMC.dist_cms(nuc_1, nuc_2, dna, dyads, nucl))
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
 
@@ -398,7 +400,6 @@ def main(n_steps, root):
     params = []
     for f, file in enumerate(npz_f):
         params.append(tMC.npz2params(file))
-
 
     params_m = np.mean(params,axis=0)
     coord_mean = tMC.origin(dna, dyads, nucl, tMC.params2coords(params_m), filename, axis=False)

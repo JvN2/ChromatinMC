@@ -106,8 +106,8 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
 
     Returns
     -------
-    d_up:           distance from dyad 1 to dyad 2
-    d_down:         distance from dyad 2 to dyad 1
+    d_up:           distance from dyad 1 to dyad 2 (nm)
+    d_down:         distance from dyad 2 to dyad 1 (nm)
 
     """
     if orientation == None:
@@ -152,8 +152,8 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
         d_up = np.sqrt(np.sum((tail_stripe_1 - patch_stripe_2) ** 2))
         d_down = np.sqrt(np.sum((tail_stripe_2 - patch_stripe_1) ** 2))
 
-    # print('d up: ', d_up)
-    # print('d down: ', d_down)
+    d_up /= 10
+    d_down /= 10
 
     return d_up, d_down
 
@@ -169,8 +169,8 @@ def tail_plot(filename, tails, save=False):
     -------
 
     """
-    dist_up_nm = [d[0] / 10 for d in tails]
-    dist_down_nm = [d[1] / 10 for d in tails]
+    dist_up_nm = [d[0] for d in tails]
+    dist_down_nm = [d[1] for d in tails]
 
     plt.rcParams.update({'font.size': 22})
 
@@ -202,7 +202,7 @@ def tail_plot(filename, tails, save=False):
         fig.set_size_inches(16, 9)
         fig.savefig(fileio.change_extension(filename, 'tails.png'), dpi=300)
         # # save tails in xlsx
-        df = pd.DataFrame(np.array(tails) / 10, columns=['Tail up (nm)', 'Tail down (nm)'])
+        df = pd.DataFrame(np.array(tails), columns=['Tail up (nm)', 'Tail down (nm)'])
         df.to_excel(fileio.change_extension(filename, 'tails.xlsx'), index=False, header=True)
 
     plt.show()
@@ -220,7 +220,7 @@ def dist_plot(filename, dist, save=False):
     -------
 
     """
-    dist = [d / 10 for d in dist]
+    # dist = [d / 10 for d in dist]
 
     plt.rcParams.update({'font.size': 22})
 
@@ -316,7 +316,7 @@ def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
 
     return g
 
-def dist_cms(dna,dyads,nucl):
+def dist_cms(dyad_1, dyad_2, dna,dyads,nucl):
     """
 
     Parameters
@@ -327,15 +327,15 @@ def dist_cms(dna,dyads,nucl):
 
     Returns
     -------
-    distance between center of masses of nucleosomes
+    distance between center of masses of nucleosomes (nm)
     """
     nuc_cms = []
     for dyad in dyads:
         nuc_cms.append(nMC.get_nuc_of(dna.coord, dna.frames, dyad, nucl)[0])
 
-    dist = np.sqrt(np.sum((nuc_cms[2] - nuc_cms[4]) ** 2))
+    dist = np.sqrt(np.sum((nuc_cms[dyad_1] - nuc_cms[dyad_2]) ** 2))
 
-    return dist
+    return dist/10
 
 def origin(dna, dyads, nucl, coord, filename, axis=False):
     """
