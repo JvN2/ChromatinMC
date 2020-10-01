@@ -209,17 +209,36 @@ def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_
 
 
 def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, dyads, nucl,
-            random_step, e_wrap_kT, e_stack_kT, fiber_start):
+            random_step, e_wrap_kT, e_stack_kT, fiber_start, Tail_switch = False):
     old_step_params = dna.params[bp]
     new_step_params = get_new_step_params(bp, previous_bp, dna, dyads, nucl, random_step)
     if np.array_equal(old_step_params, new_step_params):
         return False
+    elif Tail_switch == False: # use old stacking
+        coord = dna.coord
+        frames = dna.frames
+        old_score = [
+            score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
+            score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            score_exclusion(coord, frames, dyads, nucl),
+            score_work(coord, force),
+            # score_surface(coord),
+            0]
+        dna.update(bp, new_step_params)
+        coord = dna.coord
+        frames = dna.frames
+        new_score = [
+            score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
+            score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+            score_exclusion(coord, frames, dyads, nucl),
+            score_work(coord, force),
+            # score_surface(coord),
+            0]
     else:
         coord = dna.coord
         frames = dna.frames
         old_score = [
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            # score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
             tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
             score_work(coord, force),
@@ -230,7 +249,6 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
         frames = dna.frames
         new_score = [
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            # score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
             tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
             score_work(coord, force),
@@ -353,6 +371,7 @@ def main(n_steps, root):
     # indices of nucleosomes of which distances will be calculated in tails and cms_dist
     nuc_1 = 0
     nuc_2 = 1
+    Tail_switch = False
 
 
     pars['F_pN'].value = 0
@@ -367,6 +386,7 @@ def main(n_steps, root):
         if i == dummy_steps:
             e_stack_kT = pars['e_stack_kT'].value
             g_nuc_kT_all = []
+            Tail_switch = True
 
         g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
                                            e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
@@ -394,7 +414,7 @@ def main(n_steps, root):
 
         for bp in basepairs:
             MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params,
-                    dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start)
+                    dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start, Tail_switch)
             previous_bp = bp
         basepairs = basepairs[::-1]
 
@@ -418,9 +438,10 @@ def main(n_steps, root):
     print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
                             range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
     #
-    # tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
+    tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
     # tMC.tail_plot(filename, tails[:][dummy_steps:], save=True)
-    # # tMC.tail_plot2(filename, tails[:100], save=True)
+    tMC.tail_plot(filename, tails, save=True)
+
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])

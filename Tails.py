@@ -5,12 +5,13 @@ import pandas as pd
 from pynverse import inversefunc
 from helixmc import util
 import glob
+import math
 
 # ChromatinMC modules:
 import NucleosomeMC as nMC
 import FileIO as fileio
 
-kT = 4.10
+
 
 
 def tf_dyad(dyads, dna, nucl):
@@ -274,19 +275,19 @@ def Langevin(x):
 def expected_value():
 
     # z = np.linspace(0, 20, 100)
-    f_pN = np.linspace(1e-9, 2000, 100)
+    f_pN = np.linspace(1e-9, 4800, 100)
     # f_pN = 50
     z_m = []
     L_nm = 6.8
-    b_nm = np.linspace(1e-7, 0.6, 6)
+    b_nm = 0.6
     S_pN = 6300
     g_old = []
     # g = (L_nm * kT / b_nm) * (-np.log(f_pN) + np.log(np.tanh(b_nm * f_pN / kT))
     #                           + np.log(np.cosh(b_nm * f_pN / kT)) + (b_nm * f_pN**2) / (2 * kT * S_pN))
     # #
-    for b in b_nm:
-        g_old.append(-(kT * L_nm / b) * (np.log((b * f_pN) / (kT)) - np.log(
-        np.sinh((b * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN))
+    # for b in b_nm:
+    #     g_old.append(-(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
+    #     np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN))
 
     #
     # g_wiki = (kT * L_nm / b_nm)*(np.log(4*np.pi*np.sinh(f_pN * b_nm / kT))
@@ -294,10 +295,9 @@ def expected_value():
     #
     # g_meng = L_nm * (f_pN - np.sqrt(f_pN * kT/(2 * b_nm)) + (f_pN**2)/(2 * S_pN))
 
-    z = []
-    for b in b_nm:
-        z.append(L_nm * (Langevin(b * f_pN / kT) + f_pN / S_pN))
-    print(z)
+    # z = []
+    # for b in b_nm:
+    z = (L_nm * (Langevin(b_nm * f_pN / kT) + f_pN / S_pN))
 
 
     # coef = np.polyfit(z, f_pN, 6)
@@ -308,8 +308,8 @@ def expected_value():
     # g = np.exp(f_pN/1000)
     # g -= np.min(g)
     # g /= kT
-    g_old -= np.min(g_old)
-    g_old /= kT
+    # g_old -= np.min(g_old)
+    # g_old /= kT
     # g_wiki -= np.min(g_wiki)
     # g_wiki /= kT
     # g_meng -= np.min(g_meng)
@@ -363,11 +363,12 @@ def expected_value():
     # return
 
     fig, ax = plt.subplots()
-    # ax.plot(z, f_pN, color=(0.75, 0, 0.25), linewidth=5)
+    ax.plot(f_pN, z, color=(0.75, 0, 0.25), linewidth=5)
+    ax.plot(f_pN, (0.018 * f_pN), label = 'Fitted function')
     # ax.plot(p(np.linspace(0,20)), color=(0.28, 0, 0.75), linewidth=5, label='poly')
     # ax.plot(z, g, color=(0.75, 0, 0.25), linewidth=5, label='intergral-z')
-    for i, b in enumerate(b_nm):
-        ax.plot(z[i], g_old [i], linewidth=5, label=str(b))
+    # for i, b in enumerate(b_nm):
+    #     ax.plot(f_pN, g_old[i], linewidth=5, label=str(b))
     # ax.plot(g_old[1], color=(0.28, 0, 0.10), linewidth=5, label='b = 0.1')
     # ax.plot(g_old[2], color=(0.28, 0, 0.20), linewidth=5, label='b = 0.2')
     # ax.plot(g_old[3], color=(0.28, 0, 0.30), linewidth=5, label='b = 0.3')
@@ -380,20 +381,54 @@ def expected_value():
 
     # plt.ylabel('Force (pN)')
     # # plt.xlabel('<z>')
-    plt.xlabel('z (nm)')
-    plt.ylabel('G(kt)')
-    # plt.xlabel('Force (pN)')
+    # plt.xlabel('z (nm)')
+    plt.ylabel('z (nm)')
+    # plt.ylabel('G(kt)')
+    plt.xlabel('Force (pN)')
     plt.show()
 
-def fFJC(z_nm, L_nm=6.8, b_nm=0.22, S_pN=6300.0):
+# initial parameters
+L_nm = 6.8      # contourlength H4 tial
+b_nm = 0.6      # kuhnlength H4 tail
+S_pN = 6300.0   # stiffnes H4 tail
+kT = 4.10
+# force on H4 tials
+f_array = np.linspace(0.01, 4800, 1e6)
+# corresponding extension of H4 tials, for search
+z_array = L_nm * (Langevin(b_nm * f_array / kT) + f_array / S_pN)
+
+
+def fFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
 
     z = lambda f: L_nm * (Langevin(b_nm * f / kT) + f / S_pN)
     f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 15000], image=[0, 15000])
 
     return f_pN
 
+def find_nearest(array, value):
+    """
 
-def gFJC(z_nm, L_nm=6.8, b_nm=0.01, S_pN=6300.0):
+    Parameters
+    ----------
+    array
+    value
+
+    Returns
+    -------
+    index in array of nearest value
+    nearest value in array
+
+    """
+
+
+    idx = np.searchsorted(array, value, side="left")
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx - 1]) < math.fabs(value - array[idx])):
+        return idx - 1, array[idx - 1]
+    else:
+        return idx, array[idx]
+
+def gFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
+
     """
 
     Parameters
@@ -409,10 +444,13 @@ def gFJC(z_nm, L_nm=6.8, b_nm=0.01, S_pN=6300.0):
     -------
 
     """
-    z = lambda f: L_nm * (Langevin(b_nm * f / kT) + f / S_pN)
-    f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 15000], image=[0, 15000])
+    # z = lambda f: L_nm * (Langevin(b_nm * f / kT) + f / S_pN)
+    # f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 4800], image=[0, 4800])
+    indx, z = find_nearest(z_array, z_nm)
+    f_pN = f_array[indx]
 
     print('z_nm: ', z_nm)
+    print('z: ', z)
     print('f_pn: ', f_pN)
     g_pNnm = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
