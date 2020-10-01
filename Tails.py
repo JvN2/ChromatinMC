@@ -161,8 +161,10 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
 
     # print('d up: ', d_up)
     # print('d down: ', d_down)
+    d_up /= 10
+    d_down /= 10
 
-    return d_up/10, d_down/10
+    return d_up, d_down
 
 
 def tail_plot(filename, tails, save=False):
@@ -176,8 +178,8 @@ def tail_plot(filename, tails, save=False):
     -------
 
     """
-    dist_up_nm = tails[0]
-    dist_down_nm = tails[1]
+    dist_up_nm = [d[0] for d in tails]
+    dist_down_nm = [d[1] for d in tails]
 
     plt.rcParams.update({'font.size': 22})
 
@@ -215,6 +217,7 @@ def tail_plot(filename, tails, save=False):
     plt.show()
 
     return
+
 
 def dist_plot(filename, dist, save=False):
     """
@@ -271,6 +274,7 @@ def coth(x):
 
 def Langevin(x):
     return (coth(x) - 1.0 / x)
+
 
 def expected_value():
 
@@ -387,6 +391,9 @@ def expected_value():
     plt.xlabel('Force (pN)')
     plt.show()
 
+
+#-----#-----#-----#-----#-----#-----#
+#-----#-----#-----#-----#-----#-----#
 # initial parameters
 L_nm = 6.8      # contourlength H4 tial
 b_nm = 0.6      # kuhnlength H4 tail
@@ -396,7 +403,6 @@ kT = 4.10
 f_array = np.linspace(0.01, 4800, 1e6)
 # corresponding extension of H4 tials, for search
 z_array = L_nm * (Langevin(b_nm * f_array / kT) + f_array / S_pN)
-
 
 def fFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
 
@@ -415,12 +421,10 @@ def find_nearest(array, value):
 
     Returns
     -------
-    index in array of nearest value
-    nearest value in array
+    idx:            index in array of nearest value
+    array[idx]:     nearest value in array
 
     """
-
-
     idx = np.searchsorted(array, value, side="left")
     if idx > 0 and (idx == len(array) or math.fabs(value - array[idx - 1]) < math.fabs(value - array[idx])):
         return idx - 1, array[idx - 1]
@@ -448,10 +452,9 @@ def gFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
     # f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 4800], image=[0, 4800])
     indx, z = find_nearest(z_array, z_nm)
     f_pN = f_array[indx]
+    # print('z_nm: ', z_nm)
+    # print('z: ', z)
 
-    print('z_nm: ', z_nm)
-    print('z: ', z)
-    print('f_pn: ', f_pN)
     g_pNnm = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
 
@@ -459,6 +462,7 @@ def gFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
     f_pN = 1e-9
     g_pNnm -= -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
+
 
     return g_pNnm / kT
 
@@ -471,7 +475,6 @@ def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
     if 0 <= left_dyad < len(dyads) - fiber_start:
         t_up, t_down = tail_dist(left_dyad, right_dyad, dyads, dna, nucl)
         g += gFJC(t_up)
-        print('gFJC t up: ', g)
         g += gFJC(t_down)
 
     if fiber_start is 2 and left_dyad >= 1:
@@ -480,11 +483,11 @@ def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
         t_up, t_down = tail_dist(left_dyad, right_dyad, dyads, dna, nucl)
         g += gFJC(t_up)
         g += gFJC(t_down)
-    print('g: ', g)
+    # print('g: ', g)
     return g
 
 
-def dist_cms(nuc_1, nuc_2, dna,dyads,nucl):
+def dist_cms(nuc_1, nuc_2, dna, dyads, nucl):
     """
 
     Parameters

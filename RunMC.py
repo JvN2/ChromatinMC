@@ -137,7 +137,6 @@ def score_stacking(moving_bp, coord, frames, dyads, fixed_stack_params, e_stack_
         g += 0.01 * g * g
         g_min += np.clip(g, 0, e_stack_kT * kT)
 
-    print("g_min: ", g_min)
     return g_min
 
 
@@ -439,8 +438,7 @@ def main(n_steps, root):
                             range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
     #
     tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
-    # tMC.tail_plot(filename, tails[:][dummy_steps:], save=True)
-    tMC.tail_plot(filename, tails, save=True)
+    tMC.tail_plot(filename, tails[dummy_steps:], save=True)
 
 
     # aMC.plot_fz(filename)

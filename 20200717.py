@@ -4,12 +4,20 @@
 #
 import RunMC as runmc
 
-runmc.main(20, '2x167x1s25w2-1')
+runmc.main(20, '2x177x1s25w2-1')
 # # #
-import Tails as tMC
+# import time
+# start_time = time.time()
+#
+#
+#
+# import Tails as tMC
 # import numpy as np
 #
-# #
+# z = np.linspace(0.01, 10, 1e4)
+# for i in z:
+#     tMC.gFJC(i)
+# # #
 # # tMC.expected_value()
 # #
 # z_nm = 4.6
@@ -61,3 +69,5 @@ import Tails as tMC
 # print(f_pN[4291])
 # f = f_pN[4291]
 # print(L_nm * (Langevin(b_nm * f/ kT) + f / S_pN))
+
+# print("--- %s seconds ---" % (time.time() - start_time))
