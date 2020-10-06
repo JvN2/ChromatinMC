@@ -355,7 +355,7 @@ def create_pov(filename, coord, range_A=[1000, 1000], offset_A=[0, 0, 0], width_
         radius = np.append(radius, 3)
         radius = np.append(radius, (np.ones(4) * 14))
     if colors is None:
-        colors = 'kbbggryrycpmpm'
+        colors = 'kbbggyryrcpmpm'
     if transparency is None:
         transparency = np.zeros(len(coord))
     filename = change_extension(filename, 'pov')

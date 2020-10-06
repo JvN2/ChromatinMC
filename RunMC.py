@@ -420,25 +420,25 @@ def main(n_steps, root):
 
     #
 
-    # coord_mean = tMC.coord_mean(filename, dyads, nucl)
-    # # coord_mean, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
-    # #
+    coord_mean = tMC.coord_mean(filename, dyads, nucl)
+
     # print(fileio.create_pov(filename, coord_mean, radius=[10], colors='v', range_A=[750, 750], offset_A=[0, 0, 150],
     #                         show=True, width_pix=1500))
 
     # #
-    coord, radius, colors = tMC.get_histones(dna.coord, dyads, dna, nucl)
+    # coord, radius, colors = tMC.get_histones(dna.coord, dyads, nucl, dna=dna)
+
     # # print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
     # #                         show=True, width_pix=1500))
     #
-    f_coord = tMC.origin(dna, dyads, nucl, coord, filename, axis=False)
+    # f_coord = tMC.origin(dna, dyads, nucl, coord, filename, axis=False)
     # # colors += 'z'
     # # radius = np.append(radius, 10)
-    print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
-                            range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
+    # print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
+    #                         range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
     #
-    tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
-    tMC.tail_plot(filename, tails[dummy_steps:], save=True)
+    # tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
+    # tMC.tail_plot(filename, tails[dummy_steps:], save=True)
 
 
     # aMC.plot_fz(filename)

@@ -58,7 +58,7 @@ def tf_dyad(dyads, dna, nucl):
     return tf
 
 
-def get_histones(coord, dyads, dna, nucl):
+def get_histones(coord, dyads, nucl, dna=None, tf=None):
 
     '''
     projects histones coordinates onto every
@@ -96,7 +96,9 @@ def get_histones(coord, dyads, dna, nucl):
     radius = [10]  # radius of DNA in POVray
     colors = 'v'  # color of DNA
     coord = [coord]
-    tf = tf_dyad(dyads, dna, nucl)  # transformation matrix for every dyad
+
+    if tf == None:
+        tf = tf_dyad(dyads, dna, nucl)  # transformation matrix for every dyad
 
     for tfm in tf:
         # apply transformation on coordinates of histone proteins
@@ -111,7 +113,7 @@ def get_histones(coord, dyads, dna, nucl):
         radius = np.append(radius, np.ones(4) * 13)
         # colors of histone proteins and linker-amino-acids
         # [H3*, H3, H4*, H4, H2A*, H2B*, H2A, H2B]
-        colors += 'bbggryrypmpm'  # 8 histone proteins + H2A, H2A*, H4, H4*
+        colors += 'bbggyryrpmpm'  # 8 histone proteins + H2A, H2A*, H4, H4*
 
     return coord, radius, colors
 
@@ -288,7 +290,7 @@ def dist_plot(filename, dist, save=False):
 def expected_value():
 
     # z = np.linspace(0, 20, 100)
-    f_pN = np.linspace(1e-9, 400, 1000)
+    f_pN = np.linspace(1e-9, 4000, 1000)
     z_m = []
     L_nm = 6.8
     b_nm = 0.6
@@ -297,7 +299,7 @@ def expected_value():
     g_f = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
 
-    g_f -= np.min(g_f)
+    # g_f -= np.min(g_f)
     # g_f /= kT
 
     print('max g_f: ', np.max(g_f))
@@ -307,8 +309,9 @@ def expected_value():
 
     for i, f in enumerate(f_pN):
 
-        # expo = (-(g_f[i] - f * z))
-        expo = (-(g_f - f * z))
+        ex = (g_f - f * z)
+        ex -= np.min(ex)
+        expo = (-(ex))
         # print("expo: ", expo)
 
         p_f_z = np.exp(expo / kT)
@@ -346,6 +349,7 @@ def fFJC(z_nm):
 
     return f_pN
 
+
 def find_nearest(array, value):
     """
 
@@ -365,6 +369,7 @@ def find_nearest(array, value):
         return idx - 1, array[idx - 1]
     else:
         return idx, array[idx]
+
 
 def gFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
 
@@ -387,8 +392,8 @@ def gFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
     # f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 4800], image=[0, 4800])
     indx, z = find_nearest(z_array, z_nm)
     f_pN = f_array[indx]
-    print('z_nm: ', z_nm)
-    print('z: ', z)
+    # print('z_nm: ', z_nm)
+    # print('z: ', z)
 
     g_pNnm = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
@@ -418,7 +423,7 @@ def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
         t_up, t_down = tail_dist(left_dyad, right_dyad, dyads, dna, nucl)
         g += gFJC(t_up)
         g += gFJC(t_down)
-    print('g: ', g)
+    # print('g: ', g)
     return g
 
 
@@ -486,17 +491,24 @@ def origin(dna, dyads, nucl, coord, filename, axis=False):
     return f_coord
 
 
-def params2coords(params):
-
-    dr, frames = util.params2data(params)
-    coords = [util.dr2coords(dr)]
-
-    return coords
-
-
 def coord_mean(filename, dyads, nucl):
+    """
+
+    Parameters
+    ----------
+    filename
+    dyads
+    nucl
+
+    Returns
+    -------
+
+    """
+
+
     # get list of npz files in filename folder
     npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+
     params = []
     # params contains all 6 parameters for each basepair out of every npz file
     for f, file in enumerate(npz_f):
@@ -506,48 +518,58 @@ def coord_mean(filename, dyads, nucl):
     # get mean value of every parameter for each basepair
     params_m = np.mean(params,axis=0)
 
-    # get cms of nucleosomes
-    dr, frame = util.params2data(params_m)
-    coords = params2coords(params_m)
+    # use 6 parameters to get coordinates of every basepair
+    dr, frames = util.params2data(params_m)
+    coords = util.dr2coords(dr)
 
-    dyad_coord = coords[0][dyads[0]]
-    dyad_frame = frame[dyads[0]]
+    # get dyad_ofs to project histones in mean fiber pose
+    of_d_fiber = []  # origin frame of dyad in fiber
+    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)  # origin frame dyad in nucl pose
+    tf_d = []  # transformation matrix
 
-    dyad_of = np.concatenate(([dyad_coord], dyad_frame.T+dyad_coord), axis=0)
-    # target = np.concatenate(([dyad_coord], dyad_frame.T+dyad_coord), axis=0)
-    # tf = nMC.get_transformation(dyad_of, target)
-    #
-    # ori = np.mean(coords[0][nucl.fixed[4:-4]], axis=0)
-    # Nx = dyad_coord - ori
-    # Nx = Nx / np.linalg.norm(Nx)
-    # Nz = np.mean(coords[0][nucl.fixed[:7], :], axis=0) - np.mean(coords[0][nucl.fixed[7:], :], axis=0)
-    # Ny = np.cross(Nx, Nz)
-    # Ny = Ny / np.linalg.norm(Nz)
-    # Nz = np.cross(Nx, Ny)
-    # Nz = Nz / np.linalg.norm(Nz)
-    # frame = np.array([Nx, Ny, Nz])
-    # nucl_of = nMC.join_o_f(ori, np.transpose(frame))
-    # nuc_cms = nMC.apply_transformation(nucl_of, tf)
+    for i, d in enumerate(dyads):
 
-    f_coord = []
-    tf = nMC.get_transformation(dyad_of,
-                                target=np.asarray([[0, 0, 0], [1, 0, 0], [0, 0, 1], [0, -1, 0]]))
-    for c in coords[0]:
-        f_coord.append(nMC.apply_transformation(c, tf))
+        # get coord en frame of dyad
+        dyad_coord = coords[dyads[i]]
+        dyad_frame = frames[dyads[i]]
+
+        # combine coords and frames to origin frame of dyad
+        of_d_fiber.append(np.concatenate(([dyad_coord], dyad_frame.T+dyad_coord), axis=0))
+
+        # get transformation matrix of nucleosome dyad onto fiber dyad
+        tf_d.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
+
+    # append histone positions to coordinates
+    coord_w_hist, radius, colors = get_histones(coords, dyads, nucl, tf=tf_d)
+
+
+    # transform fiber to origin
+    nuc_cms = []
+    for d, dyad in enumerate(dyads):
+        nuc_cms.append(nMC.get_nuc_of(coords, frames, dyads[d], nucl))
+
+    t_coord = [] # transformed coords
+    # tf_o = nMC.get_transformation(nuc_cms[0], target=np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]))
+    tf_o = nMC.get_transformation(nuc_cms[0],
+                                  target=np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]))
+    for c in coord_w_hist:
+        t_coord.append(nMC.apply_transformation(c, tf_o))
 
     # save dna coords to s_coord
-    s_coord = f_coord[0]
+    s_coord = t_coord[0]
     df = pd.DataFrame(np.array(s_coord) / 10)
-    df.to_excel(fileio.change_extension(filename, 'coord.xlsx'), index=False, header=True)
+    df.to_excel(fileio.change_extension(filename, 'coord_m.xlsx'), index=False, header=True)
 
-    # nuc_cms_c = []
-    # for n, cms in enumerate(nuc_cms):
-    #     nuc_cms_c.append(nMC.apply_transformation(nuc_cms[n][0], tf)[0])
-    #
-    # dfc = pd.DataFrame(np.array(nuc_cms_c) / 10)
-    # dfc.to_excel(fileio.change_extension(filename, 'coord_cms.xlsx'), index=False, header=True)
+    nuc_cms_c = []
+    for n, cms in enumerate(nuc_cms):
+        nuc_cms_c.append(nMC.apply_transformation(nuc_cms[n][0], tf_o)[0])
 
-    return f_coord
+    dfc = pd.DataFrame(np.array(nuc_cms_c) / 10)
+    dfc.to_excel(fileio.change_extension(filename, 'coord_m_cms.xlsx'), index=False, header=True)
+    print(fileio.create_pov((fileio.change_extension(filename, '_m.png')), t_coord, radius=radius, colors=colors, range_A=[750, 750],
+                            offset_A=[0, 0, 150], show=True, width_pix=1500))
+
+    return
 
 def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl):
     left_dyad = np.argmax(dyads > moving_bp) - 1
