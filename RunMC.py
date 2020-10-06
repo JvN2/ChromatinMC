@@ -370,7 +370,7 @@ def main(n_steps, root):
     # indices of nucleosomes of which distances will be calculated in tails and cms_dist
     nuc_1 = 0
     nuc_2 = 1
-    Tail_switch = False
+    Tail_switch = True # True: score tails, False: score_stacking
 
 
     pars['F_pN'].value = 0

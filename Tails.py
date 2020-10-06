@@ -11,7 +11,24 @@ import math
 import NucleosomeMC as nMC
 import FileIO as fileio
 
+def coth(x):
+    return np.cosh(x) / np.sinh(x)
 
+
+def Langevin(x):
+    return (coth(x) - 1.0 / x)
+
+
+# initial parameters
+L_nm = 6.8      # contour length H4 tial
+b_nm = 0.6      # kuhn length H4 tail
+S_pN = 630      # stiffness H4 tail
+kT = 4.10
+# force on H4 tials
+f_array = np.linspace(0.01, 4800, 1e6)
+# corresponding extension of H4 tials, for search
+z_array = L_nm * (Langevin(b_nm * f_array / kT) + f_array / S_pN)
+# print('z max: ', np.max(z_array))
 
 
 def tf_dyad(dyads, dna, nucl):
@@ -268,143 +285,61 @@ def dist_plot(filename, dist, save=False):
     return
 
 
-def coth(x):
-    return np.cosh(x) / np.sinh(x)
-
-
-def Langevin(x):
-    return (coth(x) - 1.0 / x)
-
-
 def expected_value():
 
     # z = np.linspace(0, 20, 100)
-    f_pN = np.linspace(1e-9, 4800, 100)
-    # f_pN = 50
+    f_pN = np.linspace(1e-9, 400, 1000)
     z_m = []
     L_nm = 6.8
     b_nm = 0.6
-    S_pN = 6300
-    g_old = []
-    # g = (L_nm * kT / b_nm) * (-np.log(f_pN) + np.log(np.tanh(b_nm * f_pN / kT))
-    #                           + np.log(np.cosh(b_nm * f_pN / kT)) + (b_nm * f_pN**2) / (2 * kT * S_pN))
-    # #
-    # for b in b_nm:
-    #     g_old.append(-(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
-    #     np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN))
+    S_pN = 630
 
-    #
-    # g_wiki = (kT * L_nm / b_nm)*(np.log(4*np.pi*np.sinh(f_pN * b_nm / kT))
-    #                                - np.log(f_pN * b_nm / kT)) + L_nm * f_pN ** 2 / (2 * S_pN)
-    #
-    # g_meng = L_nm * (f_pN - np.sqrt(f_pN * kT/(2 * b_nm)) + (f_pN**2)/(2 * S_pN))
+    g_f = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
+        np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
 
-    # z = []
-    # for b in b_nm:
+    g_f -= np.min(g_f)
+    # g_f /= kT
+
+    print('max g_f: ', np.max(g_f))
+
     z = (L_nm * (Langevin(b_nm * f_pN / kT) + f_pN / S_pN))
+    print('expected function max z: ', np.max(z))
+
+    for i, f in enumerate(f_pN):
+
+        # expo = (-(g_f[i] - f * z))
+        expo = (-(g_f - f * z))
+        # print("expo: ", expo)
+
+        p_f_z = np.exp(expo / kT)
+        p_f_z /= sum(p_f_z)
+        # print('p_f_z: ', p_f_z)
+
+        z_m.append(sum(z * p_f_z))
 
 
-    # coef = np.polyfit(z, f_pN, 6)
-    # p = np.poly1d(coef)
-    # print(coef)
 
-    #
-    # g = np.exp(f_pN/1000)
-    # g -= np.min(g)
-    # g /= kT
-    # g_old -= np.min(g_old)
-    # g_old /= kT
-    # g_wiki -= np.min(g_wiki)
-    # g_wiki /= kT
-    # g_meng -= np.min(g_meng)
-    # g_meng /= kT
-
-
-    # for i, f in enumerate(f_pN):
-    #
-    #     # g_f = -(kT * L_nm / b_nm) * (np.log((b_nm * f) / (kT)) - np.log(
-    #     #     np.sinh((b_nm * f) / (kT)))) + L_nm * f ** 2 / (2 * S_pN)
-    #
-    #
-    #     #
-    #     # print(np.log(4*np.pi*np.sinh(f * b_nm / kT))
-    #     #                            - np.log(f * b_nm / kT))
-    #     # g.append(g_f)
-    #
-    #     expo = (-(g - f * z))
-    #
-    #
-    #     # fig, ax = plt.subplots()
-    #     # ax.plot(expo, color=(0.75, 0, 0.25), linewidth=5)
-    #     # plt.show()
-    #     # expo = (-(g[i] - f * z))
-    #
-    #     # print(expo)
-    #     # expo /= 10
-    #     p_f_z = np.exp(expo / kT)
-    #     p_f_z /= sum(p_f_z)
-    #     # # p_f_z *= 1000
-    #     #
-    #
-    #     #
-    #     #
-    #     z_m.append(sum(z * p_f_z))
-
-    # return
     plt.rcParams.update({'font.size': 22})
 
-    # f =0.1
-    # g_f = [-(kT * L_nm / b_nm) * (np.log((b_nm * f) / (kT)) - np.log(
-    #     np.sinh((b_nm * f) / (kT)))) + L_nm * f ** 2 / (2 * S_pN) for f in force]
-    # g_f -= np.min(g_f)
-    # g -= np.min(g)
-    # g /= kT
-
-    # p_f_z = np.exp(-(g_f - f * z) / kT)
-    # p_f_z /= sum(p_f_z)
-    # plt.plot(force, g_f)
-    # plt.show()
-    # return
-
     fig, ax = plt.subplots()
-    ax.plot(f_pN, z, color=(0.75, 0, 0.25), linewidth=5)
-    ax.plot(f_pN, (0.018 * f_pN), label = 'Fitted function')
-    # ax.plot(p(np.linspace(0,20)), color=(0.28, 0, 0.75), linewidth=5, label='poly')
-    # ax.plot(z, g, color=(0.75, 0, 0.25), linewidth=5, label='intergral-z')
-    # for i, b in enumerate(b_nm):
-    #     ax.plot(f_pN, g_old[i], linewidth=5, label=str(b))
-    # ax.plot(g_old[1], color=(0.28, 0, 0.10), linewidth=5, label='b = 0.1')
-    # ax.plot(g_old[2], color=(0.28, 0, 0.20), linewidth=5, label='b = 0.2')
-    # ax.plot(g_old[3], color=(0.28, 0, 0.30), linewidth=5, label='b = 0.3')
-    # ax.plot(z, g_wiki, color=(0.28, 0, 0.28), linewidth=5, label='wiki-g')
-    # ax.plot(f_pN, g_meng, color=(0.75, 0, 0.75), linewidth=5, label='meng-g')
+
+    ax.plot(z_m, f_pN, color=(0.75, 0, 0.75), linewidth=5)
 
     plt.setp(ax.spines.values(), linewidth=2)
     ax.tick_params(which='both', width=2, length=5, top=True, right=True)
-    plt.legend()
+    ax.set_xlim(left=0)
+    # plt.legend()
 
-    # plt.ylabel('Force (pN)')
-    # # plt.xlabel('<z>')
+    plt.ylabel('Force (pN)')
+    plt.xlabel('<z>')
     # plt.xlabel('z (nm)')
-    plt.ylabel('z (nm)')
+    # plt.ylabel('z (nm)')
     # plt.ylabel('G(kt)')
-    plt.xlabel('Force (pN)')
+    # plt.xlabel('Force (pN)')
     plt.show()
 
 
-#-----#-----#-----#-----#-----#-----#
-#-----#-----#-----#-----#-----#-----#
-# initial parameters
-L_nm = 6.8      # contourlength H4 tial
-b_nm = 0.6      # kuhnlength H4 tail
-S_pN = 6300.0   # stiffnes H4 tail
-kT = 4.10
-# force on H4 tials
-f_array = np.linspace(0.01, 4800, 1e6)
-# corresponding extension of H4 tials, for search
-z_array = L_nm * (Langevin(b_nm * f_array / kT) + f_array / S_pN)
-
-def fFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
+def fFJC(z_nm):
 
     z = lambda f: L_nm * (Langevin(b_nm * f / kT) + f / S_pN)
     f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 15000], image=[0, 15000])
@@ -452,8 +387,8 @@ def gFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
     # f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 4800], image=[0, 4800])
     indx, z = find_nearest(z_array, z_nm)
     f_pN = f_array[indx]
-    # print('z_nm: ', z_nm)
-    # print('z: ', z)
+    print('z_nm: ', z_nm)
+    print('z: ', z)
 
     g_pNnm = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
@@ -483,7 +418,7 @@ def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
         t_up, t_down = tail_dist(left_dyad, right_dyad, dyads, dna, nucl)
         g += gFJC(t_up)
         g += gFJC(t_down)
-    # print('g: ', g)
+    print('g: ', g)
     return g
 
 
