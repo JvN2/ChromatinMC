@@ -24,12 +24,14 @@ L_nm = 6.8      # contour length H4 tial
 b_nm = 0.6      # kuhn length H4 tail
 S_pN = 630      # stiffness H4 tail
 kT = 4.10
-# force on H4 tials
-f_array = np.linspace(0.01, 4800, 1e6)
-# corresponding extension of H4 tials, for search
+# possible force on H4 tials
+f_array = np.linspace(1e-4, 4800, 1e6)
+# corresponding extension of H4 tials
 z_array = L_nm * (Langevin(b_nm * f_array / kT) + f_array / S_pN)
-# print('z max: ', np.max(z_array))
-
+print('z max: ', np.max(z_array))
+# corresponding energy of H4 tials
+g_array = -(kT * L_nm / b_nm) * (np.log((b_nm * f_array) / (kT)) - np.log(
+        np.sinh((b_nm * f_array) / (kT)))) + L_nm * f_array ** 2 / (2 * S_pN)
 
 def tf_dyad(dyads, dna, nucl):
     '''
@@ -289,19 +291,11 @@ def dist_plot(filename, dist, save=False):
 
 def expected_value():
 
-    # z = np.linspace(0, 20, 100)
     f_pN = np.linspace(1e-9, 4000, 1000)
     z_m = []
-    L_nm = 6.8
-    b_nm = 0.6
-    S_pN = 630
 
     g_f = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
         np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
-
-    # g_f -= np.min(g_f)
-    # g_f /= kT
-
     print('max g_f: ', np.max(g_f))
 
     z = (L_nm * (Langevin(b_nm * f_pN / kT) + f_pN / S_pN))
@@ -309,17 +303,15 @@ def expected_value():
 
     for i, f in enumerate(f_pN):
 
-        ex = (g_f - f * z)
-        ex -= np.min(ex)
-        expo = (-(ex))
+        expo = (g_f - f * z)
+        expo -= np.min(expo)
         # print("expo: ", expo)
 
-        p_f_z = np.exp(expo / kT)
+        p_f_z = np.exp((-(expo)) / kT)
         p_f_z /= sum(p_f_z)
         # print('p_f_z: ', p_f_z)
 
         z_m.append(sum(z * p_f_z))
-
 
 
     plt.rcParams.update({'font.size': 22})
@@ -371,37 +363,31 @@ def find_nearest(array, value):
         return idx, array[idx]
 
 
-def gFJC(z_nm, L_nm=6.8, b_nm=0.6, S_pN=6300.0):
+def gFJC(z_nm):
 
     """
 
     Parameters
     ----------
     z_nm:       distance
-    k_pN__nm:   stiffness(pN/nm)
     L_nm:       contour length
     b_nm:       Kuhnlength
     S_pN:       Stretch modulus (pN)
-    EFJC:       extended freely jointed chain
 
     Returns
     -------
 
     """
-    # z = lambda f: L_nm * (Langevin(b_nm * f / kT) + f / S_pN)
-    # f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 4800], image=[0, 4800])
     indx, z = find_nearest(z_array, z_nm)
-    f_pN = f_array[indx]
-    # print('z_nm: ', z_nm)
-    # print('z: ', z)
+    g_pNnm = g_array[indx]
 
-    g_pNnm = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
-        np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
-
-    # Remove offset at f = 0
-    f_pN = 1e-9
-    g_pNnm -= -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
-        np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
+    #
+    # g_pNnm = -(kT * L_nm / b_nm) * (np.log((b_nm * f_pN) / (kT)) - np.log(
+    #     np.sinh((b_nm * f_pN) / (kT)))) + L_nm * f_pN ** 2 / (2 * S_pN)
+    #
+    # P_z = np.exp((z_array - z_nm)**4)
+    # P_z /= np.sum(P_z)
+    # g_pNnm_e = np.sum(P_z * g_array)
 
 
     return g_pNnm / kT
@@ -447,6 +433,7 @@ def dist_cms(nuc_1, nuc_2, dna, dyads, nucl):
     dist = np.sqrt(np.sum((nuc_cms[nuc_1] - nuc_cms[nuc_2]) ** 2))
 
     return dist/10
+
 
 def origin(dna, dyads, nucl, coord, filename, axis=False):
     """
@@ -570,6 +557,7 @@ def coord_mean(filename, dyads, nucl):
                             offset_A=[0, 0, 150], show=True, width_pix=1500))
 
     return
+
 
 def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl):
     left_dyad = np.argmax(dyads > moving_bp) - 1
