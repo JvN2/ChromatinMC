@@ -391,8 +391,8 @@ def gFJC(z_nm):
     # g_pNnm_e = np.sum(P_z * g_array)
 
 
-    return g_pNnm / kT
-
+    # return g_pNnm / kT
+    return g_pNnm
 
 def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
     left_dyad = np.argmax(dyads > moving_bp) - 1
@@ -425,7 +425,7 @@ def dist_cms(nuc_1, nuc_2, dna, dyads, nucl):
 
     Returns
     -------
-    distance between center of masses of nucleosomes
+    distance between center of masses of nucleosomes (nm)
     """
     nuc_cms = []
     for dyad in dyads:
