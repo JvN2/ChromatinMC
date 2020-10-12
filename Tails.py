@@ -4,6 +4,7 @@ import os as os
 import pandas as pd
 from pynverse import inversefunc
 from helixmc import util
+from helixmc.random_step import RandomStepSimple, RandomStepAgg, symmetrize_WC
 import glob
 import math
 
@@ -583,3 +584,20 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl):
         for n in up_turn:
             for m in down_turn:
                 rep_dist.append(np.sqrt(np.sum((m - n) ** 2)))
+
+    return
+
+def sequence():
+    dna_step_file = util.locate_data_file('DNA_default.npz')
+    # random_step = RandomStepSimple.load_gaussian_params(dna_step_file) # helixmc.random_step.RandomStepSimple object
+    #
+    # p0 = np.load(dna_step_file)[0] # array of 6 values (parameters?)
+    # k = np.linalg.inv(np.load(dna_step_file)[1:]) # array of 6x6 values
+    # print('po: ', p0)
+    # print('k: ', k)
+    DNA_default = np.load(dna_step_file)
+    print('DNA_default: ', len(DNA_default['TA']))
+    # DNA_gau = np.load(util.locate_data_file('DNA_gau.npy'))
+    # print('DNA_gau: ', DNA_gau)
+
+    return
