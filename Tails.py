@@ -4,6 +4,7 @@ import os as os
 import pandas as pd
 from pynverse import inversefunc
 from helixmc import util
+from helixmc.random_step import RandomStepSimple, RandomStepAgg, symmetrize_WC
 import glob
 import math
 
@@ -333,6 +334,24 @@ def expected_value():
     # plt.xlabel('Force (pN)')
     plt.show()
 
+def plotten(x, y, xlabel, ylabel):
+    plt.rcParams.update({'font.size': 22})
+
+    fig, ax = plt.subplots()
+
+    ax.plot(x, y, color=(0.75, 0, 0.75), linewidth=5)
+
+    plt.setp(ax.spines.values(), linewidth=2)
+    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
+    ax.set_xlim(left=0)
+    # plt.legend()
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+
+    plt.show()
+
 
 def fFJC(z_nm):
 
@@ -390,8 +409,7 @@ def gFJC(z_nm):
     # g_pNnm_e = np.sum(P_z * g_array)
 
 
-    # return g_pNnm / kT
-    return g_pNnm
+    return g_pNnm * 10
 
 def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
     left_dyad = np.argmax(dyads > moving_bp) - 1
@@ -559,27 +577,69 @@ def coord_mean(filename, dyads, nucl):
     return
 
 
-def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl):
+def score_repulsion(moving_bp, fiber_start, dyads, dna):
     left_dyad = np.argmax(dyads > moving_bp) - 1
     right_dyad = left_dyad + fiber_start
+    left_d_bp = dyads[left_dyad]
+    right_d_bp = dyads[right_dyad]
 
     g = 0
-    rep_dist = []
+    Amp = 41  # amplitude pNnm
+    decay_l = 0.14  # decay length
+    # rep_dist = np.zeros([74,74])
 
     if 0 <= left_dyad < len(dyads) - fiber_start:
-        up_turn = dna.coord[left_dyad: left_dyad + 74]
-        down_turn = dna.coord[right_dyad - 74: right_dyad]
+        up_turn = dna.coord[left_d_bp: left_d_bp + 74]
+        down_turn = dna.coord[right_d_bp - 74: right_d_bp]
 
-        for n in up_turn:
-            for m in down_turn:
-                rep_dist.append(np.sqrt(np.sum((m - n) ** 2)))
+        for i, n in enumerate(up_turn):
+            for j, m in enumerate(down_turn[i:]):
+                # rep_dist[i,j+i] = (np.sqrt(np.sum((m - n) ** 2)))
+                dist = np.sqrt(np.sum((m - n) ** 2))
+                g += Amp * np.exp(- decay_l * dist)
+
 
     if fiber_start is 2 and left_dyad >= 1:
         left_dyad -= 1
         right_dyad -= 1
-        up_turn = dna.coord[left_dyad: left_dyad + 74]
-        down_turn = dna.coord[right_dyad - 74: right_dyad]
+        left_d_bp = dyads[left_dyad]
+        right_d_bp = dyads[right_dyad]
 
-        for n in up_turn:
-            for m in down_turn:
-                rep_dist.append(np.sqrt(np.sum((m - n) ** 2)))
+        up_turn = dna.coord[left_d_bp: left_d_bp + 74]
+        down_turn = dna.coord[right_d_bp - 74: right_d_bp]
+
+        for i, n in enumerate(up_turn):
+            for j, m in enumerate(down_turn[i:]):
+                dist = np.sqrt(np.sum((m - n) ** 2))
+                g += Amp * np.exp(- decay_l * dist)
+
+    print('g eind: ', g)
+    return g
+
+def sequence():
+    dna_step_file = util.locate_data_file('DNA_default.npz')
+
+    DNA_default = np.load(dna_step_file)
+    DNA_default_p0_k = dict()
+    seq_list = [
+        'AA', 'AT', 'AG', 'AC', 'GA', 'GC', 'GT', 'GG', 'TT',
+        'TA', 'TC', 'TG', 'CC', 'CG', 'CA', 'CT'
+    ]
+
+    for seq in seq_list:
+
+        DNA_default_p0_k[seq] = dict()
+        DNA_default_p0_k[seq]['params'] = DNA_default[seq]
+        DNA_default_p0_k[seq]['avg'] = np.average(DNA_default[seq], axis=0)
+        DNA_default_p0_k[seq]['cov'] = np.cov(DNA_default[seq], rowvar=False)
+
+
+
+    print('DNA_default k: ', np.linalg.inv(DNA_default_p0_k['GT']['cov']))
+    print('DNA_default p0: ', DNA_default_p0_k['TA']['avg'])
+
+    Random_step = RandomStepAgg(data_file=dna_step_file)
+    print('random step: ', Random_step.get_rand_step(identifier='TA').params_avg)
+
+
+    return
