@@ -409,7 +409,7 @@ def gFJC(z_nm):
     # g_pNnm_e = np.sum(P_z * g_array)
 
 
-    return g_pNnm * 10
+    return g_pNnm * 10 # g_pNA
 
 def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
     left_dyad = np.argmax(dyads > moving_bp) - 1
@@ -584,7 +584,7 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna):
     right_d_bp = dyads[right_dyad]
 
     g = 0
-    Amp = 41  # amplitude pNnm
+    Amp = 410  # amplitude pNA
     decay_l = 0.14  # decay length
     # rep_dist = np.zeros([74,74])
 
