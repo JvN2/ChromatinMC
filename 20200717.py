@@ -2,15 +2,27 @@
 #
 # nmc.main()
 #
-# import RunMC as runmc
-#
-# runmc.main(20, '2x197x1s25w2-1')
-# # # # #
+import RunMC as runmc
+
+runmc.main(20, '2x167x1s25w2-1')
+# # # # # #
 #
 import Tails as tMC
 import numpy as np
 
-tMC.sequence()
+# Amp = 41 # amplitude
+# decay_l = 0.14 # decay length
+#
+# x = np.linspace(0,50)
+# y = Amp * np.exp(- decay_l * x)
+# print(y)
+
+# tMC.plotten(x,y, xlabel='distance (A)', ylabel='Energy (pNnm)')
+
+
+
+#
+# tMC.sequence()
 
 # # tMC.expected_value()
 # # z = np.linspace(0,20,1e4)

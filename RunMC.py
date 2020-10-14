@@ -240,6 +240,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
             tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
+            # tMC.score_repulsion(bp, fiber_start, dyads, dna),
             score_work(coord, force),
             # score_surface(coord),
             0]
@@ -250,6 +251,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
             tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
+            # tMC.score_repulsion(bp, fiber_start, dyads, dna),
             score_work(coord, force),
             # score_surface(coord),
             0]
@@ -326,7 +328,7 @@ def main(n_steps, root):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 100
+    dummy_steps = 10
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -368,8 +370,8 @@ def main(n_steps, root):
     num_npz = 50
     idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
     # indices of nucleosomes of which distances will be calculated in tails and cms_dist
-    nuc_1 = 2
-    nuc_2 = 4
+    nuc_1 = 0
+    nuc_2 = 1
     Tail_switch = True # True: score tails, False: score_stacking
 
 
