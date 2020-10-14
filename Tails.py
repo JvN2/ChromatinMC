@@ -409,7 +409,6 @@ def gFJC(z_nm):
     # g_pNnm_e = np.sum(P_z * g_array)
 
 
-    # return g_pNnm / kT
     return g_pNnm * 10
 
 def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
