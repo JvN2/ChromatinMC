@@ -578,6 +578,7 @@ def coord_mean(filename, dyads, nucl):
 
 
 def score_repulsion(moving_bp, fiber_start, dyads, dna):
+
     left_dyad = np.argmax(dyads > moving_bp) - 1
     right_dyad = left_dyad + fiber_start
     left_d_bp = dyads[left_dyad]
@@ -589,8 +590,8 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna):
     # rep_dist = np.zeros([74,74])
 
     if 0 <= left_dyad < len(dyads) - fiber_start:
-        up_turn = dna.coord[left_d_bp: left_d_bp + 74]
-        down_turn = dna.coord[right_d_bp - 74: right_d_bp]
+        up_turn = dna.coord[left_d_bp - 74: left_d_bp + 74: 2] # +
+        down_turn = dna.coord[right_d_bp - 74: right_d_bp + 74: 2]# -
 
         for i, n in enumerate(up_turn):
             for j, m in enumerate(down_turn[i:]):
