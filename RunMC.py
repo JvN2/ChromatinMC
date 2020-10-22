@@ -370,8 +370,8 @@ def main(n_steps, root):
     num_npz = 50
     idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
     # indices of nucleosomes of which distances will be calculated in tails and cms_dist
-    nuc_1 = 0
-    nuc_2 = 1
+    nuc_1 = 1
+    nuc_2 = 3
     Tail_switch = True # True: score tails, False: score_stacking
 
 

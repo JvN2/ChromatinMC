@@ -29,7 +29,7 @@ kT = 4.10
 f_array = np.linspace(1e-4, 4800, 1e6)
 # corresponding extension of H4 tials
 z_array = L_nm * (Langevin(b_nm * f_array / kT) + f_array / S_pN)
-print('z max: ', np.max(z_array))
+# print('z max: ', np.max(z_array))
 # corresponding energy of H4 tials
 g_array = -(kT * L_nm / b_nm) * (np.log((b_nm * f_array) / (kT)) - np.log(
         np.sinh((b_nm * f_array) / (kT)))) + L_nm * f_array ** 2 / (2 * S_pN)
@@ -581,23 +581,27 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna):
 
     left_dyad = np.argmax(dyads > moving_bp) - 1
     right_dyad = left_dyad + fiber_start
-    left_d_bp = dyads[left_dyad]
-    right_d_bp = dyads[right_dyad]
+    # left_d_bp = dyads[left_dyad]
+    # right_d_bp = dyads[right_dyad]
 
     g = 0
-    Amp = 410  # amplitude pNA
-    decay_l = 0.14  # decay length
+    Amp = 100  # amplitude pNA
+    decay_l = 28.0  # decay length (A)
     # rep_dist = np.zeros([74,74])
 
     if 0 <= left_dyad < len(dyads) - fiber_start:
-        up_turn = dna.coord[left_d_bp - 74: left_d_bp + 74: 2] # +
-        down_turn = dna.coord[right_d_bp - 74: right_d_bp + 74: 2]# -
+        left_d_bp = dyads[left_dyad]
+        right_d_bp = dyads[right_dyad]
+        up_turn = dna.coord[left_d_bp - 74: left_d_bp + 74: 11] # +
+        down_turn = dna.coord[right_d_bp - 74: right_d_bp + 74: 11]# -
 
         for i, n in enumerate(up_turn):
             for j, m in enumerate(down_turn[i:]):
                 # rep_dist[i,j+i] = (np.sqrt(np.sum((m - n) ** 2)))
                 dist = np.sqrt(np.sum((m - n) ** 2))
-                g += Amp * np.exp(- decay_l * dist)
+                # if dist < 40:
+                #     print(' dist: ', dist)
+                g += Amp * np.exp(- (1 / decay_l) * dist)
 
 
     if fiber_start is 2 and left_dyad >= 1:
@@ -606,15 +610,15 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna):
         left_d_bp = dyads[left_dyad]
         right_d_bp = dyads[right_dyad]
 
-        up_turn = dna.coord[left_d_bp: left_d_bp + 74]
-        down_turn = dna.coord[right_d_bp - 74: right_d_bp]
+        up_turn = dna.coord[left_d_bp - 74: left_d_bp + 74: 11]  # +
+        down_turn = dna.coord[right_d_bp - 74: right_d_bp + 74: 11]  # -
 
         for i, n in enumerate(up_turn):
             for j, m in enumerate(down_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
-                g += Amp * np.exp(- decay_l * dist)
+                g += Amp * np.exp(- (1 / decay_l) * dist)
 
-    print('g eind: ', g)
+    # print('g eind: ', g)
     return g
 
 def sequence():
