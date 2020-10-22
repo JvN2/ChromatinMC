@@ -328,7 +328,7 @@ def main(n_steps, root):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 10
+    dummy_steps = 100
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -370,8 +370,8 @@ def main(n_steps, root):
     num_npz = 50
     idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
     # indices of nucleosomes of which distances will be calculated in tails and cms_dist
-    nuc_1 = 0
-    nuc_2 = 1
+    nuc_1 = 1
+    nuc_2 = 3
     Tail_switch = True # True: score tails, False: score_stacking
 
 
