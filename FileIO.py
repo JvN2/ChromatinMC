@@ -198,7 +198,7 @@ def write_xlsx_row(filename, dataset, pars, report_file=None):
         report_file = filename
     report_file = change_extension(report_file, 'xlsx')
     writer = pd.ExcelWriter(report_file.format('openpyxl'), engine='openpyxl')
-    df_index = str(dataset) + ' > ' + filename
+    df_index = str(dataset) + '>' + filename
 
     sheets = ['Value', 'StErr', 'Min', 'Max']
     for sheet in sheets:

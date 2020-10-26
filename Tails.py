@@ -572,53 +572,48 @@ def coord_mean(filename, dyads, nucl):
     dfc = pd.DataFrame(np.array(nuc_cms_c) / 10)
     dfc.to_excel(fileio.change_extension(filename, 'coord_m_cms.xlsx'), index=False, header=True)
     print(fileio.create_pov((fileio.change_extension(filename, '_m.png')), t_coord, radius=radius, colors=colors, range_A=[750, 750],
-                            offset_A=[0, 0, 150], show=True, width_pix=1500))
+                            offset_A=[0, 0, 150], show=False, width_pix=1500))
 
-    return
+    return params_m, t_coord[0], nuc_cms_c
 
 
-def score_repulsion(moving_bp, fiber_start, dyads, dna):
+def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl):
 
     left_dyad = np.argmax(dyads > moving_bp) - 1
     right_dyad = left_dyad + fiber_start
-    # left_d_bp = dyads[left_dyad]
-    # right_d_bp = dyads[right_dyad]
 
     g = 0
-    Amp = 100  # amplitude pNA
+    Amp = 100  # amplitude (pNA)
     decay_l = 28.0  # decay length (A)
-    # rep_dist = np.zeros([74,74])
 
     if 0 <= left_dyad < len(dyads) - fiber_start:
-        left_d_bp = dyads[left_dyad]
-        right_d_bp = dyads[right_dyad]
-        up_turn = dna.coord[left_d_bp - 74: left_d_bp + 74: 11] # +
-        down_turn = dna.coord[right_d_bp - 74: right_d_bp + 74: 11]# -
+        left_nucl_bps = dyads[left_dyad] + nucl.fixed
+        right_nucl_bps = dyads[right_dyad] + nucl.fixed
+
+        up_turn = dna.coord[left_nucl_bps]
+        down_turn = dna.coord[right_nucl_bps]
 
         for i, n in enumerate(up_turn):
             for j, m in enumerate(down_turn[i:]):
-                # rep_dist[i,j+i] = (np.sqrt(np.sum((m - n) ** 2)))
                 dist = np.sqrt(np.sum((m - n) ** 2))
-                # if dist < 40:
-                #     print(' dist: ', dist)
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
 
     if fiber_start is 2 and left_dyad >= 1:
         left_dyad -= 1
         right_dyad -= 1
-        left_d_bp = dyads[left_dyad]
-        right_d_bp = dyads[right_dyad]
+        left_nucl_bps = dyads[left_dyad] + nucl.fixed
+        right_nucl_bps = dyads[right_dyad] + nucl.fixed
 
-        up_turn = dna.coord[left_d_bp - 74: left_d_bp + 74: 11]  # +
-        down_turn = dna.coord[right_d_bp - 74: right_d_bp + 74: 11]  # -
+        up_turn = dna.coord[left_nucl_bps]
+        down_turn = dna.coord[right_nucl_bps]
 
         for i, n in enumerate(up_turn):
             for j, m in enumerate(down_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
-    # print('g eind: ', g)
+
     return g
 
 def sequence():
@@ -647,4 +642,9 @@ def sequence():
     print('random step: ', Random_step.get_rand_step(identifier='TA').params_avg)
 
 
+    return
+
+def save_values(pars, filename):
+    results = pd.DataFrame(pars.valuesdict(), index=[filename])
+    results.to_excel(fileio.change_extension(filename, '_results.xlsx'), index=True, header=True)
     return

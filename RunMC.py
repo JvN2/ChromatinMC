@@ -240,7 +240,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
             tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
-            tMC.score_repulsion(bp, fiber_start, dyads, dna),
+            tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl),
             score_work(coord, force),
             # score_surface(coord),
             0]
@@ -251,7 +251,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
             tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
-            tMC.score_repulsion(bp, fiber_start, dyads, dna),
+            tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl),
             score_work(coord, force),
             # score_surface(coord),
             0]
@@ -314,7 +314,6 @@ def main(n_steps, root):
 
     # create optimal fiber length for each NRL, with 14 bp handles
     pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
-    print('L_bp: ', pars['L_bp'].value)
 
     filename = fileio.get_filename(incr=True, root=root, ext='xlsx', )
     # print('\n>>> Current file: {}'.format(filename))
@@ -328,7 +327,7 @@ def main(n_steps, root):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 100
+    dummy_steps = 10
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -370,8 +369,8 @@ def main(n_steps, root):
     num_npz = 50
     idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
     # indices of nucleosomes of which distances will be calculated in tails and cms_dist
-    nuc_1 = 1
-    nuc_2 = 3
+    nuc_1 = 0
+    nuc_2 = 1
     Tail_switch = True # True: score tails, False: score_stacking
 
 
@@ -387,7 +386,6 @@ def main(n_steps, root):
         if i == dummy_steps:
             e_stack_kT = pars['e_stack_kT'].value
             g_nuc_kT_all = []
-            # Tail_switch = True
 
         g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
                                            e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
@@ -421,7 +419,25 @@ def main(n_steps, root):
 
 
 
-    tMC.coord_mean(filename, dyads, nucl)
+    tMC.save_values(pars, filename)
+    # return pars.valuesdict(), filename
+    params_m, t_coord, nuc_cms_c = tMC.coord_mean(filename, dyads, nucl)
+    # Create some Pandas dataframes from some data.
+    df1 = pd.DataFrame(params_m)
+    df2 = pd.DataFrame(t_coord)
+    df3 = pd.DataFrame(nuc_cms_c)
+
+    # Create a Pandas Excel writer using XlsxWriter as the engine.
+    writer = pd.ExcelWriter(r'D:\users\Annelies\data\20201026\results_one.xlsx', engine='xlsxwriter')
+
+    # Write each dataframe to a different worksheet.
+    df1.to_excel(writer, sheet_name='Sheet1')
+    df2.to_excel(writer, sheet_name='Sheet2')
+    df3.to_excel(writer, sheet_name='Sheet3')
+
+    # Close the Pandas Excel writer and output the Excel file.
+    writer.save()
+    return pars.valuesdict(), filename
 
     coord, radius, colors = tMC.get_histones(dna.coord, dyads, nucl, dna=dna)
 
@@ -446,5 +462,5 @@ def main(n_steps, root):
 
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
-
     main(5e4, '8x197x1s21w2-1')
+

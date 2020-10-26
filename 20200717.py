@@ -2,9 +2,22 @@
 #
 # nmc.main()
 #
-# import RunMC as runmc
-#
-# runmc.main(20, '2x167x1s25w2-1')
+import pandas as pd
+import FileIO as fileio
+import RunMC as runmc
+
+results, filename = runmc.main(2, '2x164x1s25w2-1')
+data = pd.DataFrame(results, index=[filename])
+
+
+NRL = range(165,167,1)
+for nrl in NRL:
+    experiment = '2x' + str(nrl) + 'x1s25w2-1'
+    results, filename = runmc.main(2, experiment)
+    data.loc[filename] = results
+
+data.to_excel(r'D:\users\Annelies\data\20201026\results.xlsx', index=True, header=True)
+# print(results)
 # # # # # # #
 #
 import Tails as tMC
@@ -43,28 +56,28 @@ import numpy as np
 #
 # # print("--- %s seconds ---" % (time.time() - start_time))
 #
-from helixmc import util
-import glob
-import FileIO as fileio
-import pandas as pd
-
-filename = r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201016 repulsion exp\6x167x2s25w2-1_001"
-
-# get list of npz files in filename folder
-npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
-
-params = []
-# params contains all 6 parameters for each basepair out of every npz file
-for f, file in enumerate(npz_f):
-    data = np.load(file)
-    params.append(data['params'])
-
-# get mean value of every parameter for each basepair
-params_m = np.mean(params, axis=0)
-
-# use 6 parameters to get coordinates of every basepair
-dr, frames = util.params2data(params_m)
-coords = util.dr2coords(dr)
-
-df = pd.DataFrame(np.array(coords) / 10)
-df.to_excel(fileio.change_extension(filename, 'coord_m.xlsx'), index=False, header=True)
+# from helixmc import util
+# import glob
+# import FileIO as fileio
+# import pandas as pd
+#
+# filename = r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201016 repulsion exp\6x167x2s25w2-1_001"
+#
+# # get list of npz files in filename folder
+# npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+#
+# params = []
+# # params contains all 6 parameters for each basepair out of every npz file
+# for f, file in enumerate(npz_f):
+#     data = np.load(file)
+#     params.append(data['params'])
+#
+# # get mean value of every parameter for each basepair
+# params_m = np.mean(params, axis=0)
+#
+# # use 6 parameters to get coordinates of every basepair
+# dr, frames = util.params2data(params_m)
+# coords = util.dr2coords(dr)
+#
+# df = pd.DataFrame(np.array(coords) / 10)
+# df.to_excel(fileio.change_extension(filename, 'coord_m.xlsx'), index=False, header=True)
