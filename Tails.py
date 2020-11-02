@@ -334,6 +334,7 @@ def expected_value():
     # plt.xlabel('Force (pN)')
     plt.show()
 
+
 def plotten(x, y, xlabel, ylabel):
     plt.rcParams.update({'font.size': 22})
 
@@ -411,6 +412,7 @@ def gFJC(z_nm):
 
     return g_pNnm * 10 # g_pNA
 
+
 def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
     left_dyad = np.argmax(dyads > moving_bp) - 1
     right_dyad = left_dyad + fiber_start
@@ -427,7 +429,10 @@ def score_tails(moving_bp, fiber_start, dyads, dna, nucl):
         t_up, t_down = tail_dist(left_dyad, right_dyad, dyads, dna, nucl)
         g += gFJC(t_up)
         g += gFJC(t_down)
-    # print('g: ', g)
+
+    if fiber_start is 0:
+        g = 0
+
     return g
 
 
@@ -453,12 +458,14 @@ def dist_cms(nuc_1, nuc_2, dna, dyads, nucl):
     return dist/10
 
 
-def origin(dna, dyads, nucl, coord, filename, axis=False):
+def origin(dna, dyads, nucl, filename, axis=False):
     """
     first nucleosome is positioned in origin after transformation
 
     Parameters
     ----------
+    filename
+    axis
     dna:    Helixpose
     dyads:  indices of all dyads
     nucl:   Nucleosomepose
@@ -466,8 +473,11 @@ def origin(dna, dyads, nucl, coord, filename, axis=False):
 
     Returns
     -------
-    f_coord: transformed coordinates
+    df_last_c: coordinates of last pose
+    df_last_cms: coordinates cms of nucleosome in last pose
     """
+
+    coord, radius, colors = get_histones(dna.coord, dyads, nucl, dna=dna)
 
     nuc_cms = []
     for d, dyad in enumerate(dyads):
@@ -482,18 +492,20 @@ def origin(dna, dyads, nucl, coord, filename, axis=False):
         f_coord.append(nMC.apply_transformation(c, tf))
 
     # save dna coords to s_coord
-    s_coord = f_coord[0]
-    df = pd.DataFrame(np.array(s_coord) / 10)
-    df.to_excel(fileio.change_extension(filename, 'coord.xlsx'), index=False, header=True)
+    s_coord = np.array(f_coord[0]) / 10
+    df_last_c = pd.DataFrame(s_coord, columns=['x (nm)', 'y (nm)', 'z (nm)'])
 
     nuc_cms_c = []
     for n, cms in enumerate(nuc_cms):
         nuc_cms_c.append(nMC.apply_transformation(nuc_cms[n][0], tf)[0])
 
-    dfc = pd.DataFrame(np.array(nuc_cms_c) / 10)
-    dfc.to_excel(fileio.change_extension(filename, 'coord_cms.xlsx'), index=False, header=True)
+    df_last_cms = pd.DataFrame(np.array(nuc_cms_c) / 10)
 
-    return f_coord
+
+    print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
+                            range_A=[750, 750], offset_A=[0, 0, 300], show=False, width_pix=1500))
+
+    return df_last_c, df_last_cms
 
 
 def coord_mean(filename, dyads, nucl):
@@ -521,7 +533,10 @@ def coord_mean(filename, dyads, nucl):
         params.append(data['params'])
 
     # get mean value of every parameter for each basepair
-    params_m = np.mean(params,axis=0)
+    params_m = np.mean(params, axis=0)
+    # save mean parameter values per bp in dataframe
+    df_p_m = pd.DataFrame(params_m, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
+                          index=range(1,len(params_m) + 1))
 
     # use 6 parameters to get coordinates of every basepair
     dr, frames = util.params2data(params_m)
@@ -551,40 +566,55 @@ def coord_mean(filename, dyads, nucl):
     # transform fiber to origin
     nuc_cms = []
     for d, dyad in enumerate(dyads):
-        nuc_cms.append(nMC.get_nuc_of(coords, frames, dyads[d], nucl))
+        nuc_cms.append(nMC.apply_transformation(nucl.of, tf_d[d]))
+
 
     t_coord = [] # transformed coords
-    # tf_o = nMC.get_transformation(nuc_cms[0], target=np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]))
-    tf_o = nMC.get_transformation(nuc_cms[0],
-                                  target=np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]))
+    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+    tf_o = nMC.get_transformation(nuc_cms[0], target=origin_of)
+    # Tranform coords where first nucleosome is placed in origin
     for c in coord_w_hist:
         t_coord.append(nMC.apply_transformation(c, tf_o))
 
-    # save dna coords to s_coord
-    s_coord = t_coord[0]
-    df = pd.DataFrame(np.array(s_coord) / 10)
-    df.to_excel(fileio.change_extension(filename, 'coord_m.xlsx'), index=False, header=True)
+    # # save dna coords to s_coord and in dataframe
+    s_coord = np.array(t_coord[0]) / 10
+    df_m_c = pd.DataFrame(s_coord, columns=['x (nm)', 'y (nm)', 'z (nm)'])
 
+    # transform coord of cms of nucleosomes the same as bp coords and save in dataframe
     nuc_cms_c = []
-    for n, cms in enumerate(nuc_cms):
-        nuc_cms_c.append(nMC.apply_transformation(nuc_cms[n][0], tf_o)[0])
+    nuc_params = []
 
-    dfc = pd.DataFrame(np.array(nuc_cms_c) / 10)
-    dfc.to_excel(fileio.change_extension(filename, 'coord_m_cms.xlsx'), index=False, header=True)
+    for n, cms in enumerate(nuc_cms):
+        nuc_cms[n] = nMC.apply_transformation(nuc_cms[n], tf_o)
+        nuc_cms_c.append(nuc_cms[n][0])
+        nuc_params.append(nMC.ofs2params(nuc_cms[n], origin_of, _3dna=True, flipx=[0,0]))
+
+
+
+    df_cms_c = pd.DataFrame(np.array(nuc_cms_c) / 10, columns=['x (nm)', 'y (nm)', 'z (nm)'])
+    df_last_nucl = pd.DataFrame(nuc_params, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'])
+
     print(fileio.create_pov((fileio.change_extension(filename, '_m.png')), t_coord, radius=radius, colors=colors, range_A=[750, 750],
                             offset_A=[0, 0, 150], show=False, width_pix=1500))
 
-    return params_m, t_coord[0], nuc_cms_c
+    # combine dataframe of bp coords and parameters
+    df_m = pd.concat([df_m_c, df_p_m], axis=1)
+    df_nuc = pd.concat([df_cms_c, df_last_nucl], axis=1)
 
 
-def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl):
+    return df_m, df_nuc
+
+
+def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
 
     left_dyad = np.argmax(dyads > moving_bp) - 1
     right_dyad = left_dyad + fiber_start
 
     g = 0
-    Amp = 100  # amplitude (pNA)
-    decay_l = 28.0  # decay length (A)
+    # Repulsion parameters
+    Amp = pars['Rep_Amp_pNA'].value # amplitude (pNA)
+    decay_l = pars['Rep_decay_A'].value  # decay length (A)
 
     if 0 <= left_dyad < len(dyads) - fiber_start:
         left_nucl_bps = dyads[left_dyad] + nucl.fixed
@@ -613,6 +643,8 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl):
                 dist = np.sqrt(np.sum((m - n) ** 2))
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
+    if fiber_start is 0:
+        g = 0
 
     return g
 
@@ -644,7 +676,20 @@ def sequence():
 
     return
 
-def save_values(pars, filename):
+def save_values(pars, filename, dyads, nucl):
+
+    mean_sheet, nucl_sheet = coord_mean(filename, dyads, nucl)
     results = pd.DataFrame(pars.valuesdict(), index=[filename])
-    results.to_excel(fileio.change_extension(filename, '_results.xlsx'), index=True, header=True)
+
+    # Create a Pandas Excel writer using XlsxWriter as the engine.
+    writer = pd.ExcelWriter(filename, engine='xlsxwriter')
+
+    # Write each dataframe to a different worksheet.
+    results.to_excel(writer, sheet_name='params')
+    mean_sheet.to_excel(writer, sheet_name='mean')
+    nucl_sheet.to_excel(writer, sheet_name='nucl')
+
+    # Close the Pandas Excel writer and output the Excel file.
+    writer.save()
+
     return

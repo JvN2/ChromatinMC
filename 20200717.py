@@ -6,17 +6,25 @@ import pandas as pd
 import FileIO as fileio
 import RunMC as runmc
 
-results, filename = runmc.main(2, '2x164x1s25w2-1')
+
+params = {}
+params['n_nuc'] = 2
+params['NRL'] = 165
+params['fiber_start'] = 0
+params['dummy_steps'] = 10
+
+
+results, filename = runmc.main(2, root=None, input=params)
 data = pd.DataFrame(results, index=[filename])
 
 
-NRL = range(165,167,1)
-for nrl in NRL:
-    experiment = '2x' + str(nrl) + 'x1s25w2-1'
-    results, filename = runmc.main(2, experiment)
-    data.loc[filename] = results
-
-data.to_excel(r'D:\users\Annelies\data\20201026\results.xlsx', index=True, header=True)
+# NRL = range(165,167,1)
+# for nrl in NRL:
+#     experiment = '2x' + str(nrl) + 'x1s25w2-1'
+#     results, filename = runmc.main(2, experiment)
+#     data.loc[filename] = results
+#
+# data.to_excel(r'D:\users\Annelies\data\20201028\results.xlsx', index=True, header=True)
 # print(results)
 # # # # # # #
 #

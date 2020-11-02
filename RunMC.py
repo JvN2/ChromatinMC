@@ -208,7 +208,7 @@ def get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_
 
 
 def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, dyads, nucl,
-            random_step, e_wrap_kT, e_stack_kT, fiber_start, Tail_switch = False):
+            random_step, e_wrap_kT, e_stack_kT, fiber_start, Tail_switch, pars):
     old_step_params = dna.params[bp]
     new_step_params = get_new_step_params(bp, previous_bp, dna, dyads, nucl, random_step)
     if np.array_equal(old_step_params, new_step_params):
@@ -240,7 +240,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
             tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
-            tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl),
+            tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl, pars),
             score_work(coord, force),
             # score_surface(coord),
             0]
@@ -251,7 +251,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
             score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
             tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
             score_exclusion(coord, frames, dyads, nucl),
-            tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl),
+            tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl, pars),
             score_work(coord, force),
             # score_surface(coord),
             0]
@@ -262,7 +262,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
         return False
 
 
-def main(n_steps, root):
+def main(n_steps, root, input):
     pars = Parameters()
     # Parameters that define the nucleosomal array
     pars.add('L_bp', value=428)
@@ -281,6 +281,7 @@ def main(n_steps, root):
     pars.add('e_stack_kT', value=25)
     pars.add('NRL', value=187)
     pars.add('fiber_start', value=2)
+
     # Parameters for reporting results
     pars.add('F_pN', value=0)
     pars.add('z_nm', value=0)
@@ -295,6 +296,22 @@ def main(n_steps, root):
     pars.add('g_tilt_kT', value=0)
     pars.add('g_roll_kT', value=0)
     pars.add('g_twist_kT', value=0)
+
+    # parameters for Annelies
+    pars.add('num_npz', value=50)     # number of npz files that will be stored during simulation
+    pars.add('dummy_steps', value=100)
+    pars.add('nuc_1_idx', value=0) # index of nucleosome that is followed for report
+    pars.add('nuc_2_idx', value=1)
+    pars.add('tail_switch', value=True)
+    pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
+    pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
+    pars.add('g_tails_kT', value=0) #energy of tails in nucleosome
+    pars.add('g_rep_kT', value=0) #energy of repulsion between nucleosomes
+
+    # pass input values to pars
+    for key in input.keys():
+        pars[key].value = input[key]
+
 
     # Setup files and forces
     if root is None:
@@ -312,10 +329,12 @@ def main(n_steps, root):
         pars['e_stack_kT'].value = iterpar[3]
         pars['e_wrap_kT'].value = iterpar[4]
 
+
     # create optimal fiber length for each NRL, with 14 bp handles
     pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
 
-    filename = fileio.get_filename(incr=True, root=root, ext='xlsx', )
+    filename = fileio.get_filename(incr=True, root=root, ext='xlsx')
+
     # print('\n>>> Current file: {}'.format(filename))
     n_samples = 250
     fmin_pN = 0
@@ -327,7 +346,7 @@ def main(n_steps, root):
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
     forces = np.append(forces, forces[::-1])
 
-    dummy_steps = 10
+    dummy_steps = pars['dummy_steps'].value
     sample_indices += dummy_steps
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
@@ -357,6 +376,7 @@ def main(n_steps, root):
     fixed_stack_params = nMC.ofs2params(n_ofs[fiber_start], n_ofs[0], _3dna=True)
 
     basepairs = np.asarray(range(pars['L_bp'] - 1))
+
     if pars['e_stack_kT'].value == 0:
         e_stack_kT = 0
     else:
@@ -365,13 +385,13 @@ def main(n_steps, root):
     g_nuc_kT_all = []
     tails = []
     cms_dist = []
-    # number of npz files that will be stored during simulation
-    num_npz = 50
-    idx = np.round(np.linspace(dummy_steps, len(forces) - 1, num_npz))
+
+
+    idx = np.round(np.linspace(dummy_steps, len(forces) - 1, pars['num_npz'].value))
     # indices of nucleosomes of which distances will be calculated in tails and cms_dist
-    nuc_1 = 0
-    nuc_2 = 1
-    Tail_switch = True # True: score tails, False: score_stacking
+    nuc_1 = pars['nuc_1_idx'].value
+    nuc_2 = pars['nuc_2_idx'].value
+    Tail_switch = pars['tail_switch'].value # True: score tails, False: score_stacking
 
 
     pars['F_pN'].value = 0
@@ -379,7 +399,7 @@ def main(n_steps, root):
 
     previous_bp = 0
     datafile = fileio.get_filename(sub=True, incr=True, ext='npz')
-    paramsfile = fileio.change_extension(datafile, 'parms_0001.npz')
+
 
     fileio.report_progress(n_steps, title='RunMC', init=True)
     for i, force in enumerate(forces):
@@ -387,77 +407,47 @@ def main(n_steps, root):
             e_stack_kT = pars['e_stack_kT'].value
             g_nuc_kT_all = []
 
-        g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
-                                           e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
-        g_nuc_kT_all.append(g_nuc_kT)
+        # g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
+        #                                    e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
+        # g_nuc_kT_all.append(g_nuc_kT)
 
         tails.append(tMC.tail_dist(nuc_1, nuc_2, dyads, dna, nucl, orientation='-*'))
         cms_dist.append(tMC.dist_cms(nuc_1, nuc_2, dna, dyads, nucl))
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
 
-        if i in sample_indices:
-            g_nuc_kT_all = np.mean(g_nuc_kT_all, axis=0)
-            for g, name in zip(g_nuc_kT_all, names):
-                pars[name].value = g
-            pars['F_pN'].value = force
-            pars['z_nm'].value = dna.coord_terminal[2] / 10
-            fileio.write_xlsx_row(datafile, i - dummy_steps, pars, report_file=filename)
-            # dna.write2disk(datafile)
-            g_nuc_kT_all = []
-            datafile = fileio.increment_file_nr(datafile)
+        # if i in sample_indices:
+        #     g_nuc_kT_all = np.mean(g_nuc_kT_all, axis=0)
+        #     for g, name in zip(g_nuc_kT_all, names):
+        #         pars[name].value = g
+        #     pars['F_pN'].value = force
+        #     pars['z_nm'].value = dna.coord_terminal[2] / 10
+        #     # fileio.write_xlsx_row(datafile, i - dummy_steps, pars, report_file=filename)
+        #     # dna.write2disk(datafile)
+        #     g_nuc_kT_all = []
+            # datafile = fileio.increment_file_nr(datafile)
 
         if i in idx:
-            dna.write2disk(paramsfile)
-            paramsfile = fileio.increment_file_nr(paramsfile)
+            dna.write2disk(datafile)
+            datafile = fileio.increment_file_nr(datafile)
 
         for bp in basepairs:
             MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params,
-                    dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start, Tail_switch)
+                    dyads, nucl, random_step, e_wrap_kT, e_stack_kT, fiber_start, Tail_switch, pars)
             previous_bp = bp
         basepairs = basepairs[::-1]
 
 
-
-    tMC.save_values(pars, filename)
-    # return pars.valuesdict(), filename
-    params_m, t_coord, nuc_cms_c = tMC.coord_mean(filename, dyads, nucl)
-    # Create some Pandas dataframes from some data.
-    df1 = pd.DataFrame(params_m)
-    df2 = pd.DataFrame(t_coord)
-    df3 = pd.DataFrame(nuc_cms_c)
-
-    # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter(r'D:\users\Annelies\data\20201026\results_one.xlsx', engine='xlsxwriter')
-
-    # Write each dataframe to a different worksheet.
-    df1.to_excel(writer, sheet_name='Sheet1')
-    df2.to_excel(writer, sheet_name='Sheet2')
-    df3.to_excel(writer, sheet_name='Sheet3')
-
-    # Close the Pandas Excel writer and output the Excel file.
-    writer.save()
-    return pars.valuesdict(), filename
-
-    coord, radius, colors = tMC.get_histones(dna.coord, dyads, nucl, dna=dna)
-
-    print(fileio.create_pov(filename, coord, radius=radius, colors=colors, range_A=[750, 750], offset_A=[0, 0, 150],
-                            show=True, width_pix=1500))
+    tMC.save_values(pars, filename, dyads, nucl)
     #
-    f_coord = tMC.origin(dna, dyads, nucl, coord, filename, axis=False)
-    # # colors += 'z'
-    # # radius = np.append(radius, 10)
-    print(fileio.create_pov((fileio.change_extension(filename, '_org.png')), f_coord, radius=radius, colors=colors,
-                            range_A=[750, 750], offset_A=[0, 0, 300], show=True, width_pix=1500))
-    #
-    tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
-    tMC.tail_plot(filename, tails[dummy_steps:], save=True)
+    # tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
+    # tMC.tail_plot(filename, tails[dummy_steps:], save=True)
 
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])
     # fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, 0, -90])
-    return
+    return pars.valuesdict(), filename
 
 
 if __name__ == '__main__':
