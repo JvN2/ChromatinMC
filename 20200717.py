@@ -1,22 +1,22 @@
 # import NucleosomeMC as nmc
 #
 # nmc.main()
-#
+# #
 import pandas as pd
 import FileIO as fileio
 import RunMC as runmc
 
 
 params = {}
-params['n_nuc'] = 2
+params['n_nuc'] = 3
 params['NRL'] = 165
-params['fiber_start'] = 0
-params['dummy_steps'] = 10
+params['fiber_start'] = 1
+params['dummy_steps'] = 3
+params['num_npz'] = 2
 
 
-results, filename = runmc.main(2, root=None, input=params)
+results, filename = runmc.main(9, root=None, input=params)
 data = pd.DataFrame(results, index=[filename])
-
 
 # NRL = range(165,167,1)
 # for nrl in NRL:
@@ -29,7 +29,7 @@ data = pd.DataFrame(results, index=[filename])
 # # # # # # #
 #
 import Tails as tMC
-import numpy as np
+
 #
 # Amp = 100 # amplitude pNA
 # decay_l = 28.0 # decay length A

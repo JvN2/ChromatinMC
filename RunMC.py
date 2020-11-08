@@ -285,28 +285,29 @@ def main(n_steps, root, input):
     # Parameters for reporting results
     pars.add('F_pN', value=0)
     pars.add('z_nm', value=0)
-    pars.add('g_dna_kT', value=0)
-    pars.add('g_wrap_kT', value=0)
-    pars.add('Unwrapped_bp', value=0)
-    pars.add('g_stack_kT', value=0)
-    pars.add('g_work_kT', value=0)
     pars.add('g_shift_kT', value=0)
     pars.add('g_slide_kT', value=0)
     pars.add('g_rise_kT', value=0)
     pars.add('g_tilt_kT', value=0)
     pars.add('g_roll_kT', value=0)
     pars.add('g_twist_kT', value=0)
+    pars.add('Unwrapped_bp', value=0)
+    pars.add('g_dna_kT', value=0)
+    pars.add('g_wrap_kT', value=0)
+    pars.add('g_stack_kT', value=0)
+    pars.add('g_tails_kT', value=0) #energy of tails in nucleosome
+    pars.add('g_rep_kT', value=0) #energy of repulsion between nucleosomes
+    pars.add('g_work_kT', value=0)
+    pars.add('g_total', value=0)  # total energy score of fiber
 
-    # parameters for Annelies
+    # parameters for implementation H4 tails
     pars.add('num_npz', value=50)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
-    pars.add('nuc_1_idx', value=0) # index of nucleosome that is followed for report
-    pars.add('nuc_2_idx', value=1)
+    pars.add('nuc_cms', value=0) # track distance between nucleosome center of masses
     pars.add('tail_switch', value=True)
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
-    pars.add('g_tails_kT', value=0) #energy of tails in nucleosome
-    pars.add('g_rep_kT', value=0) #energy of repulsion between nucleosomes
+
 
     # pass input values to pars
     for key in input.keys():
@@ -351,6 +352,7 @@ def main(n_steps, root, input):
     sample_indices[0] = 0
     forces = np.append(np.zeros(dummy_steps), forces)
 
+
     # Initialize random steps
     random_step = RandomStepSimple.load_gaussian_params(dna_step_file)
     p0 = np.load(dna_step_file)[0]
@@ -383,16 +385,13 @@ def main(n_steps, root, input):
         e_stack_kT = 1e3 * kT
 
     g_nuc_kT_all = []
-    tails = []
-    cms_dist = []
 
-
-    idx = np.round(np.linspace(dummy_steps, len(forces) - 1, pars['num_npz'].value))
+    idx = np.round(np.linspace(2 * dummy_steps, len(forces) - 1, pars['num_npz'].value))
     # indices of nucleosomes of which distances will be calculated in tails and cms_dist
-    nuc_1 = pars['nuc_1_idx'].value
-    nuc_2 = pars['nuc_2_idx'].value
     Tail_switch = pars['tail_switch'].value # True: score tails, False: score_stacking
-
+    energy = {} # dictonary to hold energy values before calculating mean
+    energy_all = {}  # dictonary to hold all energy values
+    results_std = tMC.which_energies(energy) # put energy keys in dict and form dataframe to report results
 
     pars['F_pN'].value = 0
     pars['z_nm'].value = dna.coord_terminal[2] / 10
@@ -406,13 +405,16 @@ def main(n_steps, root, input):
         if i == dummy_steps:
             e_stack_kT = pars['e_stack_kT'].value
             g_nuc_kT_all = []
+            results = pd.DataFrame(columns=pars.valuesdict())
+            for key in energy:
+                energy[key] = []
+                energy_all[key] = []
 
         # g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
         #                                    e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         # g_nuc_kT_all.append(g_nuc_kT)
 
-        tails.append(tMC.tail_dist(nuc_1, nuc_2, dyads, dna, nucl, orientation='-*'))
-        cms_dist.append(tMC.dist_cms(nuc_1, nuc_2, dna, dyads, nucl))
+        tMC.energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_start, fixed_wrap_params, p0, k, force)
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
 
@@ -429,6 +431,24 @@ def main(n_steps, root, input):
 
         if i in idx:
             dna.write2disk(datafile)
+
+            for key in energy:
+                # save energy values in energy_all
+                energy_all[key].extend(energy[key])
+                # pass sum of energy to pars
+                pars[key].value = np.mean(energy[key])
+                # calculate standard deviation of energies
+                energy[key] = np.std(energy[key])
+
+            # save mean energy in results df
+            results.loc[datafile] = pars.valuesdict()
+            # save stds of energy in results df
+            results_std.loc[datafile] = energy
+
+            # empty the energy dictionary
+            for key in energy:
+                energy[key] = []
+
             datafile = fileio.increment_file_nr(datafile)
 
         for bp in basepairs:
@@ -438,11 +458,7 @@ def main(n_steps, root, input):
         basepairs = basepairs[::-1]
 
 
-    tMC.save_values(pars, filename, dyads, nucl)
-    #
-    # tMC.dist_plot(filename, cms_dist[dummy_steps:], save=True)
-    # tMC.tail_plot(filename, tails[dummy_steps:], save=True)
-
+    tMC.save_values(pars, filename, dyads, nucl, results, results_std, energy_all, fixed_wrap_params, p0, k)
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])

@@ -11,6 +11,7 @@ import math
 # ChromatinMC modules:
 import NucleosomeMC as nMC
 import FileIO as fileio
+import RunMC as rMC
 
 def coth(x):
     return np.cosh(x) / np.sinh(x)
@@ -88,9 +89,7 @@ def get_histones(coord, dyads, nucl, dna=None, tf=None):
         if chain == 'DNA':
             pass
         # remove coordinates that are produce sphere in the middle of nowhere
-        elif chain == 'H2B*':
-            p_coord.append(nucl.chains[chain][2][:-3])
-        elif chain == 'H2B':
+        elif chain == 'H2B*' or chain == 'H2B':
             p_coord.append(nucl.chains[chain][2][:-3])
         else:
             p_coord.append(nucl.chains[chain][2])
@@ -508,7 +507,7 @@ def origin(dna, dyads, nucl, filename, axis=False):
     return df_last_c, df_last_cms
 
 
-def coord_mean(filename, dyads, nucl):
+def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, k):
     """
 
     Parameters
@@ -562,7 +561,6 @@ def coord_mean(filename, dyads, nucl):
     # append histone positions to coordinates
     coord_w_hist, radius, colors = get_histones(coords, dyads, nucl, tf=tf_d)
 
-
     # transform fiber to origin
     nuc_cms = []
     for d, dyad in enumerate(dyads):
@@ -577,9 +575,12 @@ def coord_mean(filename, dyads, nucl):
     for c in coord_w_hist:
         t_coord.append(nMC.apply_transformation(c, tf_o))
 
-    # # save dna coords to s_coord and in dataframe
-    s_coord = np.array(t_coord[0]) / 10
-    df_m_c = pd.DataFrame(s_coord, columns=['x (nm)', 'y (nm)', 'z (nm)'])
+
+    # create separate list of transformed histone coords
+    df_H2A, df_H2B, df_H3, df_H4, df_l_coord = histones_coords(nucl, tf_d, tf_o)
+
+    # # save dna coords in dataframe
+    df_m_c = pd.DataFrame(np.array(t_coord[0]) / 10, columns=['x (nm)', 'y (nm)', 'z (nm)'])
 
     # transform coord of cms of nucleosomes the same as bp coords and save in dataframe
     nuc_cms_c = []
@@ -588,22 +589,46 @@ def coord_mean(filename, dyads, nucl):
     for n, cms in enumerate(nuc_cms):
         nuc_cms[n] = nMC.apply_transformation(nuc_cms[n], tf_o)
         nuc_cms_c.append(nuc_cms[n][0])
-        nuc_params.append(nMC.ofs2params(nuc_cms[n], origin_of, _3dna=True, flipx=[0,0]))
-
+        if n >= fiber_start:
+            nuc_params.append(nMC.ofs2params(nuc_cms[n], nuc_cms[n - fiber_start], _3dna=True, flipx=[0,0]))
 
 
     df_cms_c = pd.DataFrame(np.array(nuc_cms_c) / 10, columns=['x (nm)', 'y (nm)', 'z (nm)'])
-    df_last_nucl = pd.DataFrame(nuc_params, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'])
+    df_nucl_p = pd.DataFrame(nuc_params, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
+                             index=range(fiber_start,len(dyads)))
 
     print(fileio.create_pov((fileio.change_extension(filename, '_m.png')), t_coord, radius=radius, colors=colors, range_A=[750, 750],
                             offset_A=[0, 0, 150], show=False, width_pix=1500))
 
+    # energy of bps
+    dna_coord = t_coord[0]
+    dna_params = params_m
+    dna_frames = frames
+    e_wrap_kT = pars['e_wrap_kT'].value
+
+    w = np.ones(len(dna_params))
+
+    for dyad in dyads:
+        fixed_bps = rMC.score_wrapping(dyad + 1, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                       half_nuc=True)[1]
+        if len(fixed_bps) > 0:
+            w[fixed_bps[0]:fixed_bps[1]] = 0
+        else:
+            w = None
+    g_dna_all = rMC.score_dna(dna_params, p0, k, w=w)
+
+    df_m_g_all = pd.DataFrame(g_dna_all, columns=['g_shift_kT',
+               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT'], index=range(1,len(g_dna_all) + 1))
+
+    df_m_g = pd.DataFrame(np.sum(g_dna_all, axis=1), columns=['g_total (kT)'], index=range(1,len(g_dna_all) + 1))
+
+
     # combine dataframe of bp coords and parameters
-    df_m = pd.concat([df_m_c, df_p_m], axis=1)
-    df_nuc = pd.concat([df_cms_c, df_last_nucl], axis=1)
+    df_m = pd.concat([df_m_c, df_p_m, df_m_g_all, df_m_g], axis=1)
+    df_nuc = pd.concat([df_cms_c, df_nucl_p], axis=1)
 
 
-    return df_m, df_nuc
+    return df_m, df_nuc, df_H2A, df_H2B, df_H3, df_H4, df_l_coord
 
 
 def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
@@ -648,6 +673,7 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
 
     return g
 
+
 def sequence():
     dna_step_file = util.locate_data_file('DNA_default.npz')
 
@@ -676,20 +702,172 @@ def sequence():
 
     return
 
-def save_values(pars, filename, dyads, nucl):
 
-    mean_sheet, nucl_sheet = coord_mean(filename, dyads, nucl)
-    results = pd.DataFrame(pars.valuesdict(), index=[filename])
+def save_values(pars, filename, dyads, nucl, results, results_std, energy_all, fixed_wrap_params, p0, k):
+
+    fiber_start = pars['fiber_start'].value
+
+    mean_sheet, nucl_sheet, df_H2A, df_H2B, df_H3, df_H4, df_l_coord = coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, k)
+
+
+    for key in energy_all:
+        pars[key].value = np.mean(energy_all[key])
+    # save mean energy in results df
+    results.loc[filename] = pars.valuesdict()
+    results_std.loc['average'] = results_std.mean()
+
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     writer = pd.ExcelWriter(filename, engine='xlsxwriter')
 
     # Write each dataframe to a different worksheet.
     results.to_excel(writer, sheet_name='params')
+    results_std.to_excel(writer, sheet_name='std')
     mean_sheet.to_excel(writer, sheet_name='mean')
     nucl_sheet.to_excel(writer, sheet_name='nucl')
+    df_H2A.to_excel(writer, sheet_name='H2A')
+    df_H2B.to_excel(writer, sheet_name='H2B')
+    df_H3.to_excel(writer, sheet_name='H3')
+    df_H4.to_excel(writer, sheet_name='H4')
+    df_l_coord.to_excel(writer, sheet_name='l_coord')
 
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
 
     return
+
+
+def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_start, fixed_wrap_params, p0, k, force):
+
+    dna_coord = dna.coord
+    dna_params = dna.params
+    dna_frames = dna.frames
+
+    e_wrap_kT = pars['e_wrap_kT'].value
+    e_stack_kT = pars['e_stack_kT'].value
+
+    g_dna = np.zeros(6)
+    g_wrap = 0
+    g_stack = 0
+    g_tails = 0
+    g_rep = 0
+    g_work = 0
+
+    n_nucs = pars['n_nuc'].value
+    tail_switch = pars['tail_switch'].value
+
+    w = np.ones(len(dna_params))
+
+    for dyad in dyads:
+        fixed_bps = rMC.score_wrapping(dyad + 1, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                   half_nuc=True)[1]
+        if len(fixed_bps) > 0:
+            w[fixed_bps[0]:fixed_bps[1]] = 0
+        else:
+            w = None
+    g_dna_all = rMC.score_dna(dna_params, p0, k, w=w)
+
+    for dyad1, dyad2 in zip(dyads[:-1], dyads[1:]):
+        g_dna += np.sum(g_dna_all[dyad1:dyad2], axis=0)
+        if tail_switch == True:
+            g_tails += score_tails(dyad1 + 1, fiber_start, dyads, dna, nucl)
+            g_rep   += score_repulsion(dyad1 + 1, fiber_start, dyads, dna, nucl, pars)
+        else:
+            g_stack += rMC.score_stacking(dyad1 + 1, dna_coord, dna_frames, dyads, fixed_stack_params, e_stack_kT, nucl,
+                                  fiber_start)
+        g_work += rMC.score_work(dna_coord, force, start_bp=dyad1, end_bp=dyad2, )
+        g_wrap += rMC.score_wrapping(dyad1 + 2, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                 half_nuc=True)[0]
+        g_wrap += rMC.score_wrapping(dyad2 - 2, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                 half_nuc=True)[0]
+
+    g_dna /= (n_nucs - 1)
+    g_wrap /= (n_nucs - 1)
+    g_work /= (n_nucs - 1)
+    g_stack /= (n_nucs - fiber_start) * fiber_start
+    g_tails /= (n_nucs - fiber_start) * fiber_start
+    g_rep /= (n_nucs - fiber_start) * fiber_start
+    #
+    # g_nuc_kT = np.asarray([np.sum(g_dna) * kT, g_wrap, g_stack, g_work]) / kT
+    # names = ['g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT']
+    #
+    # g_nuc_kT = np.append(g_nuc_kT, g_dna)
+    # names += ['g_shift_kT', 'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT']
+
+    energy['g_dna_kT'].extend([np.sum(g_dna)]) # Is already in kT
+    energy['g_wrap_kT'].extend([g_wrap  / 41.0]) # kT
+    energy['g_stack_kT'].extend([g_stack / 41.0]) # kT
+    energy['g_tails_kT'].extend([g_tails / 41.0]) # kT
+    energy['g_rep_kT'].extend([g_rep / 41.0])
+    energy['g_work_kT'].extend([g_work / 41.0])
+
+    energy['g_total'].extend([np.sum([np.sum(g_dna) * 41.0, g_wrap, g_stack, g_tails, g_rep, g_work]) / 41.0])
+    energy['g_shift_kT'].extend([g_dna[0]])
+    energy['g_slide_kT'].extend([g_dna[1]])
+    energy['g_rise_kT'].extend([g_dna[2]])
+    energy['g_tilt_kT'].extend([g_dna[3]])
+    energy['g_roll_kT'].extend([g_dna[4]])
+    energy['g_twist_kT'].extend([g_dna[5]])
+
+
+    return
+
+
+def which_energies(energy):
+
+    g_names = ['g_tails_kT', 'g_rep_kT', 'g_total', 'g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT', 'g_shift_kT',
+               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT']
+    results_std = pd.DataFrame(columns=g_names)
+    for names in g_names:
+        energy[names] = []
+
+    return results_std
+
+def histones_coords(nucl, tf_d, tf_o):
+
+    # create separate list of histone coords
+    H2A_c = []
+    H2B_c = []
+    H3_c = []
+    H4_c = []
+
+    for chain in nucl.chains:
+        if chain == 'DNA':
+            pass
+        # remove coordinates that are produce sphere in the middle of nowhere
+        elif chain == 'H2A*' or chain == 'H2A':
+            H2A_c.extend(nucl.chains[chain][2])
+        elif chain == 'H2B*' or chain == 'H2B':
+            H2B_c.extend(nucl.chains[chain][2][:-3])
+        elif chain == 'H3*' or chain == 'H3':
+            H3_c.extend(nucl.chains[chain][2])
+        elif chain == 'H4*' or chain == 'H4':
+            H4_c.extend(nucl.chains[chain][2])
+
+    # transform histone coords to every nucl position
+    H2A_ct = []
+    H2B_ct = []
+    H3_ct = []
+    H4_ct = []
+    l_coordt = []
+
+    for tf in tf_d:
+        H2A_ct.extend(nMC.apply_transformation(nMC.apply_transformation(np.array(H2A_c), tf), tf_o))
+        H2B_ct.extend(nMC.apply_transformation(nMC.apply_transformation(np.array(H2B_c), tf), tf_o))
+        H3_ct.extend(nMC.apply_transformation(nMC.apply_transformation(np.array(H3_c), tf), tf_o))
+        H4_ct.extend(nMC.apply_transformation(nMC.apply_transformation(np.array(H4_c), tf), tf_o))
+        l_coordt.extend(nMC.apply_transformation(nMC.apply_transformation(np.array(nucl.l_coord), tf), tf_o))
+
+
+    df_H2A = pd.DataFrame(np.array(H2A_ct) / 10, columns=['x (nm)', 'y (nm)', 'z (nm)'])
+    df_H2B = pd.DataFrame(np.array(H2B_ct) / 10, columns=['x (nm)', 'y (nm)', 'z (nm)'])
+    df_H3 = pd.DataFrame(np.array(H3_ct) / 10, columns=['x (nm)', 'y (nm)', 'z (nm)'])
+    df_H4 = pd.DataFrame(np.array(H4_ct) / 10, columns=['x (nm)', 'y (nm)', 'z (nm)'])
+
+
+    l_index = ['H2A', 'H2A*', 'H4', 'H4*'] * len(tf_d)
+
+    df_l_coord = pd.DataFrame(np.array(l_coordt) / 10, columns=['x (nm)', 'y (nm)', 'z (nm)'], index=l_index)
+
+
+    return df_H2A, df_H2B, df_H3, df_H4, df_l_coord
