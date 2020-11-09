@@ -123,7 +123,7 @@ def score_stacking(moving_bp, coord, frames, dyads, fixed_stack_params, e_stack_
     # sigma *= 2.0
     k = kT / sigma ** 2
 
-    if 0 <= left_dyad < len(dyads) - fiber_start:
+    if 0 <= left_dyad < len(dyads) - fiber_start and left_dyad != right_dyad:
         stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad], dyads[right_dyad],
                                           nucl, fiber_start)
         g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
@@ -303,10 +303,12 @@ def main(n_steps, root, input):
     # parameters for implementation H4 tails
     pars.add('num_npz', value=50)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
-    pars.add('nuc_cms', value=0) # track distance between nucleosome center of masses
-    pars.add('tail_switch', value=True)
+    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
+    pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
+    pars.add('tail_up_nm', value=0) # mean value of tail distance
+    pars.add('tail_down_nm', value=0) # mean value of tail distance
 
 
     # pass input values to pars
@@ -315,9 +317,13 @@ def main(n_steps, root, input):
 
 
     # Setup files and forces
+    # if root is None:
+    #     root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
+    #                                              pars['e_stack_kT'].value, pars['e_wrap_kT'].value).replace('.', '-')
     if root is None:
-        root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
-                                                 pars['e_stack_kT'].value, pars['e_wrap_kT'].value).replace('.', '-')
+        root = '{1}x{2}x{0}s{3}{4}A{5}d'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
+                                                 pars['tail_switch'].value, pars['Rep_Amp_pNA'].value,
+                                                 pars['Rep_decay_A'].value)
     else:
         iterpar = []
         for par_txt in re.findall('\d+', root):
@@ -414,7 +420,8 @@ def main(n_steps, root, input):
         #                                    e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         # g_nuc_kT_all.append(g_nuc_kT)
 
-        tMC.energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_start, fixed_wrap_params, p0, k, force)
+        tMC.energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_start, fixed_wrap_params,
+                                               fixed_stack_params, p0, k, force)
 
         fileio.report_progress(i, title='Force = {0:.1f} pN {1}'.format(force, os.path.splitext(filename)[0]))
 

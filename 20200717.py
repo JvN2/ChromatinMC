@@ -8,11 +8,12 @@ import RunMC as runmc
 
 
 params = {}
-params['n_nuc'] = 3
+params['n_nuc'] = 4
 params['NRL'] = 165
-params['fiber_start'] = 1
+params['fiber_start'] = 2
 params['dummy_steps'] = 3
 params['num_npz'] = 2
+params['tail_switch'] = True
 
 
 results, filename = runmc.main(9, root=None, input=params)
@@ -25,7 +26,7 @@ data = pd.DataFrame(results, index=[filename])
 #     data.loc[filename] = results
 #
 # data.to_excel(r'D:\users\Annelies\data\20201028\results.xlsx', index=True, header=True)
-# print(results)
+
 # # # # # # #
 #
 import Tails as tMC

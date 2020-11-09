@@ -138,6 +138,9 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
     d_down:         distance from dyad 2 to dyad 1 (nm)
 
     """
+    d_up = 0
+    d_down = 0
+
     if orientation == None:
         orientation = '-*'
     l_coord = np.asarray(nucl.l_coord)
@@ -180,8 +183,6 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
         d_up = np.sqrt(np.sum((tail_stripe_1 - patch_stripe_2) ** 2))
         d_down = np.sqrt(np.sum((tail_stripe_2 - patch_stripe_1) ** 2))
 
-    # print('d up: ', d_up)
-    # print('d down: ', d_down)
     d_up /= 10
     d_down /= 10
 
@@ -589,7 +590,7 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
     for n, cms in enumerate(nuc_cms):
         nuc_cms[n] = nMC.apply_transformation(nuc_cms[n], tf_o)
         nuc_cms_c.append(nuc_cms[n][0])
-        if n >= fiber_start:
+        if n >= fiber_start and fiber_start != 0:
             nuc_params.append(nMC.ofs2params(nuc_cms[n], nuc_cms[n - fiber_start], _3dna=True, flipx=[0,0]))
 
 
@@ -737,7 +738,7 @@ def save_values(pars, filename, dyads, nucl, results, results_std, energy_all, f
     return
 
 
-def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_start, fixed_wrap_params, p0, k, force):
+def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_start, fixed_wrap_params, fixed_stack_params, p0, k, force):
 
     dna_coord = dna.coord
     dna_params = dna.params
@@ -752,6 +753,9 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
     g_tails = 0
     g_rep = 0
     g_work = 0
+    nucl_cms = 0
+    tail = np.zeros(2)
+
 
     n_nucs = pars['n_nuc'].value
     tail_switch = pars['tail_switch'].value
@@ -781,18 +785,21 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
         g_wrap += rMC.score_wrapping(dyad2 - 2, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
                                  half_nuc=True)[0]
 
+    # calculate distances between nucleosomes and distance of tails
+    for n in range(fiber_start, n_nucs):
+        nucl_cms += dist_cms(n, n - fiber_start, dna, dyads, nucl)
+        tail += tail_dist(n - fiber_start, n, dyads, dna, nucl)
+
     g_dna /= (n_nucs - 1)
     g_wrap /= (n_nucs - 1)
     g_work /= (n_nucs - 1)
-    g_stack /= (n_nucs - fiber_start) * fiber_start
-    g_tails /= (n_nucs - fiber_start) * fiber_start
-    g_rep /= (n_nucs - fiber_start) * fiber_start
-    #
-    # g_nuc_kT = np.asarray([np.sum(g_dna) * kT, g_wrap, g_stack, g_work]) / kT
-    # names = ['g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT']
-    #
-    # g_nuc_kT = np.append(g_nuc_kT, g_dna)
-    # names += ['g_shift_kT', 'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT']
+
+    if fiber_start != 0:
+        g_stack /= (n_nucs - fiber_start) * fiber_start
+        g_tails /= (n_nucs - fiber_start) * fiber_start
+        g_rep /= (n_nucs - fiber_start) * fiber_start
+        nucl_cms /= (n_nucs - fiber_start)
+        tail /= (n_nucs - fiber_start)
 
     energy['g_dna_kT'].extend([np.sum(g_dna)]) # Is already in kT
     energy['g_wrap_kT'].extend([g_wrap  / 41.0]) # kT
@@ -800,8 +807,8 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
     energy['g_tails_kT'].extend([g_tails / 41.0]) # kT
     energy['g_rep_kT'].extend([g_rep / 41.0])
     energy['g_work_kT'].extend([g_work / 41.0])
-
     energy['g_total'].extend([np.sum([np.sum(g_dna) * 41.0, g_wrap, g_stack, g_tails, g_rep, g_work]) / 41.0])
+
     energy['g_shift_kT'].extend([g_dna[0]])
     energy['g_slide_kT'].extend([g_dna[1]])
     energy['g_rise_kT'].extend([g_dna[2]])
@@ -809,6 +816,9 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
     energy['g_roll_kT'].extend([g_dna[4]])
     energy['g_twist_kT'].extend([g_dna[5]])
 
+    energy['nucl_cms_nm'].extend([nucl_cms])
+    energy['tail_up_nm'].extend([tail[0]])
+    energy['tail_down_nm'].extend([tail[1]])
 
     return
 
@@ -816,7 +826,8 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
 def which_energies(energy):
 
     g_names = ['g_tails_kT', 'g_rep_kT', 'g_total', 'g_dna_kT', 'g_wrap_kT', 'g_stack_kT', 'g_work_kT', 'g_shift_kT',
-               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT']
+               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT', 'nucl_cms_nm', 'tail_up_nm',
+               'tail_down_nm']
     results_std = pd.DataFrame(columns=g_names)
     for names in g_names:
         energy[names] = []
