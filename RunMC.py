@@ -323,7 +323,7 @@ def main(n_steps, root, input):
     if root is None:
         root = '{1}x{2}x{0}s{3}{4}A{5}d'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
                                                  pars['tail_switch'].value, pars['Rep_Amp_pNA'].value,
-                                                 pars['Rep_decay_A'].value)
+                                                 pars['Rep_decay_A'].value).replace('.', '-')
     else:
         iterpar = []
         for par_txt in re.findall('\d+', root):

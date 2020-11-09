@@ -591,7 +591,7 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
         nuc_cms[n] = nMC.apply_transformation(nuc_cms[n], tf_o)
         nuc_cms_c.append(nuc_cms[n][0])
         if n >= fiber_start:
-            if fiber_start != 0
+            if fiber_start != 0:
                 nuc_params.append(nMC.ofs2params(nuc_cms[n], nuc_cms[n - fiber_start], _3dna=True, flipx=[0,0]))
             else:
                 nuc_params.append(nMC.ofs2params(nuc_cms[n], nuc_cms[n - 1], _3dna=True, flipx=[0, 0]))
