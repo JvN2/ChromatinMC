@@ -714,7 +714,7 @@ def save_values(pars, filename, dyads, nucl, results, results_std, energy_all, f
     for key in energy_all:
         pars[key].value = np.mean(energy_all[key])
     # save mean energy in results df
-    results.loc[filename] = pars.valuesdict()
+    results.loc['average'] = pars.valuesdict()
     results_std.loc['average'] = results_std.mean()
 
 
