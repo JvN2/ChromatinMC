@@ -470,7 +470,7 @@ def main(n_steps, root, input):
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])
     # fileio.create_pov_movie(filename, fps=5, octamers=True, overwrite=False, frame=[60, 0, -90])
-    return pars.valuesdict(), filename
+    return
 
 
 if __name__ == '__main__':

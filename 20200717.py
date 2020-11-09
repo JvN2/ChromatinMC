@@ -10,14 +10,16 @@ import RunMC as runmc
 params = {}
 params['n_nuc'] = 4
 params['NRL'] = 165
-params['fiber_start'] = 0
+params['fiber_start'] = 1
 params['dummy_steps'] = 3
-params['num_npz'] = 5
+params['num_npz'] = 2
 params['tail_switch'] = True
+params['Rep_Amp_pNA'] = 100
+params['Rep_decay_A'] = 5.0
 
 
-results, filename = runmc.main(28, root=None, input=params)
-data = pd.DataFrame(results, index=[filename])
+runmc.main(9, root=None, input=params)
+# data = pd.DataFrame(results, index=[filename])
 
 # NRL = range(165,167,1)
 # for nrl in NRL:
