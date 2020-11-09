@@ -669,8 +669,7 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
                 dist = np.sqrt(np.sum((m - n) ** 2))
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
-    if fiber_start is 0:
-        g = 0
+
 
     return g
 
@@ -800,6 +799,10 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
         g_rep /= (n_nucs - fiber_start) * fiber_start
         nucl_cms /= (n_nucs - fiber_start)
         tail /= (n_nucs - fiber_start)
+    else:
+        g_rep /= (n_nucs - 1)
+        nucl_cms /= (n_nucs - 1)
+        tail /= (n_nucs - 1)
 
     energy['g_dna_kT'].extend([np.sum(g_dna)]) # Is already in kT
     energy['g_wrap_kT'].extend([g_wrap  / 41.0]) # kT
