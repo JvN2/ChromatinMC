@@ -788,9 +788,15 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
                                  half_nuc=True)[0]
 
     # calculate distances between nucleosomes and distance of tails
-    for n in range(fiber_start, n_nucs):
-        nucl_cms += dist_cms(n, n - fiber_start, dna, dyads, nucl)
-        tail += tail_dist(n - fiber_start, n, dyads, dna, nucl)
+    if fiber_start > 0:
+        for n in range(fiber_start, n_nucs):
+            nucl_cms += dist_cms(n, n - fiber_start, dna, dyads, nucl)
+            tail += tail_dist(n - fiber_start, n, dyads, dna, nucl)
+    else:
+        for n in range(1, n_nucs):
+            nucl_cms += dist_cms(n, n - 1, dna, dyads, nucl)
+            tail += tail_dist(n - 1, n, dyads, dna, nucl)
+
 
     g_dna /= (n_nucs - 1)
     g_wrap /= (n_nucs - 1)

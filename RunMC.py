@@ -262,7 +262,7 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
         return False
 
 
-def main(n_steps, root, input):
+def main(n_steps, root):
     pars = Parameters()
     # Parameters that define the nucleosomal array
     pars.add('L_bp', value=428)
@@ -303,7 +303,7 @@ def main(n_steps, root, input):
     # parameters for implementation H4 tails
     pars.add('num_npz', value=50)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
-    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
+    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
@@ -311,9 +311,9 @@ def main(n_steps, root, input):
     pars.add('tail_down_nm', value=0) # mean value of tail distance
 
 
-    # pass input values to pars
-    for key in input.keys():
-        pars[key].value = input[key]
+    # # pass input values to pars
+    # for key in input.keys():
+    #     pars[key].value = input[key]
 
 
     # Setup files and forces
@@ -330,11 +330,11 @@ def main(n_steps, root, input):
             iterpar.append(float(par_txt))
         iterpar[4] += iterpar[5] / 10.0
 
-        pars['n_nuc'].value = iterpar[0]
+        pars['n_nuc'].value = int(iterpar[0])
         pars['NRL'].value = iterpar[1]
         pars['fiber_start'].value = int(iterpar[2])
-        pars['e_stack_kT'].value = iterpar[3]
-        pars['e_wrap_kT'].value = iterpar[4]
+        pars['Rep_Amp_pNA'].value = iterpar[3]
+        pars['Rep_decay_A'].value = iterpar[4]
 
 
     # create optimal fiber length for each NRL, with 14 bp handles

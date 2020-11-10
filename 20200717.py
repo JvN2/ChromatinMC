@@ -7,27 +7,29 @@ import FileIO as fileio
 import RunMC as runmc
 
 
-params = {}
-params['n_nuc'] = 4
-params['NRL'] = 165
-params['fiber_start'] = 1
-params['dummy_steps'] = 3
-params['num_npz'] = 2
-params['tail_switch'] = True
-params['Rep_Amp_pNA'] = 100
-params['Rep_decay_A'] = 5.0
-
-
-runmc.main(9, root=None, input=params)
-# data = pd.DataFrame(results, index=[filename])
-
-# NRL = range(165,167,1)
-# for nrl in NRL:
-#     experiment = '2x' + str(nrl) + 'x1s25w2-1'
-#     results, filename = runmc.main(2, experiment)
-#     data.loc[filename] = results
+# params = {}
+# params['n_nuc'] = 5
+# params['dummy_steps'] = 1
+# params['num_npz'] = 50
+# params['tail_switch'] = False
 #
-# data.to_excel(r'D:\users\Annelies\data\20201028\results.xlsx', index=True, header=True)
+# results, filename = runmc.main(3, root=None, input=params)
+# data = pd.DataFrame(results, index=['test'])
+# data.drop(index='test')
+#
+#
+# NRL = [167, 197]
+# start = [0,1,2]
+# params['dummy_steps'] = 100
+#
+# for nrl in NRL:
+#     for s in start:
+#         params['NRL'] = nrl
+#         params['fiber_start'] = s
+#         results, filename = runmc.main(2e4, root=None, input=params)
+#         data.loc[filename] = results
+#
+# data.to_excel(r'D:\users\vlaar\data\20201109\old_stack.xlsx', index=True, header=True)
 
 # # # # # # #
 #
