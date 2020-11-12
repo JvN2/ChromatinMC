@@ -14,6 +14,7 @@ import RunMC as runmc
 # params['tail_switch'] = False
 #
 # results, filename = runmc.main(3, root=None, input=params)
+runmc.main(3, '4x167x0s100w28-0')
 # data = pd.DataFrame(results, index=['test'])
 # data.drop(index='test')
 #

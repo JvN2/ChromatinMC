@@ -637,42 +637,77 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
 
 def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
 
-    left_dyad = np.argmax(dyads > moving_bp) - 1
-    right_dyad = left_dyad + fiber_start
-
     g = 0
     # Repulsion parameters
-    Amp = pars['Rep_Amp_pNA'].value # amplitude (pNA)
+    Amp = pars['Rep_Amp_pNA'].value  # amplitude (pNA)
     decay_l = pars['Rep_decay_A'].value  # decay length (A)
+    left_dyad = np.argmax(dyads > moving_bp) - 1
 
-    if 0 <= left_dyad < len(dyads) - fiber_start:
+    if fiber_start != 0:
+
+        right_dyad = left_dyad + fiber_start
+
+        if 0 <= left_dyad < len(dyads) - fiber_start:
+            left_nucl_bps = dyads[left_dyad] + nucl.fixed
+            right_nucl_bps = dyads[right_dyad] + nucl.fixed
+
+            up_turn = dna.coord[left_nucl_bps]
+            down_turn = dna.coord[right_nucl_bps]
+
+            for i, n in enumerate(up_turn):
+                for j, m in enumerate(down_turn[i:]):
+                    dist = np.sqrt(np.sum((m - n) ** 2))
+                    g += Amp * np.exp(- (1 / decay_l) * dist)
+
+
+        if fiber_start is 2 and left_dyad >= 1:
+            left_dyad -= 1
+            right_dyad -= 1
+            left_nucl_bps = dyads[left_dyad] + nucl.fixed
+            right_nucl_bps = dyads[right_dyad] + nucl.fixed
+
+            up_turn = dna.coord[left_nucl_bps]
+            down_turn = dna.coord[right_nucl_bps]
+
+            for i, n in enumerate(up_turn):
+                for j, m in enumerate(down_turn[i:]):
+                    dist = np.sqrt(np.sum((m - n) ** 2))
+                    g += Amp * np.exp(- (1 / decay_l) * dist)
+
+    elif fiber_start == 0 and left_dyad >= 0:
+        dna_coord = dna.coord
+        dna_frames = dna.frames
+
+        nuc_cms = []
+        nuc_dist = []
+        for dyad in dyads:
+            nuc_cms.append(nMC.get_nuc_of(dna_coord, dna_frames, dyad, nucl)[0])
+        # check distance of nucleosomes
+        for i, cm1 in enumerate(nuc_cms):
+            nuc_dist.extend([np.sum((nuc_cms[left_dyad] - cm1) ** 2)])
+        # nuc_sort_idx = np.argsort(nuc_dist)
+
+        # determine indices of two dyads closest to left_dyad
+        first_dyad = np.argsort(nuc_dist)[1]
+        second_dyad = np.argsort(nuc_dist)[2]
+
         left_nucl_bps = dyads[left_dyad] + nucl.fixed
-        right_nucl_bps = dyads[right_dyad] + nucl.fixed
+        first_nucl_bps = dyads[first_dyad] + nucl.fixed
+        second_nucl_bps = dyads[second_dyad] + nucl.fixed
 
         up_turn = dna.coord[left_nucl_bps]
-        down_turn = dna.coord[right_nucl_bps]
+        first_turn = dna.coord[first_nucl_bps]
+        second_turn = dna.coord[second_nucl_bps]
 
         for i, n in enumerate(up_turn):
-            for j, m in enumerate(down_turn[i:]):
+            for j, m in enumerate(first_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
-
-    if fiber_start is 2 and left_dyad >= 1:
-        left_dyad -= 1
-        right_dyad -= 1
-        left_nucl_bps = dyads[left_dyad] + nucl.fixed
-        right_nucl_bps = dyads[right_dyad] + nucl.fixed
-
-        up_turn = dna.coord[left_nucl_bps]
-        down_turn = dna.coord[right_nucl_bps]
-
         for i, n in enumerate(up_turn):
-            for j, m in enumerate(down_turn[i:]):
+            for j, m in enumerate(second_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
                 g += Amp * np.exp(- (1 / decay_l) * dist)
-
-
 
     return g
 

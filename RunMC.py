@@ -301,29 +301,20 @@ def main(n_steps, root):
     pars.add('g_total', value=0)  # total energy score of fiber
 
     # parameters for implementation H4 tails
-    pars.add('num_npz', value=50)     # number of npz files that will be stored during simulation
-    pars.add('dummy_steps', value=100)
-    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
+    pars.add('num_npz', value=1)     # number of npz files that will be stored during simulation
+    pars.add('dummy_steps', value=1)
+    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
     pars.add('tail_up_nm', value=0) # mean value of tail distance
     pars.add('tail_down_nm', value=0) # mean value of tail distance
 
-
-    # # pass input values to pars
-    # for key in input.keys():
-    #     pars[key].value = input[key]
-
-
     # Setup files and forces
-    # if root is None:
-    #     root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
-    #                                              pars['e_stack_kT'].value, pars['e_wrap_kT'].value).replace('.', '-')
     if root is None:
-        root = '{1}x{2}x{0}s{3}{4}A{5}d'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
-                                                 pars['tail_switch'].value, pars['Rep_Amp_pNA'].value,
-                                                 pars['Rep_decay_A'].value).replace('.', '-')
+        root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
+                                                 pars['Rep_Amp_pNA'].value, pars['Rep_decay_A'].value).replace('.', '-')
+
     else:
         iterpar = []
         for par_txt in re.findall('\d+', root):
