@@ -272,7 +272,7 @@ def main(n_steps, root):
 
     # Parameters that define the folded fiber
     pars.add('rise_A', value=100)
-    pars.add('nld_A', value=2.5)    #was 20
+    pars.add('nld_A', value=20)
     pars.add('chirality', value=1)
     pars.add('face', value=1)
     pars.add('diameter_A', value=330)
@@ -301,10 +301,9 @@ def main(n_steps, root):
     pars.add('g_total', value=0)  # total energy score of fiber
 
     # parameters for implementation H4 tails
-    pars.add('num_npz', value=5)     # number of npz files that will be stored during simulation
-    pars.add('dummy_steps', value=10)
-    pars.add('iterations', value=n_steps)
-    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
+    pars.add('num_npz', value=10)     # number of npz files that will be stored during simulation
+    pars.add('dummy_steps', value=100)
+    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses

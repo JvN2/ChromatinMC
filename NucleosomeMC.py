@@ -435,8 +435,8 @@ def main():
         n_coord.append(apply_transformation(l, tf))
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
-    print(fileio.create_pov(filename, n_coord, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
-
+    # print(fileio.create_pov(filename, n_coord, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
+    print(nuc.fixed)
 
 if __name__ == '__main__':
     main()
