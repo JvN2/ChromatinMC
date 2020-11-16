@@ -301,8 +301,8 @@ def main(n_steps, root):
     pars.add('g_total', value=0)  # total energy score of fiber
 
     # parameters for implementation H4 tails
-    pars.add('num_npz', value=1)     # number of npz files that will be stored during simulation
-    pars.add('dummy_steps', value=1)
+    pars.add('num_npz', value=10)     # number of npz files that will be stored during simulation
+    pars.add('dummy_steps', value=100)
     pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
