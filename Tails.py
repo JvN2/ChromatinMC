@@ -601,7 +601,7 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
     df_nucl_p = pd.DataFrame(nuc_params, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
                              index=range(fiber_start,len(dyads)))
 
-    print(fileio.create_pov((fileio.change_extension(filename, '_m.png')), t_coord, radius=radius, colors=colors, range_A=[750, 750],
+    print(fileio.create_pov((fileio.change_extension(filename, '_m.png')), t_coord, radius=radius, colors=colors, range_A=[1000, 1000],
                             offset_A=[0, 0, 150], show=False, width_pix=1500))
 
     # energy of bps
