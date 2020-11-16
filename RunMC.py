@@ -439,6 +439,9 @@ def main(n_steps, root):
                 # calculate standard deviation of energies
                 energy[key] = np.std(energy[key])
 
+            pars['F_pN'].value = force
+            pars['z_nm'].value = dna.coord_terminal[2] / 10
+
             # save mean energy in results df
             results.loc[datafile] = pars.valuesdict()
             # save stds of energy in results df
