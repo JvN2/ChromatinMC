@@ -42,7 +42,7 @@ if __name__ == "__main__":
         # [8, 197, 0, 102, 65.0],
         # [8, 197, 0, 102, 85.0],
         # [8, 197, 0, 102, 100.0],
-        [16, 167, 2, 102, 25.0],
+        # [16, 167, 2, 102, 25.0],
         [16, 197, 1, 102, 25.0],
        #  [8, 167, 1, 102, 45.0],
        #  [8, 167, 1, 102, 65.0],
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         print('>>> More than 22 processes, only the first 22 are executed')
         iterpars = iterpars[:22]
 
-    n_steps = 200
+    n_steps = 2000
 
     procs = len(iterpars)  # Number of processes to create
 
