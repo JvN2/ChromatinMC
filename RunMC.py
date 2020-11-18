@@ -266,7 +266,7 @@ def main(n_steps, root):
 
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=428)
+    pars.add('L_bp', value=1600)
     pars.add('P_nm', value=50)
     pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
@@ -331,7 +331,7 @@ def main(n_steps, root):
 
 
     # create optimal fiber length for each NRL, with 14 bp handles
-    pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
+    # pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
 
     filename = fileio.get_filename(incr=True, root=root, ext='xlsx')
 
@@ -475,5 +475,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(5e4, '8x197x1s21w2-1')
+    main(2000, '8x197x1s25w2-1' )
 
