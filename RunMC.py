@@ -344,6 +344,7 @@ def main(n_steps, root):
     sample_forces = np.logspace(np.log10(fmin_pN), np.log10(fmax_pN), n_samples / 2)
     sample_indices = np.searchsorted(forces, sample_forces)
     sample_indices = np.append(sample_indices, n_steps / 2 + (n_steps / 2 - sample_indices[::-1]) - 1)
+
     forces = np.append(forces, forces[::-1])
 
     dummy_steps = pars['dummy_steps'].value
@@ -460,6 +461,8 @@ def main(n_steps, root):
             previous_bp = bp
         basepairs = basepairs[::-1]
 
+    fileio.create_pov(filename, [dna.coord], colors='k', radius=[10])
+    return
 
     tMC.save_values(pars, filename, dyads, nucl, results, results_std, energy_all, fixed_wrap_params, p0, k)
 
@@ -471,5 +474,6 @@ def main(n_steps, root):
 
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
+
     main(5e4, '8x197x1s21w2-1')
 

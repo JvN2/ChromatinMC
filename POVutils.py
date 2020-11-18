@@ -88,7 +88,7 @@ union {
     return HeaderTxt
 
 
-def add_sphere(pov_image, coord, radius=4, color='k', transperancy=0.5):
+def add_sphere(pov_image, coord, radius=4, color='k', transperancy=0.0):
     POVTxt = """
 object {
    sphere { < #xyz# > #R# }
