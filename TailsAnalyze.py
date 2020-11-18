@@ -1,6 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import glob
+from helixmc.pose import HelixPose
+import FileIO as fileio
 import Tails as tMC
 
 def plotten(x, y, xlabel, ylabel):
@@ -126,4 +129,13 @@ def tail_energy():
 
     plotten(z_array, g_array, xlabel='distance (nm)', ylabel='energy (kT)')
 
+    return
+
+def plot_npz(filename):
+
+    # get list of npz files in filename folder
+    npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+
+    dna = HelixPose.from_file(npz_f[0])
+    fileio.create_pov(filename, [dna.coord], colors='k', radius=[10], show=True)
     return
