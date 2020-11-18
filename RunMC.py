@@ -122,8 +122,8 @@ def score_stacking(moving_bp, coord, frames, dyads, fixed_stack_params, e_stack_
     sigma = np.asarray([1.0, 1.0, 1.0, 0.1, 0.1, 0.1])
     # sigma *= 2.0
     k = kT / sigma ** 2
-
-    if 0 <= left_dyad < len(dyads) - fiber_start and left_dyad != right_dyad:
+    #TODO: make suitable for 0-start
+    if 0 <= left_dyad < len(dyads) - fiber_start:
         stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad], dyads[right_dyad],
                                           nucl, fiber_start)
         g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
@@ -266,7 +266,7 @@ def main(n_steps, root):
 
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=1600)
+    pars.add('L_bp', value=1800)
     pars.add('P_nm', value=50)
     pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
@@ -302,7 +302,7 @@ def main(n_steps, root):
     pars.add('g_total', value=0)  # total energy score of fiber
 
     # parameters for implementation H4 tails
-    pars.add('num_npz', value=10)     # number of npz files that will be stored during simulation
+    pars.add('num_npz', value=20)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
     pars.add('iterations', value=n_steps)
     pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
@@ -475,5 +475,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(2000, '8x197x1s25w2-1' )
+    main(2000, '8x197x1s25w2-1')
 

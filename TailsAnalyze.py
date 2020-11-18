@@ -136,6 +136,6 @@ def plot_npz(filename):
     # get list of npz files in filename folder
     npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
 
-    dna = HelixPose.from_file(npz_f[0])
-    fileio.create_pov(filename, [dna.coord], colors='k', radius=[10], show=True)
+    dna = HelixPose.from_file(npz_f[5])
+    fileio.create_pov(filename, [dna.coord], offset_A=[0,0,150], colors='k', radius=[10], show=True)
     return
