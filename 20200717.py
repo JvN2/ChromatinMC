@@ -1,8 +1,18 @@
 import NucleosomeMC as nmc
 import TailsAnalyze as TA
 
-TA.expo_decay()
+TA.plot_npz(r'D:\users\Annelies\data\20201109\3x165x1s25w2-1_001')
+# #
+
+# import numpy as np
+# NRL = 197
+# n_nucs = 2
+# n_bp = 422
 #
+# dyads = np.asarray(NRL * (np.arange(0, n_nucs, 1) - (n_nucs - 1) / 2.0))
+# dyads = (dyads + n_bp // 2).astype(int)
+#
+# print(dyads)
 # nmc.main()
 #
 import pandas as pd
