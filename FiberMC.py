@@ -117,7 +117,7 @@ def create_unfolded_fiber(fiber_pars):
 
     '''
 
-    n_bp = fiber_pars['L_bp']
+    n_bp = int(fiber_pars['L_bp'])
     n_nucs = fiber_pars['n_nuc']
     NRL = fiber_pars['NRL']
 
@@ -358,7 +358,7 @@ def main(pars):
     # create fiber with positioned nucleosomes, but missing linker DNA
     casted_fiber, _, w = create_casted_fiber(pars, nucl)
     # fileio.plot_dna(casted_fiber, range_nm=50, wait=5, origin_index=0)
-
+    # return
     bases2 = []
     bases1 = []
     bases3 = []

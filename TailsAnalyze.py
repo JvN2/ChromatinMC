@@ -1,5 +1,26 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import Tails as tMC
+
+def plotten(x, y, xlabel, ylabel):
+    plt.rcParams.update({'font.size': 22})
+
+    fig, ax = plt.subplots()
+
+    ax.plot(x, y, color=(0.75, 0, 0.25), linewidth=5)
+
+    plt.setp(ax.spines.values(), linewidth=2)
+    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
+    ax.set_xlim(left=0)
+    # plt.legend()
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+
+    plt.show()
+
 
 def repulsion_exp():
     filename = r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201110\20201112_cms_dists.xlsx"
@@ -44,5 +65,65 @@ def repulsion_exp():
     plt.xlabel('decay length (nm)')
     plt.ylabel('Distance between nucleosomes (nm)')
     plt.show()
+
+    return
+
+def expo_decay ():
+
+    kT = 41.0
+    Amp = 2.5 * kT # amplitude pNA
+    decay_l = [5.0, 25.0, 45.0, 65.0, 85.0, 100.0]
+
+    x = np.linspace(0,100, 500)
+    y = {}
+    for d in decay_l:
+        y[d] = Amp * np.exp(- (1 / d) * x)
+        y[d] /= kT
+
+    x /= 10 # A to nm
+
+    plt.rcParams.update({'font.size': 22})
+
+    fig, ax = plt.subplots()
+
+    for d in decay_l:
+        ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=5, label='$\lambda$' + ' = ' + str(d))
+
+    plt.setp(ax.spines.values(), linewidth=2)
+    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
+    ax.set_xlim(left=0)
+    plt.legend()
+
+    plt.xlabel('distance (nm)')
+    plt.ylabel('energy (kT)')
+
+    plt.show()
+
+    return
+
+def coth(x):
+    return np.cosh(x) / np.sinh(x)
+
+def Langevin(x):
+    return (coth(x) - 1.0 / x)
+
+def tail_energy():
+
+    # initial parameters
+    L_nm = 6.8  # contour length H4 tial
+    b_nm = 0.6  # kuhn length H4 tail
+    S_pN = 630  # stiffness H4 tail
+    kT = 4.10
+    # possible force on H4 tials
+    f_array = np.linspace(1e-4, 80, 1e6)
+    # corresponding extension of H4 tials
+    z_array = L_nm * (Langevin(b_nm * f_array / kT) + f_array / S_pN)
+    # corresponding energy of H4 tials
+    g_array = -(kT * L_nm / b_nm) * (np.log((b_nm * f_array) / (kT)) - np.log(
+        np.sinh((b_nm * f_array) / (kT)))) + L_nm * f_array ** 2 / (2 * S_pN)
+
+    g_array /= kT
+
+    plotten(z_array, g_array, xlabel='distance (nm)', ylabel='energy (kT)')
 
     return

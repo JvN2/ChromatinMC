@@ -263,11 +263,12 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
 
 
 def main(n_steps, root):
+
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=428)
-    pars.add('P_nm', value=50)
-    pars.add('n_nuc', value=4)
+    pars.add('L_bp', value=1600)
+    pars.add('P_nm', value=50) #
+    pars.add('n_nuc', value=8)
     pars.add('e_nuc_kT', value=34.7)
 
     # Parameters that define the folded fiber
@@ -279,8 +280,8 @@ def main(n_steps, root):
 
     pars.add('e_wrap_kT', value=2.1)
     pars.add('e_stack_kT', value=25)
-    pars.add('NRL', value=187)
-    pars.add('fiber_start', value=2)
+    pars.add('NRL', value=197)
+    pars.add('fiber_start', value=1)
 
     # Parameters for reporting results
     pars.add('F_pN', value=0)
@@ -309,6 +310,10 @@ def main(n_steps, root):
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
     pars.add('tail_up_nm', value=0) # mean value of tail distance
     pars.add('tail_down_nm', value=0) # mean value of tail distance
+
+    # fMC.main(pars)
+    # return
+
 
     # Setup files and forces
     if root is None:
@@ -396,6 +401,11 @@ def main(n_steps, root):
     previous_bp = 0
     datafile = fileio.get_filename(sub=True, incr=True, ext='npz')
 
+    # pars.pretty_print()
+    # return
+    dna2 = fMC.create_folded_fiber(fixed_stack_params)
+    HelixPose.plot_helix(dna2)
+    return
 
     fileio.report_progress(n_steps, title='RunMC', init=True)
     for i, force in enumerate(forces):

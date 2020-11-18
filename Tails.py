@@ -30,7 +30,6 @@ kT = 4.10
 f_array = np.linspace(1e-4, 4800, 1e6)
 # corresponding extension of H4 tials
 z_array = L_nm * (Langevin(b_nm * f_array / kT) + f_array / S_pN)
-# print('z max: ', np.max(z_array))
 # corresponding energy of H4 tials
 g_array = -(kT * L_nm / b_nm) * (np.log((b_nm * f_array) / (kT)) - np.log(
         np.sinh((b_nm * f_array) / (kT)))) + L_nm * f_array ** 2 / (2 * S_pN)
@@ -335,23 +334,6 @@ def expected_value():
     plt.show()
 
 
-def plotten(x, y, xlabel, ylabel):
-    plt.rcParams.update({'font.size': 22})
-
-    fig, ax = plt.subplots()
-
-    ax.plot(x, y, color=(0.75, 0, 0.75), linewidth=5)
-
-    plt.setp(ax.spines.values(), linewidth=2)
-    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
-    ax.set_xlim(left=0)
-    # plt.legend()
-
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-
-
-    plt.show()
 
 
 def fFJC(z_nm):
