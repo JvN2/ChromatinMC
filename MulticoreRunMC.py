@@ -61,7 +61,7 @@ if __name__ == "__main__":
         print('>>> More than 22 processes, only the first 22 are executed')
         iterpars = iterpars[:22]
 
-    n_steps = 2200
+    n_steps = 200
 
     procs = len(iterpars)  # Number of processes to create
 
