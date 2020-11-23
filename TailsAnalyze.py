@@ -31,6 +31,10 @@ def repulsion_exp():
     one_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,D,E")
     two_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,F,G")
 
+    zero_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,B,C")
+    one_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,D,E")
+    two_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,F,G")
+
     x_1 = range(1, 8)
     x_tick = one_start_167.index
 
@@ -43,17 +47,33 @@ def repulsion_exp():
     y_2 = two_start_167.iloc[:, 0]
     e_2 = two_start_167.iloc[:, 1]
 
+    y9_0 = zero_start_197.iloc[:, 0]
+    e9_0 = zero_start_197.iloc[:, 1]
+
+    y9_1 = one_start_197.iloc[:, 0]
+    e9_1 = one_start_197.iloc[:, 1]
+
+    y9_2 = two_start_197.iloc[:, 0]
+    e9_2 = two_start_197.iloc[:, 1]
+
     #
     #
     plt.rcParams.update({'font.size': 22})
     #
     fig, ax = plt.subplots()
     #
-    ax.errorbar(x_1, y_1, e_1, color=(0.25, 0, 0.75), marker='o', markersize=10, label='NRL 167 1-start', linewidth=0,
+    ax.errorbar(x_1, y_1, e_1, color=(0.25, 0, 0.25), marker='o', markersize=10, label='NRL 167 1-start', linewidth=0,
                 ecolor='r', elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y_2, e_2, color=(0.5, 0, 0.5), marker='o', markersize=10, label='NRL 167 2-start', linewidth=0,
+    ax.errorbar(x_1, y_2, e_2, color=(0.5, 0, 0.25), marker='o', markersize=10, label='NRL 167 2-start', linewidth=0,
                 ecolor='r', elinewidth=5, capsize=5)
     ax.errorbar(x_1, y_0, e_0, color=(0.75, 0, 0.25), marker='o', markersize=10, label='NRL 167 0-start', linewidth=0,
+                ecolor='r', elinewidth=5, capsize=5)
+
+    ax.errorbar(x_1, y9_1, e9_1, color=(0, 0.25, 0.25), marker='o', markersize=10, label='NRL 197 1-start', linewidth=0,
+                ecolor='r', elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y9_2, e9_2, color=(0, 0.5, 0.25), marker='o', markersize=10, label='NRL 197 2-start', linewidth=0,
+                ecolor='r', elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y9_0, e9_0, color=(0, 0.75, 0.25), marker='o', markersize=10, label='NRL 197 0-start', linewidth=0,
                 ecolor='r', elinewidth=5, capsize=5)
 
     #
@@ -62,7 +82,9 @@ def repulsion_exp():
     plt.xticks(x_1, x_tick)
     ax.set_xlim(left=0)
     # ax.set_ylim(bottom=0)
-    plt.legend()
+    # ax.set_ylim(top=30)
+    # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.legend(loc='upper left')
     #
     plt.title('Repulsion amplitude 2,5 kT', y=1.08)
     plt.xlabel('decay length (nm)')
@@ -90,7 +112,7 @@ def expo_decay ():
     fig, ax = plt.subplots()
 
     for d in decay_l:
-        ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=5, label='$\lambda$' + ' = ' + str(d))
+        ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=5, label='$\lambda$' + ' = ' + str(d/10))
 
     plt.setp(ax.spines.values(), linewidth=2)
     ax.tick_params(which='both', width=2, length=5, top=True, right=True)

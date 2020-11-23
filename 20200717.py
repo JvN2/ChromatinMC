@@ -1,8 +1,8 @@
 import NucleosomeMC as nmc
 import TailsAnalyze as TA
 
-TA.plot_npz(r'D:\users\Annelies\data\20201109\3x165x1s25w2-1_001')
-# #
+# TA.plot_npz(r'D:\users\Annelies\data\20201109\3x165x1s25w2-1_001')
+TA.expo_decay ()
 
 # import numpy as np
 # NRL = 197
