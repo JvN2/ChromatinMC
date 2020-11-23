@@ -255,6 +255,8 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
                 score_work(coord, force),
                 # score_surface(coord),
                 0]
+    print('old_score', old_score)
+    print('new_score', new_score)
     if util.MC_acpt_rej(np.sum(old_score), np.sum(new_score)):
         return True
     else:
