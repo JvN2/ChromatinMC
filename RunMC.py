@@ -214,48 +214,47 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
     new_step_params = get_new_step_params(bp, previous_bp, dna, dyads, nucl, random_step)
     if np.array_equal(old_step_params, new_step_params):
         return False
-    elif Tail_switch == False: # use old stacking
-        coord = dna.coord
-        frames = dna.frames
-        old_score = [
-            score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
-            score_exclusion(coord, frames, dyads, nucl),
-            score_work(coord, force),
-            # score_surface(coord),
-            0]
-        dna.update(bp, new_step_params)
-        coord = dna.coord
-        frames = dna.frames
-        new_score = [
-            score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
-            score_exclusion(coord, frames, dyads, nucl),
-            score_work(coord, force),
-            # score_surface(coord),
-            0]
     else:
         coord = dna.coord
         frames = dna.frames
-        old_score = [
-            score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
-            score_exclusion(coord, frames, dyads, nucl),
-            tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl, pars),
-            score_work(coord, force),
-            # score_surface(coord),
-            0]
-        dna.update(bp, new_step_params)
-        coord = dna.coord
-        frames = dna.frames
-        new_score = [
-            score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
-            tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
-            score_exclusion(coord, frames, dyads, nucl),
-            tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl, pars),
-            score_work(coord, force),
-            # score_surface(coord),
-            0]
+        if Tail_switch == False: # use old stacking
+            old_score = [
+                score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
+                score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+                score_exclusion(coord, frames, dyads, nucl),
+                score_work(coord, force),
+                # score_surface(coord),
+                0]
+            dna.update(bp, new_step_params)
+            coord = dna.coord
+            frames = dna.frames
+            new_score = [
+                score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
+                score_stacking(bp, coord, frames, dyads, fixed_stack_params, e_stack_kT, nucl, fiber_start),
+                score_exclusion(coord, frames, dyads, nucl),
+                score_work(coord, force),
+                # score_surface(coord),
+                0]
+        else: # use tail stacking
+            old_score = [
+                score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
+                tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
+                score_exclusion(coord, frames, dyads, nucl),
+                tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl, pars),
+                score_work(coord, force),
+                # score_surface(coord),
+                0]
+            dna.update(bp, new_step_params)
+            coord = dna.coord
+            frames = dna.frames
+            new_score = [
+                score_wrapping(bp, coord, frames, dyads, nucl, fixed_wrap_params, e_wrap_kT)[0],
+                tMC.score_tails(bp, fiber_start, dyads, dna, nucl),
+                score_exclusion(coord, frames, dyads, nucl),
+                tMC.score_repulsion(bp, fiber_start, dyads, dna, nucl, pars),
+                score_work(coord, force),
+                # score_surface(coord),
+                0]
     if util.MC_acpt_rej(np.sum(old_score), np.sum(new_score)):
         return True
     else:
