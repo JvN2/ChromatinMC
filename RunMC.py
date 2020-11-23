@@ -122,21 +122,22 @@ def score_stacking(moving_bp, coord, frames, dyads, fixed_stack_params, e_stack_
     sigma = np.asarray([1.0, 1.0, 1.0, 0.1, 0.1, 0.1])
     # sigma *= 2.0
     k = kT / sigma ** 2
+    if fiber_start > 0:
+        if 0 <= left_dyad < len(dyads) - fiber_start
+            stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad], dyads[right_dyad],
+                                              nucl, fiber_start)
+            g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
+            g += 0.01 * g * g
+            g_min += np.clip(g, 0, e_stack_kT * kT)
 
-    if 0 <= left_dyad < len(dyads) - fiber_start and left_dyad != right_dyad:
-        stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad], dyads[right_dyad],
-                                          nucl, fiber_start)
-        g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
-        g += 0.01 * g * g
-        g_min += np.clip(g, 0, e_stack_kT * kT)
-
-    if fiber_start is 2 and left_dyad >= 1:
-        stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad - 1], dyads[right_dyad - 1],
-                                          nucl, fiber_start)
-        g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
-        g += 0.01 * g * g
-        g_min += np.clip(g, 0, e_stack_kT * kT)
-
+        if fiber_start is 2 and left_dyad >= 1:
+            stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad - 1], dyads[right_dyad - 1],
+                                              nucl, fiber_start)
+            g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
+            g += 0.01 * g * g
+            g_min += np.clip(g, 0, e_stack_kT * kT)
+    else:
+        g_min = 0
     return g_min
 
 
