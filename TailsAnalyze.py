@@ -1,6 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import glob
+from helixmc.pose import HelixPose
+from helixmc import util
+import NucleosomeMC as nMC
+import FileIO as fileio
 import Tails as tMC
 
 def plotten(x, y, xlabel, ylabel):
@@ -28,6 +33,10 @@ def repulsion_exp():
     one_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,D,E")
     two_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,F,G")
 
+    zero_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,B,C")
+    one_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,D,E")
+    two_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,F,G")
+
     x_1 = range(1, 8)
     x_tick = one_start_167.index
 
@@ -40,17 +49,33 @@ def repulsion_exp():
     y_2 = two_start_167.iloc[:, 0]
     e_2 = two_start_167.iloc[:, 1]
 
+    y9_0 = zero_start_197.iloc[:, 0]
+    e9_0 = zero_start_197.iloc[:, 1]
+
+    y9_1 = one_start_197.iloc[:, 0]
+    e9_1 = one_start_197.iloc[:, 1]
+
+    y9_2 = two_start_197.iloc[:, 0]
+    e9_2 = two_start_197.iloc[:, 1]
+
     #
     #
     plt.rcParams.update({'font.size': 22})
     #
     fig, ax = plt.subplots()
     #
-    ax.errorbar(x_1, y_1, e_1, color=(0.25, 0, 0.75), marker='o', markersize=10, label='NRL 167 1-start', linewidth=0,
+    ax.errorbar(x_1, y_1, e_1, color=(0.25, 0, 0.25), marker='o', markersize=10, label='NRL 167 1-start', linewidth=0,
                 ecolor='r', elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y_2, e_2, color=(0.5, 0, 0.5), marker='o', markersize=10, label='NRL 167 2-start', linewidth=0,
+    ax.errorbar(x_1, y_2, e_2, color=(0.5, 0, 0.25), marker='o', markersize=10, label='NRL 167 2-start', linewidth=0,
                 ecolor='r', elinewidth=5, capsize=5)
     ax.errorbar(x_1, y_0, e_0, color=(0.75, 0, 0.25), marker='o', markersize=10, label='NRL 167 0-start', linewidth=0,
+                ecolor='r', elinewidth=5, capsize=5)
+
+    ax.errorbar(x_1, y9_1, e9_1, color=(0, 0.25, 0.25), marker='o', markersize=10, label='NRL 197 1-start', linewidth=0,
+                ecolor='r', elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y9_2, e9_2, color=(0, 0.5, 0.25), marker='o', markersize=10, label='NRL 197 2-start', linewidth=0,
+                ecolor='r', elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y9_0, e9_0, color=(0, 0.75, 0.25), marker='o', markersize=10, label='NRL 197 0-start', linewidth=0,
                 ecolor='r', elinewidth=5, capsize=5)
 
     #
@@ -59,7 +84,9 @@ def repulsion_exp():
     plt.xticks(x_1, x_tick)
     ax.set_xlim(left=0)
     # ax.set_ylim(bottom=0)
-    plt.legend()
+    ax.set_ylim(top=35)
+    # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.legend(loc='upper left')
     #
     plt.title('Repulsion amplitude 2,5 kT', y=1.08)
     plt.xlabel('decay length (nm)')
@@ -87,7 +114,7 @@ def expo_decay ():
     fig, ax = plt.subplots()
 
     for d in decay_l:
-        ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=5, label='$\lambda$' + ' = ' + str(d))
+        ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=5, label='$\lambda$' + ' = ' + str(d/10))
 
     plt.setp(ax.spines.values(), linewidth=2)
     ax.tick_params(which='both', width=2, length=5, top=True, right=True)
@@ -125,5 +152,80 @@ def tail_energy():
     g_array /= kT
 
     plotten(z_array, g_array, xlabel='distance (nm)', ylabel='energy (kT)')
+
+    return
+
+def get_nucl_dyads(coords, NRL, n_nucs):
+    """
+
+    Returns
+    -------
+    nucl: nucleosome pose
+    dyads: indices of dyads
+    """
+    # create nucleosomepose
+    nucl = nMC.NucPose()
+    nucl.from_file('1KX5')
+    # get list of dyad indices
+    n_bp = len(coords)  # number of bp
+    dyads = np.asarray(NRL * (np.arange(0, n_nucs, 1) - (n_nucs - 1) / 2.0))
+    dyads = (dyads + n_bp // 2).astype(int)
+
+    return nucl, dyads
+
+
+def plot_npz(filename, nrl, nucs):
+
+    # get list of npz files in filename folder
+    npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+    # save parameters of bp of every dna pose in params
+    params = []
+    for f in npz_f[:]:
+        dna = HelixPose.from_file(f)
+        params.append(dna.params)
+    # calculate mean parameters per bp
+    params = np.mean(params, axis=0)
+
+
+    # use 6 parameters to get coordinates of every basepair
+    dr, frames = util.params2data(params)
+    coords = util.dr2coords(dr)
+
+    # get nucleosome pose en list of dyads
+    nucl, dyads = get_nucl_dyads(coords, nrl, nucs)
+
+    # get dyad_ofs to project histones in mean fiber pose
+    of_d_fiber = []  # origin frame of dyad in fiber
+    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)  # origin frame dyad in nucl pose
+    tf_d = []  # transformation matrix
+
+    for i, d in enumerate(dyads):
+        # get origin frame of dyad in fiber
+        of_d_fiber.append(nMC.get_of_2(coords, frames, d))
+
+        # get transformation matrix of nucleosome dyad onto fiber dyad
+        tf_d.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
+
+    # get center of masses of nucleosome
+    nuc_cms = []
+    for d, dyad in enumerate(dyads):
+        nuc_cms.append(nMC.apply_transformation(nucl.of, tf_d[d]))
+
+    # append histone positions to coordinates
+    # tf_d ensures that histones are placed correct at nucleosome position
+    coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
+
+    # transform fiber to origin
+    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+    tf_o = nMC.get_transformation(nuc_cms[0], target=origin_of)
+    t_coord = []  # transformed coords
+    # Tranform coords where first nucleosome is placed in origin
+    for c in coord_w_hist:
+        t_coord.append(nMC.apply_transformation(c, tf_o))
+
+
+    print(fileio.create_pov((fileio.change_extension(filename, 'png')), t_coord, radius=radius, colors=colors, range_A=[1500, 1500],
+                            offset_A=[0, 0, 500], show=True, width_pix=1500))
 
     return
