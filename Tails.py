@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os as os
 import pandas as pd
-from pynverse import inversefunc
+# from pynverse import inversefunc
 from helixmc import util
 from helixmc.random_step import RandomStepSimple, RandomStepAgg, symmetrize_WC
 import glob
@@ -336,12 +336,12 @@ def expected_value():
 
 
 
-def fFJC(z_nm):
-
-    z = lambda f: L_nm * (Langevin(b_nm * f / kT) + f / S_pN)
-    f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 15000], image=[0, 15000])
-
-    return f_pN
+# def fFJC(z_nm):
+#
+#     z = lambda f: L_nm * (Langevin(b_nm * f / kT) + f / S_pN)
+#     f_pN = inversefunc(z, y_values=z_nm, domain=[(1e-7), 15000], image=[0, 15000])
+#
+#     return f_pN
 
 
 def find_nearest(array, value):
