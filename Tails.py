@@ -808,7 +808,7 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
     g_wrap /= (n_nucs - 1)
     g_work /= (n_nucs - 1)
 
-    if fiber_start != 0:
+    if fiber_start > 0:
         g_stack /= (n_nucs - fiber_start) * fiber_start
         g_tails /= (n_nucs - fiber_start) * fiber_start
         g_rep /= (n_nucs - fiber_start) * fiber_start

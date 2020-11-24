@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import glob
 from helixmc.pose import HelixPose
+from helixmc import util
+import NucleosomeMC as nMC
 import FileIO as fileio
 import Tails as tMC
 
@@ -82,7 +84,7 @@ def repulsion_exp():
     plt.xticks(x_1, x_tick)
     ax.set_xlim(left=0)
     # ax.set_ylim(bottom=0)
-    # ax.set_ylim(top=30)
+    ax.set_ylim(top=35)
     # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     plt.legend(loc='upper left')
     #
@@ -153,11 +155,77 @@ def tail_energy():
 
     return
 
-def plot_npz(filename):
+def get_nucl_dyads(coords, NRL, n_nucs):
+    """
+
+    Returns
+    -------
+    nucl: nucleosome pose
+    dyads: indices of dyads
+    """
+    # create nucleosomepose
+    nucl = nMC.NucPose()
+    nucl.from_file('1KX5')
+    # get list of dyad indices
+    n_bp = len(coords)  # number of bp
+    dyads = np.asarray(NRL * (np.arange(0, n_nucs, 1) - (n_nucs - 1) / 2.0))
+    dyads = (dyads + n_bp // 2).astype(int)
+
+    return nucl, dyads
+
+
+def plot_npz(filename, nrl, nucs):
 
     # get list of npz files in filename folder
     npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+    # save parameters of bp of every dna pose in params
+    params = []
+    for f in npz_f[:]:
+        dna = HelixPose.from_file(f)
+        params.append(dna.params)
+    # calculate mean parameters per bp
+    params = np.mean(params, axis=0)
 
-    dna = HelixPose.from_file(npz_f[0])
-    fileio.create_pov(filename, [dna.coord], colors='k', radius=[10], show=True)
+
+    # use 6 parameters to get coordinates of every basepair
+    dr, frames = util.params2data(params)
+    coords = util.dr2coords(dr)
+
+    # get nucleosome pose en list of dyads
+    nucl, dyads = get_nucl_dyads(coords, nrl, nucs)
+
+    # get dyad_ofs to project histones in mean fiber pose
+    of_d_fiber = []  # origin frame of dyad in fiber
+    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)  # origin frame dyad in nucl pose
+    tf_d = []  # transformation matrix
+
+    for i, d in enumerate(dyads):
+        # get origin frame of dyad in fiber
+        of_d_fiber.append(nMC.get_of_2(coords, frames, d))
+
+        # get transformation matrix of nucleosome dyad onto fiber dyad
+        tf_d.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
+
+    # get center of masses of nucleosome
+    nuc_cms = []
+    for d, dyad in enumerate(dyads):
+        nuc_cms.append(nMC.apply_transformation(nucl.of, tf_d[d]))
+
+    # append histone positions to coordinates
+    # tf_d ensures that histones are placed correct at nucleosome position
+    coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
+
+    # transform fiber to origin
+    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+    tf_o = nMC.get_transformation(nuc_cms[0], target=origin_of)
+    t_coord = []  # transformed coords
+    # Tranform coords where first nucleosome is placed in origin
+    for c in coord_w_hist:
+        t_coord.append(nMC.apply_transformation(c, tf_o))
+
+
+    print(fileio.create_pov((fileio.change_extension(filename, 'png')), t_coord, radius=radius, colors=colors, range_A=[1500, 1500],
+                            offset_A=[0, 0, 500], show=True, width_pix=1500))
+
     return

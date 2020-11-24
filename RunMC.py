@@ -123,7 +123,7 @@ def score_stacking(moving_bp, coord, frames, dyads, fixed_stack_params, e_stack_
     # sigma *= 2.0
     k = kT / sigma ** 2
     if fiber_start > 0:
-        if 0 <= left_dyad < len(dyads) - fiber_start
+        if 0 <= left_dyad < len(dyads) - fiber_start:
             stack_params = fMC.get_stack_pars(coord, frames, dyads[left_dyad], dyads[right_dyad],
                                               nucl, fiber_start)
             g = 0.5 * np.sum(k * (stack_params - fixed_stack_params) ** 2) / kT
@@ -255,8 +255,6 @@ def MC_move(dna, bp, previous_bp, force, fixed_wrap_params, fixed_stack_params, 
                 score_work(coord, force),
                 # score_surface(coord),
                 0]
-    print('old_score', old_score)
-    print('new_score', new_score)
     if util.MC_acpt_rej(np.sum(old_score), np.sum(new_score)):
         return True
     else:
@@ -268,7 +266,7 @@ def main(n_steps, root):
 
     pars = Parameters()
     # Parameters that define the nucleosomal array
-    pars.add('L_bp', value=428)
+    pars.add('L_bp', value=1800)
     pars.add('P_nm', value=50)
     pars.add('n_nuc', value=4)
     pars.add('e_nuc_kT', value=34.7)
@@ -305,9 +303,9 @@ def main(n_steps, root):
 
     # parameters for implementation H4 tails
     pars.add('num_npz', value=10)     # number of npz files that will be stored during simulation
-    pars.add('dummy_steps', value=100)
+    pars.add('dummy_steps', value=1)
     pars.add('iterations', value=n_steps)
-    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
+    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
@@ -477,5 +475,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(5e4, '8x197x1s21w2-1')
+    main(3, '8x197x1s21w2-1')
 
