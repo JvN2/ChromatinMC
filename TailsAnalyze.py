@@ -183,6 +183,8 @@ def plot_npz(filename, nrl, nucs):
     for f in npz_f[:]:
         dna = HelixPose.from_file(f)
         params.append(dna.params)
+        fileio.create_pov(filename, [dna.coord], colors='k', radius=[10], show=True)
+    return
     # calculate mean parameters per bp
     params = np.mean(params, axis=0)
 
