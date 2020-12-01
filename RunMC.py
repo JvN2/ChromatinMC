@@ -453,6 +453,9 @@ def main(n_steps, root):
             for key in energy:
                 energy[key] = []
 
+            # save stack parameters of nucleosomes in pose
+            tMC.nuc_pars(dna, dyads, nucl, fiber_start, datafile)
+
             datafile = fileio.increment_file_nr(datafile)
 
         for bp in basepairs:
