@@ -305,7 +305,7 @@ def main(n_steps, root):
     pars.add('num_npz', value=10)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
     pars.add('iterations', value=n_steps)
-    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
+    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
@@ -331,14 +331,14 @@ def main(n_steps, root):
 
 
     # create optimal fiber length for each NRL, with 14 bp handles
-    # pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
+    pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
 
     filename = fileio.get_filename(incr=True, root=root, ext='xlsx')
 
     # print('\n>>> Current file: {}'.format(filename))
     n_samples = 250
-    fmin_pN = 0.1
-    fmax_pN = 0.1
+    fmin_pN = 0
+    fmax_pN = 0
     forces = np.linspace(fmin_pN, fmax_pN, n_steps / 2)
 
     sample_forces = np.logspace(np.log10(fmin_pN), np.log10(fmax_pN), n_samples / 2)
@@ -461,8 +461,6 @@ def main(n_steps, root):
             previous_bp = bp
         basepairs = basepairs[::-1]
 
-    fileio.create_pov(filename, [dna.coord], colors='k', radius=[10])
-    return
 
     tMC.save_values(pars, filename, dyads, nucl, results, results_std, energy_all, fixed_wrap_params, p0, k)
 
