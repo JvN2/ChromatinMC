@@ -478,5 +478,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(2000, '8x197x1s25w2-1')
+    main(500, '8x197x1s25w2-1')
 

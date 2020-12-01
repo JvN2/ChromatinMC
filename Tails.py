@@ -909,12 +909,12 @@ def nuc_pars(dna, dyads, nucl, fiber_start, datafile):
     for i, d in enumerate(dyads):
         if fiber_start == 2:
             if i >= fiber_start:
-                nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyad1=dyads[i - fiber_start], dyad2=dyads[i],
+                nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyads[i - fiber_start], dyads[i],
                                                    nucl, fiber_start))
 
         else:
-            if i >= 1
-                nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyad1=dyads[i - 1], dyad2=dyads[i],
+            if i >= 1:
+                nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyads[i - 1], dyads[i],
                                                        nucl, fiber_start))
 
     df_nuc_pars = pd.Dataframe(nuc_pars, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
