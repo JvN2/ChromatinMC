@@ -100,19 +100,21 @@ def repulsion_exp():
 def expo_decay ():
 
     kT = 41.0
-    # Amp = 2.5 * kT # amplitude pNA
-    Amp = [20, 61, 102, 143, 184, 205] # amplitude pNA
-    # decay_l = [5.0, 25.0, 45.0, 65.0, 85.0, 100.0]
-    decay_l = 50.0
+    Amp = 2.5 * kT # amplitude pNA
+    # Amp = [20, 61, 102, 143, 184, 205] # amplitude pNA
+    decay_l = [5.0, 25.0, 45.0, 65.0, 85.0, 100.0]
+    # decay_l = 50.0
 
     x = np.linspace(0,100, 500)
     y = {}
-    # for d in decay_l:
-    #     y[d] = Amp * np.exp(- (1 / d) * x)
-    #     y[d] /= kT
-    for A in Amp:
-        y[A] = A * np.exp(- (1 / decay_l) * x)
-        y[A] /= kT
+    for d in decay_l:
+        y[d] = Amp * np.exp( - (1 / d) * x)
+        y[d] /= kT
+    # for A in Amp:
+    #     y[A] = A * np.exp(- (1 / decay_l) * x)
+    #     y[A] /= kT
+
+
 
     x /= 10 # A to nm
 
@@ -120,16 +122,17 @@ def expo_decay ():
 
     fig, ax = plt.subplots()
 
-    # for d in decay_l:
-    #     ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=5, label='$\lambda$' + ' = ' + str(d/10))
-    for A in Amp:
-        ax.plot(x, y[A], color=(A / 205.0, 0, 1 - (A / 205.0)), linewidth=5, label='A' + ' = ' + "{:3.1f}".format(A/kT))
+    for d in decay_l:
+        ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=5, label='$\lambda$' + ' = ' + str(d/10))
+    # for A in Amp:
+    #     ax.plot(x, y[A], color=(A / 205.0, 0, 1 - (A / 205.0)), linewidth=5, label='A' + ' = ' + "{:3.1f}".format(A/kT))
 
     plt.setp(ax.spines.values(), linewidth=2)
     ax.tick_params(which='both', width=2, length=5, top=True, right=True)
     ax.set_xlim(left=0)
     plt.legend()
-    plt.title('Decay length 5.0 nm', y=1.08)
+    # plt.title('Decay length 5.0 nm', y=1.08)
+    plt.title('Amplitude 2.5 kT', y=1.08)
     plt.xlabel('distance (nm)')
     plt.ylabel('energy (kT)')
 

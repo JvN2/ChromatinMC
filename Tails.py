@@ -629,6 +629,8 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
             for i, n in enumerate(up_turn):
                 for j, m in enumerate(down_turn[i:]):
                     dist = np.sqrt(np.sum((m - n) ** 2))
+                    # calculate dist between surface dna
+                    dist -= 20 # twice radius of DNA in A
                     g += Amp * np.exp(- (1 / decay_l) * dist)
 
 
@@ -644,6 +646,8 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
             for i, n in enumerate(up_turn):
                 for j, m in enumerate(down_turn[i:]):
                     dist = np.sqrt(np.sum((m - n) ** 2))
+                    # calculate dist between surface dna
+                    dist -= 20 # twice radius of DNA in A
                     g += Amp * np.exp(- (1 / decay_l) * dist)
 
     elif fiber_start == 0 and left_dyad >= 0:
@@ -674,11 +678,15 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
         for i, n in enumerate(up_turn):
             for j, m in enumerate(first_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
+                # calculate dist between surface dna
+                dist -= 20  # twice radius of DNA in A
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
         for i, n in enumerate(up_turn):
             for j, m in enumerate(second_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
+                # calculate dist between surface dna
+                dist -= 20  # twice radius of DNA in A
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
     return g
