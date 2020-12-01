@@ -11,6 +11,7 @@ import math
 import NucleosomeMC as nMC
 import FileIO as fileio
 import RunMC as rMC
+import FiberMC as fMC
 
 def coth(x):
     return np.cosh(x) / np.sinh(x)
@@ -900,3 +901,25 @@ def histones_coords(nucl, tf_d, tf_o):
 
 
     return df_H2A, df_H2B, df_H3, df_H4, df_l_coord
+
+def nuc_pars(dna, dyads, nucl, fiber_start, datafile):
+
+    nuc_pars=[]
+
+    for i, d in enumerate(dyads):
+        if fiber_start == 2:
+            if i >= fiber_start:
+                nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyad1=dyads[i - fiber_start], dyad2=dyads[i],
+                                                   nucl, fiber_start))
+
+        else:
+            if i >= 1
+                nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyad1=dyads[i - 1], dyad2=dyads[i],
+                                                       nucl, fiber_start))
+
+    df_nuc_pars = pd.Dataframe(nuc_pars, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
+                             index=range(fiber_start,len(dyads)))
+
+    df_nuc_pars.to_excel(fileio.change_extension(datafile, 'xlsx'))
+
+    return
