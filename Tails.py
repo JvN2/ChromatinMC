@@ -917,8 +917,12 @@ def nuc_pars(dna, dyads, nucl, fiber_start, datafile):
                 nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyads[i - 1], dyads[i],
                                                        nucl, fiber_start))
 
-    df_nuc_pars = pd.Dataframe(nuc_pars, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
-                             index=range(fiber_start,len(dyads)))
+    idx = 1
+    if fiber_start == 2:
+        idx = 2
+
+    df_nuc_pars = pd.DataFrame(nuc_pars, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
+                             index=range(idx,len(dyads)))
 
     df_nuc_pars.to_excel(fileio.change_extension(datafile, 'xlsx'))
 

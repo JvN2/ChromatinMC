@@ -303,7 +303,7 @@ def main(n_steps, root):
 
     # parameters for implementation H4 tails
     pars.add('num_npz', value=10)     # number of npz files that will be stored during simulation
-    pars.add('dummy_steps', value=100)
+    pars.add('dummy_steps', value=1)
     pars.add('iterations', value=n_steps)
     pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
@@ -478,5 +478,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(500, '8x197x1s25w2-1')
+    main(50, '8x197x2s25w2-1')
 
