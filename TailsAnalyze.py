@@ -228,11 +228,13 @@ def plot_npz(filename, nrl, nucs):
 
         # append histone positions to coordinates
         # tf_d ensures that histones are placed correct at nucleosome position
-        coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
+        # coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
+        coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 100:dyads[5] + 100], dyads, nucl, tf=tf_d[3:6])
 
         # transform fiber to origin
-        origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
-        tf_o = nMC.get_transformation(nuc_cms[0], target=origin_of)
+        # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+        origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+        tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
         t_coord = []  # transformed coords
         # Tranform coords where first nucleosome is placed in origin
         for c in coord_w_hist:
@@ -240,6 +242,6 @@ def plot_npz(filename, nrl, nucs):
 
 
         print(fileio.create_pov((fileio.change_extension(f, 'png')), t_coord, radius=radius, colors=colors, range_A=[1000, 1000],
-                                offset_A=[0, 0, 200], show=False, width_pix=1500))
+                                offset_A=[0, 0, 300], show=False, width_pix=1500))
 
     return

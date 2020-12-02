@@ -1,7 +1,7 @@
 import NucleosomeMC as nmc
 import TailsAnalyze as TA
 
-# TA.plot_npz(r"D:\users\vlaar\data\20201124\8x197x1s21w2-1_003", 197, 8)
+TA.plot_npz(r"D:\users\vlaar\data\20201202\8x197x2s102w13-1_002", 197, 8)
 
 # TA.repulsion_exp()
-TA.expo_decay()
+# TA.expo_decay()
