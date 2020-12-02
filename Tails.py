@@ -533,6 +533,7 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
 
     # append histone positions to coordinates
     coord_w_hist, radius, colors = get_histones(coords, dyads, nucl, tf=tf_d)
+    coord_3_nuc, radius3, colors3 = get_histones(coords[dyads[3]-100:dyads[5]+100], dyads, nucl, tf=tf_d[3:6])
 
     # transform fiber to origin
     nuc_cms = []
@@ -541,12 +542,16 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
 
 
     t_coord = [] # transformed coords
-    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
-    origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
-    tf_o = nMC.get_transformation(nuc_cms[0], target=origin_of)
-    # Tranform coords where first nucleosome is placed in origin
+    coord3 = [] # 3 nucleosomes coords
+    origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+    tf_o = nMC.get_transformation(nuc_cms[4], target=origin_of)
+    # Tranform coords where 5th nucleosome is placed in origin
     for c in coord_w_hist:
         t_coord.append(nMC.apply_transformation(c, tf_o))
+
+    for c in coord_3_nuc:
+        coord3.append(nMC.apply_transformation(c, tf_o))
 
 
     # create separate list of transformed histone coords
@@ -573,8 +578,11 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
     df_nucl_p = pd.DataFrame(nuc_params, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
                              index=range(fiber_start,len(dyads)))
 
+
     print(fileio.create_pov((fileio.change_extension(filename, '_m.png')), t_coord, radius=radius, colors=colors, range_A=[1000, 1000],
-                            offset_A=[0, 0, 150], show=False, width_pix=1500))
+                            offset_A=[0, 0, 500], show=False, width_pix=1500))
+    print(fileio.create_pov((fileio.change_extension(filename, '_3m.png')), coord3, radius=radius3, colors=colors3, range_A=[1000, 1000],
+                            offset_A=[0, 0, 200], show=False, width_pix=1500))
 
     # energy of bps
     dna_coord = t_coord[0]
@@ -630,8 +638,7 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
                 for j, m in enumerate(down_turn[i:]):
                     dist = np.sqrt(np.sum((m - n) ** 2))
                     # calculate dist between surface dna
-                    dist -= 20 # twice radius of DNA in A
-                    g += Amp * np.exp(- (1 / decay_l) * dist)
+                    g += Amp * np.exp(- (1 / decay_l) * (dist - 20))
 
 
         if fiber_start is 2 and left_dyad >= 1:
@@ -647,8 +654,7 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
                 for j, m in enumerate(down_turn[i:]):
                     dist = np.sqrt(np.sum((m - n) ** 2))
                     # calculate dist between surface dna
-                    dist -= 20 # twice radius of DNA in A
-                    g += Amp * np.exp(- (1 / decay_l) * dist)
+                    g += Amp * np.exp(- (1 / decay_l) * (dist - 20))
 
     elif fiber_start == 0 and left_dyad >= 0:
         dna_coord = dna.coord
@@ -679,15 +685,13 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
             for j, m in enumerate(first_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
                 # calculate dist between surface dna
-                dist -= 20  # twice radius of DNA in A
-                g += Amp * np.exp(- (1 / decay_l) * dist)
+                g += Amp * np.exp(- (1 / decay_l) * (dist - 20))
 
         for i, n in enumerate(up_turn):
             for j, m in enumerate(second_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
                 # calculate dist between surface dna
-                dist -= 20  # twice radius of DNA in A
-                g += Amp * np.exp(- (1 / decay_l) * dist)
+                g += Amp * np.exp(- (1 / decay_l) * (dist - 20))
 
     return g
 
@@ -934,4 +938,12 @@ def nuc_pars(dna, dyads, nucl, fiber_start, datafile):
 
     df_nuc_pars.to_excel(fileio.change_extension(datafile, 'xlsx'))
 
+    return
+
+def fixed_pars2excel(fixed_stack_pars, datafile):
+    print(fixed_stack_pars)
+    print(type(fixed_stack_pars))
+    df_nuc_pars = pd.DataFrame(np.reshape(fixed_stack_pars, (1,6)), columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
+                             index=['fixed'])
+    df_nuc_pars.to_excel(fileio.change_extension(datafile, '_fixed.xlsx'))
     return
