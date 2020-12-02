@@ -305,7 +305,7 @@ def main(n_steps, root):
     pars.add('num_npz', value=10)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
     pars.add('iterations', value=n_steps)
-    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
+    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
@@ -453,6 +453,9 @@ def main(n_steps, root):
             for key in energy:
                 energy[key] = []
 
+            # save stack parameters of nucleosomes in pose
+            tMC.nuc_pars(dna, dyads, nucl, fiber_start, datafile)
+
             datafile = fileio.increment_file_nr(datafile)
 
         for bp in basepairs:
@@ -461,6 +464,8 @@ def main(n_steps, root):
             previous_bp = bp
         basepairs = basepairs[::-1]
 
+    fileio.create_pov(filename, [dna.coord], colors='k', radius=[10])
+    return
 
     tMC.save_values(pars, filename, dyads, nucl, results, results_std, energy_all, fixed_wrap_params, p0, k)
 
@@ -473,5 +478,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(5e2, '8x197x1s21w2-1')
+    main(50, '8x197x2s25w2-1')
 

@@ -11,6 +11,7 @@ import math
 import NucleosomeMC as nMC
 import FileIO as fileio
 import RunMC as rMC
+import FiberMC as fMC
 
 def coth(x):
     return np.cosh(x) / np.sinh(x)
@@ -628,6 +629,8 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
             for i, n in enumerate(up_turn):
                 for j, m in enumerate(down_turn[i:]):
                     dist = np.sqrt(np.sum((m - n) ** 2))
+                    # calculate dist between surface dna
+                    dist -= 20 # twice radius of DNA in A
                     g += Amp * np.exp(- (1 / decay_l) * dist)
 
 
@@ -643,6 +646,8 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
             for i, n in enumerate(up_turn):
                 for j, m in enumerate(down_turn[i:]):
                     dist = np.sqrt(np.sum((m - n) ** 2))
+                    # calculate dist between surface dna
+                    dist -= 20 # twice radius of DNA in A
                     g += Amp * np.exp(- (1 / decay_l) * dist)
 
     elif fiber_start == 0 and left_dyad >= 0:
@@ -673,11 +678,15 @@ def score_repulsion(moving_bp, fiber_start, dyads, dna, nucl, pars):
         for i, n in enumerate(up_turn):
             for j, m in enumerate(first_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
+                # calculate dist between surface dna
+                dist -= 20  # twice radius of DNA in A
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
         for i, n in enumerate(up_turn):
             for j, m in enumerate(second_turn[i:]):
                 dist = np.sqrt(np.sum((m - n) ** 2))
+                # calculate dist between surface dna
+                dist -= 20  # twice radius of DNA in A
                 g += Amp * np.exp(- (1 / decay_l) * dist)
 
     return g
@@ -900,3 +909,29 @@ def histones_coords(nucl, tf_d, tf_o):
 
 
     return df_H2A, df_H2B, df_H3, df_H4, df_l_coord
+
+def nuc_pars(dna, dyads, nucl, fiber_start, datafile):
+
+    nuc_pars=[]
+
+    for i, d in enumerate(dyads):
+        if fiber_start == 2:
+            if i >= fiber_start:
+                nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyads[i - fiber_start], dyads[i],
+                                                   nucl, fiber_start))
+
+        else:
+            if i >= 1:
+                nuc_pars.append(fMC.get_stack_pars(dna.coord,dna.frames, dyads[i - 1], dyads[i],
+                                                       nucl, fiber_start))
+
+    idx = 1
+    if fiber_start == 2:
+        idx = 2
+
+    df_nuc_pars = pd.DataFrame(nuc_pars, columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
+                             index=range(idx,len(dyads)))
+
+    df_nuc_pars.to_excel(fileio.change_extension(datafile, 'xlsx'))
+
+    return
