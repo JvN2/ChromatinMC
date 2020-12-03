@@ -279,7 +279,7 @@ def main(n_steps, root):
     pars.add('diameter_A', value=330)
 
     pars.add('e_wrap_kT', value=2.1)
-    pars.add('e_stack_kT', value=25)
+    pars.add('e_stack_kT', value=25e5) # was 25
     pars.add('NRL', value=187)
     pars.add('fiber_start', value=2)
 

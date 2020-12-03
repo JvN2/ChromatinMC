@@ -245,3 +245,16 @@ def plot_npz(filename, nrl, nucs):
                                 offset_A=[0, 0, 300], show=False, width_pix=1500))
 
     return
+
+def get_stack_params(filename):
+    # get list of npz files in filename folder
+    xlsx_f = glob.glob(fileio.change_extension(filename, '\*.xlsx'))
+    xlsx = []
+    nucl_stack_params = []
+    for i, file in enumerate(xlsx_f):
+        xlsx = pd.read_excel(file, usecols =['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'])
+        nucl_stack_params.append(xlsx.iloc[1:-1].mean(axis=0))
+
+    nucl_stack_params = np.mean(nucl_stack_params, axis=0)
+
+    return nucl_stack_params
