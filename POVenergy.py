@@ -175,30 +175,27 @@ def show(filename):
 
     return
 
-def main(filename, coord, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500, colors=None, radius=None,
-                   showt=False, transparency=None):
-    if radius is None:
-        radius = [10]
-    if colors is None:
-        colors = [1,0,0]
-    if transparency is None:
-        transparency = np.zeros(len(coord))
+def main(filename, coord, colors, radius=10, range_A=[1000, 1000], offset_A=[0, 0, 0], width_pix=500,
+                   showt=False):
+
     filename = fileio.change_extension(filename, 'pov')
     aspect_ratio = range_A[1] / float(range_A[0])
     pov_image = init(plt_width=range_A[0], aspect_ratio=aspect_ratio)
-    i = 0
-    j = 0
+    # i = 0
+    # j = 0
     offset = np.asarray(offset_A) - np.asarray((0, 0, range_A[1] / 2.0))
-    for coord, t in zip(coord, transparency):
-        if (i > len(colors) - 1):
-            i = 0
-        if (j > len(radius) - 1):
-            j = 0
-        for sphere in coord:
-            pov_image = add_sphere(pov_image, sphere + offset, color=colors[i], radius=radius[j],
-                                       transperancy=t)
-        i += 1
-        j += 1
+    for i, c in enumerate(coord):
+        pov_image = add_sphere(pov_image, c + offset, color=colors[i], radius=radius)
+    # for coord, t in zip(coord, transparency):
+    #     if (i > len(colors) - 1):
+    #         i = 0
+    #     if (j > len(radius) - 1):
+    #         j = 0
+    #     for sphere in coord:
+    #         pov_image = add_sphere(pov_image, sphere + offset, color=colors[i], radius=radius[j],
+    #                                    transperancy=t)
+    #     i += 1
+    #     j += 1
     save(pov_image, filename=filename)
     render(filename, height=width_pix * aspect_ratio, width=width_pix)
     if showt:

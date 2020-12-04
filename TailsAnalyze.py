@@ -7,6 +7,7 @@ from helixmc import util
 import NucleosomeMC as nMC
 import FileIO as fileio
 import Tails as tMC
+import POVenergy as POVe
 
 def plotten(x, y, xlabel, ylabel):
     plt.rcParams.update({'font.size': 22})
@@ -189,10 +190,17 @@ def get_nucl_dyads(coords, NRL, n_nucs):
     return nucl, dyads
 
 
-def plot_npz(filename, nrl, nucs):
+def plot_npz(filename):
 
     # get list of npz files in filename folder
     npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+
+    pars = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0, usecols=['NRL',
+                                                                           'n_nuc'])
+    nrl = pars.iloc[0]['NRL']
+    nucs = pars.iloc[0]['n_nuc']
+    print(nrl)
+    print(nucs)
     # save parameters of bp of every dna pose in params
     params = []
     for f in npz_f[:]:
@@ -251,10 +259,56 @@ def get_stack_params(filename):
     xlsx_f = glob.glob(fileio.change_extension(filename, '\*.xlsx'))
     xlsx = []
     nucl_stack_params = []
+    nucl_stack_params_std = []
     for i, file in enumerate(xlsx_f):
         xlsx = pd.read_excel(file, usecols =['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'])
         nucl_stack_params.append(xlsx.iloc[1:-1].mean(axis=0))
+        nucl_stack_params_std.append(xlsx.iloc[1:-1])
 
     nucl_stack_params = np.mean(nucl_stack_params, axis=0)
+    nucl_stack_params_std = np.std(np.vstack(nucl_stack_params_std), axis=0)
 
-    return nucl_stack_params
+    return nucl_stack_params, nucl_stack_params_std
+
+def dna_energy_display(filename, energy_kT='g_total (kT)'):
+    pars = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0, usecols=['NRL',
+                                                                                                 'L_bp', 'n_nuc'])
+    NRL = pars.iloc[0]['NRL']
+    n_nucs = pars.iloc[0]['n_nuc']
+    nucl = nMC.NucPose()
+    nucl.from_file('1KX5')
+    # get list of dyad indices
+    n_bp = pars.iloc[0]['L_bp']  # number of bp
+    dyads = np.asarray(NRL * (np.arange(0, n_nucs, 1) - (n_nucs - 1) / 2.0))
+    dyads = (dyads + n_bp // 2).astype(int)
+    begin = dyads[3] - 100
+    end = dyads[5] + 100
+
+    file = pd.read_excel(filename, sheet_name='mean', header=0, usecols =['g_shift_kT',
+               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT', 'g_total (kT)']).iloc[begin:end]
+    coords = pd.read_excel(filename, sheet_name='mean', header=0, usecols =['x (nm)', 'y (nm)', 'z (nm)']).iloc[begin:end]
+    # file = file.astype('int32')
+    # energy = np.sqrt(file[energy_kT]**2)/np.amax(file[energy_kT])
+    file[energy_kT] = np.sqrt(file[energy_kT] ** 2)
+    n_bins = 10
+    bin_max = np.amax(file[energy_kT])
+    bin = np.linspace(-1e-10, bin_max, n_bins, dtype=float)
+    bin_labels = np.arange(n_bins-1)
+
+    colorwaaier = []
+    rod = []
+    for i, b in enumerate(bin):
+        colorwaaier.append([1, (1 - (b/bin_max))**2,  (1 - (b/bin_max))**2])
+        rod.append([0,0,i])
+
+    POVe.main(fileio.change_extension(filename, 'label.png'), rod, colorwaaier, radius=1, range_A=[50, 50], offset_A=[0, 0, 25], width_pix=500, showt=True)
+
+    file['bin'] = pd.cut(file[energy_kT], bins=bin, labels=bin_labels)
+    colors = []
+
+    for b in file['bin']:
+        colors.append(colorwaaier[b])
+
+    POVe.main(filename, coords.to_numpy(), colors, radius=1, range_A=[50, 50], offset_A=[0, 0, 25], width_pix=500, showt=True)
+
+    return
