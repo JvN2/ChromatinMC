@@ -944,8 +944,7 @@ def nuc_pars(dna, dyads, nucl, fiber_start, datafile):
 
 
 def fixed_pars2excel(fixed_stack_pars, datafile):
-    print(fixed_stack_pars)
-    print(type(fixed_stack_pars))
+
     df_nuc_pars = pd.DataFrame(np.reshape(fixed_stack_pars, (1,6)), columns=['shift (A)', 'slide (A)', 'rise (A)', 'tilt', 'roll', 'twist'],
                              index=['fixed'])
     df_nuc_pars.to_excel(fileio.change_extension(datafile, '_fixed.xlsx'))
