@@ -109,29 +109,21 @@ def expo_decay ():
     #     y[A] = A * np.exp(- (1 / decay_l) * x)
     #     y[A] /= kT
 
-
-
     x /= 10 # A to nm
-
-    plt.rcParams.update({'font.size': 22})
+    #
+    # plt.rcParams.update({'font.size': 22})
 
     fig, ax = plt.subplots()
-
+    label = []
     for d in decay_l:
-        ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=5, label='$\lambda$' + ' = ' + str(d/10))
+        ax.plot(x, y[d], color=(d / 100, 0, 1 - (d / 100)), linewidth=4, label='$\lambda$' + ' = ' + str(d/10))
+        label.append('$\lambda$' + ' = ' + str(d/10))
+
     # for A in Amp:
     #     ax.plot(x, y[A], color=(A / 205.0, 0, 1 - (A / 205.0)), linewidth=5, label='A' + ' = ' + "{:3.1f}".format(A/kT))
-
-    plt.setp(ax.spines.values(), linewidth=2)
-    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
-    ax.set_xlim(left=0)
-    plt.legend()
-    # plt.title('Decay length 5.0 nm', y=1.08)
-    plt.title('Amplitude 2.5 kT', y=1.08)
-    plt.xlabel('distance (nm)')
-    plt.ylabel('energy (kT)')
-
-    plt.show()
+    #
+    format_plot('distance (nm)', 'energy (kT)', 'title', scale_page=(3.0/5.0),
+                aspect=0.7, save=r"D:\Downloads\test01.png", yrange=None, legend=label, ax=ax)
 
     return
 
