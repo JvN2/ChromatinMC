@@ -40,7 +40,7 @@ def repulsion_exp():
     two_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,F,G")
 
     x_1 = range(1, 8)
-    x_tick = one_start_167.index
+    x_tick = one_start_167.index[:-1]
 
     y_0 = zero_start_167.iloc[:, 0]
     e_0 = zero_start_167.iloc[:, 1]
@@ -60,44 +60,36 @@ def repulsion_exp():
     y9_2 = two_start_197.iloc[:, 0]
     e9_2 = two_start_197.iloc[:, 1]
 
-    #
-    #
-    plt.rcParams.update({'font.size': 22})
-    #
     fig, ax = plt.subplots()
+    left, bottom, width, height = [0.6, 0.55, 0.35, 0.35]
+    ax2 = fig.add_axes([left, bottom, width, height]) # inset
     #
-    ax.errorbar(x_1, y_1, e_1, color=(0.75, 0, 0.25), marker='^', markersize=10, label='167 1-start', linewidth=0,
-                ecolor=(0.75, 0, 0.25), elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y_2, e_2, color=(0.75, 0, 0.25), marker='s', markersize=10, label='167 2-start', linewidth=0,
-                ecolor=(0.75, 0, 0.25), elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y_0, e_0, color=(0.75, 0, 0.25), marker='o', markersize=10, label='167 0-start', linewidth=0,
-                ecolor=(0.75, 0, 0.25), elinewidth=5, capsize=5)
+    ax.errorbar(x_tick, y_1.iloc[:-1], e_1.iloc[:-1], color=(0.75, 0, 0.25), marker='^', markersize=5, label='167 1-start', linewidth=0,
+                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    ax.axhline(y=y_1['old'], color=(0.75, 0, 0.25), linestyle='-', lw=3)
+    ax.errorbar(x_tick, y_2.iloc[:-1], e_2.iloc[:-1], color=(0.75, 0, 0.25), marker='s', markersize=5, label='167 2-start', linewidth=0,
+                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    ax.axhline(y=y_2['old'], color=(0.75, 0, 0.25), linestyle='--', lw=3)
 
-    ax.errorbar(x_1, y9_1, e9_1, color=(0, 0.75, 0.25), marker='^', markersize=10, label='197 1-start', linewidth=0,
-                ecolor=(0, 0.75, 0.25), elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y9_2, e9_2, color=(0, 0.75, 0.25), marker='s', markersize=10, label='197 2-start', linewidth=0,
-                ecolor=(0, 0.75, 0.25), elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y9_0, e9_0, color=(0, 0.75, 0.25), marker='o', markersize=10, label='197 0-start', linewidth=0,
-                ecolor=(0, 0.75, 0.25), elinewidth=5, capsize=5)
+    ax2.errorbar(x_tick, y_0.iloc[:-1], e_0.iloc[:-1], color=(0.75, 0, 0.25), marker='o', markersize=5, label='167 0-start', linewidth=0,
+                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    ax2.axhline(y=y_0['old'], color=(0.75, 0, 0.25), linestyle='-', lw=2)
 
-    #
-    plt.setp(ax.spines.values(), linewidth=2)
-    ax.tick_params(which='both', width=2, length=5, top=True, right=True)
-    plt.xticks(x_1, x_tick)
-    ax.set_xlim(left=0)
-    # ax.set_ylim(bottom=0)
-    ax.set_ylim(top=35)
-    # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    plt.legend(loc='upper left')
-    #
-    # plt.title('Repulsion amplitude 2,5 kT', y=1.08)
-    # plt.xlabel('decay length (nm)')
-    plt.title('Decay length 5.0 nm', y=1.08)
-    plt.xlabel('Amplitude (kT)')
-    plt.ylabel('Distance between nucleosomes (nm)')
-    plt.show()
-    plt.savefig(r"D:\Downloads\20201112_cms_dists.png")
+    ax.errorbar(x_tick, y9_1.iloc[:-1], e9_1.iloc[:-1], color=(0, 0.75, 0.25), marker='^', markersize=5, label='197 1-start', linewidth=0,
+                ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
+    ax.axhline(y=y9_1['old'], color=(0, 0.75, 0.25), linestyle='-', lw=3)
+    ax.errorbar(x_tick, y9_2.iloc[:-1], e9_2.iloc[:-1], color=(0, 0.75, 0.25), marker='s', markersize=5, label='197 2-start', linewidth=0,
+                ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
+    ax.axhline(y=y9_2['old'], color=(0, 0.75, 0.25), linestyle='--', lw=3)
 
+    ax2.errorbar(x_tick, y9_0.iloc[:-1], e9_0.iloc[:-1], color=(0, 0.75, 0.25), marker='o', markersize=5, label='197 0-start', linewidth=0,
+                ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
+    ax2.axhline(y=y9_0['old'], color=(0, 0.75, 0.25), linestyle='-', lw=2)
+
+    labels=['167 1-start fps', '167 2-start fps', '197 1-start fps', '197 2-start fps', '167 1-start', '167 2-start', '197 1-start', '197 2-start',]
+
+    format_plot('decay length (nm)', 'nucleosome distance (nm)', 'title', scale_page=1.0,
+                aspect=0.5, save=r"D:\Downloads\test.png", yrange=[5.5, 11.1], legend=None, ax=ax)
     return
 
 def expo_decay ():
@@ -404,7 +396,7 @@ def format_plot(xtitle='x (a.u.)', ytitle='y (a.u.)', title='', xrange=None, yra
         base, ext = os.path.splitext(save)
         if ext == '.emf':
             save = base + '.pdf'
-        fig.savefig(save, dpi=1200, transparent=True)
+        fig.savefig(save, dpi=1200, transparent=False)
         if ext == '.emf':
             try:
                 subprocess.call(["C:\Program Files\Inkscape\inkscape.exe", "--file", save, "--export-emf",
