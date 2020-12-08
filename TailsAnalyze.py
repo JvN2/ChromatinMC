@@ -29,7 +29,8 @@ def plotten(x, y, xlabel, ylabel):
 
 
 def repulsion_exp():
-    filename = r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201110\20201112_cms_dists.xlsx"
+
+    filename = r"D:\Downloads\20201112_cms_dists.xlsx"
     zero_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,B,C")
     one_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,D,E")
     two_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,F,G")
@@ -65,19 +66,19 @@ def repulsion_exp():
     #
     fig, ax = plt.subplots()
     #
-    ax.errorbar(x_1, y_1, e_1, color=(0.25, 0, 0.25), marker='o', markersize=10, label='NRL 167 1-start', linewidth=0,
-                ecolor='r', elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y_2, e_2, color=(0.5, 0, 0.25), marker='o', markersize=10, label='NRL 167 2-start', linewidth=0,
-                ecolor='r', elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y_0, e_0, color=(0.75, 0, 0.25), marker='o', markersize=10, label='NRL 167 0-start', linewidth=0,
-                ecolor='r', elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y_1, e_1, color=(0.75, 0, 0.25), marker='^', markersize=10, label='167 1-start', linewidth=0,
+                ecolor=(0.75, 0, 0.25), elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y_2, e_2, color=(0.75, 0, 0.25), marker='s', markersize=10, label='167 2-start', linewidth=0,
+                ecolor=(0.75, 0, 0.25), elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y_0, e_0, color=(0.75, 0, 0.25), marker='o', markersize=10, label='167 0-start', linewidth=0,
+                ecolor=(0.75, 0, 0.25), elinewidth=5, capsize=5)
 
-    ax.errorbar(x_1, y9_1, e9_1, color=(0, 0.25, 0.25), marker='o', markersize=10, label='NRL 197 1-start', linewidth=0,
-                ecolor='r', elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y9_2, e9_2, color=(0, 0.5, 0.25), marker='o', markersize=10, label='NRL 197 2-start', linewidth=0,
-                ecolor='r', elinewidth=5, capsize=5)
-    ax.errorbar(x_1, y9_0, e9_0, color=(0, 0.75, 0.25), marker='o', markersize=10, label='NRL 197 0-start', linewidth=0,
-                ecolor='r', elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y9_1, e9_1, color=(0, 0.75, 0.25), marker='^', markersize=10, label='197 1-start', linewidth=0,
+                ecolor=(0, 0.75, 0.25), elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y9_2, e9_2, color=(0, 0.75, 0.25), marker='s', markersize=10, label='197 2-start', linewidth=0,
+                ecolor=(0, 0.75, 0.25), elinewidth=5, capsize=5)
+    ax.errorbar(x_1, y9_0, e9_0, color=(0, 0.75, 0.25), marker='o', markersize=10, label='197 0-start', linewidth=0,
+                ecolor=(0, 0.75, 0.25), elinewidth=5, capsize=5)
 
     #
     plt.setp(ax.spines.values(), linewidth=2)
@@ -95,6 +96,7 @@ def repulsion_exp():
     plt.xlabel('Amplitude (kT)')
     plt.ylabel('Distance between nucleosomes (nm)')
     plt.show()
+    plt.savefig(r"D:\Downloads\20201112_cms_dists.png")
 
     return
 
@@ -312,3 +314,103 @@ def dna_energy_display(filename, energy_kT='g_total (kT)'):
     POVe.main(filename, coords.to_numpy(), colors, radius=1, range_A=[50, 50], offset_A=[0, 0, 25], width_pix=500, showt=True)
 
     return
+
+def format_plot(xtitle='x (a.u.)', ytitle='y (a.u.)', title='', xrange=None, yrange=None,
+                ylog=False, xlog=False, scale_page=1.0, aspect=0.5, save=None, boxed=True,
+                GUI=False, ref='', legend=None, fig=None, ax=None):
+    # adjust the format to nice looks
+    from matplotlib.ticker import AutoMinorLocator
+    import os, subprocess
+
+    page_width = 7  # inches ( = A4 width - 1 inch margin)
+    margins = (0.55, 0.45, 0.2, 0.2)  # inches
+    fontsize = 14
+
+    if fig == None:
+        fig = plt.gcf()
+    if ax == None:
+        ax = plt.gca()
+
+    # Set up figure
+    fig_width = page_width * scale_page
+    fig_height = (fig_width - (margins[0] + margins[2])) * aspect + margins[1] + margins[3]
+    fig.set_size_inches(fig_width, fig_height)
+
+    # Set up axes
+    ax_rect = [margins[0] / fig_width]
+    ax_rect.append(margins[1] / fig_height)
+    ax_rect.append((fig_width - margins[0] - margins[2]) / fig_width)
+    ax_rect.append((fig_height - margins[1] - margins[3]) / fig_height)
+
+    # ax_rect = [margins[0] / fig_width,
+    #            margins[1] / fig_height,
+    #            (fig_width - margins[2] - margins[0]) / fig_width,
+    #            (fig_height - margins[3] - margins[1]) / fig_height
+    #            ]
+
+    ax.set_position(ax_rect)
+
+    # Add axis titles and frame label; use absolute locations, rather then leaving it up to Matplotlib
+    if ref is not None:
+        plt.text(ax_rect[1] * 0.15, ax_rect[-1] + ax_rect[1], ref, horizontalalignment='left',
+                 verticalalignment='center',
+                 fontsize=fontsize * 1.2, transform=fig.transFigure)
+    plt.text(ax_rect[0] + 0.5 * ax_rect[2], 0, xtitle, horizontalalignment='center',
+             verticalalignment='bottom', fontsize=fontsize, transform=fig.transFigure)
+    plt.text(ax_rect[1] * 0.005, ax_rect[1] + 0.5 * ax_rect[3], ytitle, horizontalalignment='left',
+             verticalalignment='center', fontsize=fontsize, transform=fig.transFigure, rotation=90)
+
+    if legend is not None:
+        plt.rcParams["legend.frameon"] = False
+        plt.rcParams["legend.edgecolor"] = 'none'
+        plt.rcParams["legend.labelspacing"] = 0.25
+        plt.rcParams["legend.handlelength"] = 1
+        plt.rcParams["legend.handletextpad"] = 0.25
+        plt.legend(legend, prop={'size': fontsize * 0.8}, )
+
+    # fig.canvas.mpl_connect("key_press_event", key_press_action)
+
+    if not boxed:
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+
+    ax.xaxis.set_minor_locator(AutoMinorLocator())
+    ax.yaxis.set_minor_locator(AutoMinorLocator())
+    ax.tick_params(which='both', axis='both', bottom=True, top=boxed, left=True, right=boxed, direction='in')
+    ax.tick_params(which='major', length=4, labelsize=fontsize * 0.8, width=1)
+    ax.tick_params(which='minor', length=2, width=1)
+    for axis in ['top', 'bottom', 'left', 'right']:
+        ax.spines[axis].set_linewidth(1)
+
+    if xlog:
+        ax.semilogx()
+    else:
+        ax.ticklabel_format(axis='x', style='sci', scilimits=(-3, 3))
+    if ylog:
+        ax.semilogy()
+    else:
+        ax.ticklabel_format(axis='y', style='sci', scilimits=(-3, 3))
+
+    if xrange is not None:
+        ax.set_xlim(xrange)
+    if yrange is not None:
+        ax.set_ylim(yrange)
+
+    if not GUI and save is None: plt.show()
+
+    if save is not None:
+        if not os.path.exists(os.path.dirname(save)):
+            os.makedirs(os.path.dirname(save))
+        base, ext = os.path.splitext(save)
+        if ext == '.emf':
+            save = base + '.pdf'
+        fig.savefig(save, dpi=1200, transparent=True)
+        if ext == '.emf':
+            try:
+                subprocess.call(["C:\Program Files\Inkscape\inkscape.exe", "--file", save, "--export-emf",
+                                 base + '.emf'])
+                os.remove(save)
+            except:
+                print('Install Inkscape for conversion to emf.\nPlot saved as pdf in stead.')
+        plt.close()
+    return fig, ax
