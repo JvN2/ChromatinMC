@@ -10,7 +10,6 @@ import Tails as tMC
 import POVenergy as POVe
 
 def plotten(x, y, xlabel, ylabel):
-    plt.rcParams.update({'font.size': 22})
 
     fig, ax = plt.subplots()
 
@@ -153,7 +152,12 @@ def tail_energy():
 
     g_array /= kT
 
-    plotten(z_array, g_array, xlabel='distance (nm)', ylabel='energy (kT)')
+
+    fig, ax = plt.subplots()
+
+    ax.plot(z_array, g_array, color=(0.8, 0, 0.8), linewidth=5)
+    format_plot('distance (nm)', 'energy (kT)', 'titel', scale_page=(3.0/5.0),
+                aspect=0.7, save=r"D:\Downloads\test02.png", ax=ax)
 
     return
 
