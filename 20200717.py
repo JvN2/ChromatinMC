@@ -4,12 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# TA.plot_npz(r"D:\users\vlaar\data\20201202\8x197x1s25w2-1_002")
+# TA.plot_npz(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 fixed parameters stacking\8x197x2s102w79-1_001")
 
 # TA.repulsion_exp()
 # TA.expo_decay()
-TA.tail_energy()
-# TA.get_stack_params(r"D:\users\vlaar\data\20201202\8x197x2s102w13-1_002")
-# TA.dna_energy_display(r"D:\users\vlaar\data\20201202\8x197x2s102w13-1_001.xlsx")
+# TA.tail_energy()
+# print(TA.get_stack_params(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 fixed parameters stacking\8x167x0s102w79-1_001.xlsx"))
+# TA.dna_energy_display(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 fixed parameters stacking\8x167x0s102w79-1_001.xlsx")
 
-# plt.plot(np.arange(0, 10, 1), np.random.random(10))
+TA.stack_exp('shift (A)')
+
