@@ -8,6 +8,7 @@ import NucleosomeMC as nMC
 import FileIO as fileio
 import Tails as tMC
 import POVenergy as POVe
+import RunMC as rMC
 
 def repulsion_exp():
 
@@ -42,36 +43,38 @@ def repulsion_exp():
     e9_2 = two_start_197.iloc[:, 1]
 
     fig, ax = plt.subplots()
-    left, bottom, width, height = [0.6, 0.55, 0.35, 0.35]
-    ax2 = fig.add_axes([left, bottom, width, height]) # inset
+    # left, bottom, width, height = [0.6, 0.55, 0.35, 0.35]
+    # ax2 = fig.add_axes([left, bottom, width, height]) # inset
     #
-    ax.errorbar(x_tick, y_1.iloc[:-1], e_1.iloc[:-1], color=(0.75, 0, 0.25), marker='^', markersize=5, label='167 1-start', linewidth=0,
-                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax.axhline(y=y_1['old'], color=(0.75, 0, 0.25), linestyle='-', lw=3)
+    # ax.errorbar(x_tick, y_1.iloc[:-1], e_1.iloc[:-1], color=(0.75, 0, 0.25), marker='^', markersize=5, label='167 1-start', linewidth=0,
+    #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
     ax.errorbar(x_tick, y_2.iloc[:-1], e_2.iloc[:-1], color=(0.75, 0, 0.25), marker='s', markersize=5, label='167 2-start', linewidth=0,
                 ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax.axhline(y=y_2['old'], color=(0.75, 0, 0.25), linestyle='--', lw=3)
+    ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
 
-    ax2.errorbar(x_tick, y_0.iloc[:-1], e_0.iloc[:-1], color=(0.75, 0, 0.25), marker='o', markersize=5, label='167 0-start', linewidth=0,
-                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax2.axhline(y=y_0['old'], color=(0.75, 0, 0.25), linestyle='-', lw=2)
+    # ax.errorbar(x_tick, y_0.iloc[:-1], e_0.iloc[:-1], color=(0.75, 0, 0.25), marker='o', markersize=5, label='167 0-start', linewidth=0,
+    #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    # ax.axhline(y=y_0['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
 
-    ax.errorbar(x_tick, y9_1.iloc[:-1], e9_1.iloc[:-1], color=(0, 0.75, 0.25), marker='^', markersize=5, label='197 1-start', linewidth=0,
-                ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    ax.axhline(y=y9_1['old'], color=(0, 0.75, 0.25), linestyle='-', lw=3)
+    # ax.errorbar(x_tick, y9_1.iloc[:-1], e9_1.iloc[:-1], color=(0, 0.75, 0.25), marker='^', markersize=5, label='197 1-start', linewidth=0,
+    #             ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
+    # ax.axhline(y=y9_1['old'], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
     ax.errorbar(x_tick, y9_2.iloc[:-1], e9_2.iloc[:-1], color=(0, 0.75, 0.25), marker='s', markersize=5, label='197 2-start', linewidth=0,
                 ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    ax.axhline(y=y9_2['old'], color=(0, 0.75, 0.25), linestyle='--', lw=3)
+    ax.axhline(y=y9_2['old'], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
 
-    ax2.errorbar(x_tick, y9_0.iloc[:-1], e9_0.iloc[:-1], color=(0, 0.75, 0.25), marker='o', markersize=5, label='197 0-start', linewidth=0,
-                ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    ax2.axhline(y=y9_0['old'], color=(0, 0.75, 0.25), linestyle='-', lw=2)
+    # ax.errorbar(x_tick, y9_0.iloc[:-1], e9_0.iloc[:-1], color=(0, 0.75, 0.25), marker='o', markersize=5, label='197 0-start', linewidth=0,
+    #             ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
+    # ax.axhline(y=y9_0['old'], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
 
     labels=['167 1-start fps', '167 2-start fps', '197 1-start fps', '197 2-start fps', '167 1-start', '167 2-start', '197 1-start', '197 2-start',]
-    save_loc = fileio.change_extension(filename, '.png')
-    format_plot('decay length (nm)', 'nucleosome distance (nm)', 'title', scale_page=1.0,
-                aspect=0.5, save=save_loc, yrange=[5.5, 11.1], legend=None, ax=ax)
+    save_loc = fileio.change_extension(filename, '2-start.png')
+    format_plot('decay length (nm)', 'distance (nm)', 'title', scale_page=(1.0/3),
+                aspect=1, save=save_loc, yrange=[0,33], legend=None, ax=ax)
+
     return
+
 
 def expo_decay ():
 
@@ -145,7 +148,8 @@ def tail_energy():
 
     return
 
-def get_nucl_dyads(coords, NRL, n_nucs):
+
+def get_nucl_dyads(L_bp, NRL, n_nucs):
     """
 
     Returns
@@ -157,75 +161,11 @@ def get_nucl_dyads(coords, NRL, n_nucs):
     nucl = nMC.NucPose()
     nucl.from_file('1KX5')
     # get list of dyad indices
-    n_bp = len(coords)  # number of bp
     dyads = np.asarray(NRL * (np.arange(0, n_nucs, 1) - (n_nucs - 1) / 2.0))
-    dyads = (dyads + n_bp // 2).astype(int)
+    dyads = (dyads + L_bp // 2).astype(int)
 
     return nucl, dyads
 
-
-def plot_npz(filename):
-
-    # get list of npz files in filename folder
-    npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
-
-    pars = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0, usecols=['NRL',
-                                                                           'n_nuc'])
-    nrl = pars.iloc[0]['NRL']
-    nucs = pars.iloc[0]['n_nuc']
-
-    # save parameters of bp of every dna pose in params
-    params = []
-    for f in npz_f[:]:
-        dna = HelixPose.from_file(f)
-        params.append(dna.params)
-    # # calculate mean parameters per bp
-    params = np.mean(params, axis=0)
-    # params = dna.params
-
-    # use 6 parameters to get coordinates of every basepair
-    dr, frames = util.params2data(params)
-    coords = util.dr2coords(dr)
-
-    # get nucleosome pose en list of dyads
-    nucl, dyads = get_nucl_dyads(coords, nrl, nucs)
-
-    # get dyad_ofs to project histones in mean fiber pose
-    of_d_fiber = []  # origin frame of dyad in fiber
-    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)  # origin frame dyad in nucl pose
-    tf_d = []  # transformation matrix
-
-    for i, d in enumerate(dyads):
-        # get origin frame of dyad in fiber
-        of_d_fiber.append(nMC.get_of_2(coords, frames, d))
-
-        # get transformation matrix of nucleosome dyad onto fiber dyad
-        tf_d.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
-
-    # get center of masses of nucleosome
-    nuc_cms = []
-    for d, dyad in enumerate(dyads):
-        nuc_cms.append(nMC.apply_transformation(nucl.of, tf_d[d]))
-
-    # append histone positions to coordinates
-    # tf_d ensures that histones are placed correct at nucleosome position
-    # coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
-    coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 75:dyads[5] + 75], dyads, nucl, tf=tf_d[3:6])
-
-    # transform fiber to origin
-    origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
-    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
-    tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
-    t_coord = []  # transformed coords
-    # Tranform coords where first nucleosome is placed in origin
-    for c in coord_w_hist:
-        t_coord.append(nMC.apply_transformation(c, tf_o))
-
-
-        # print(fileio.create_pov((fileio.change_extension(f, 'png')), t_coord, radius=radius, colors=colors, range_A=[1000, 1000],
-        #                         offset_A=[0, 0, 300], show=False, width_pix=1500))
-
-    return t_coord[0]
 
 def get_stack_params(filename):
     # get list of xlsx files in filename folder
@@ -243,55 +183,6 @@ def get_stack_params(filename):
 
     return nucl_stack_params, nucl_stack_params_std
 
-def dna_energy_display(filename, energy_kT='g_total (kT)'):
-    pars = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0, usecols=['NRL',
-                                                                                                 'L_bp', 'n_nuc'])
-    NRL = pars.iloc[0]['NRL']
-    n_nucs = pars.iloc[0]['n_nuc']
-    nucl = nMC.NucPose()
-    nucl.from_file('1KX5')
-    # get list of dyad indices
-    n_bp = pars.iloc[0]['L_bp']  # number of bp
-    dyads = np.asarray(NRL * (np.arange(0, n_nucs, 1) - (n_nucs - 1) / 2.0))
-    dyads = (dyads + n_bp // 2).astype(int)
-    begin = dyads[3] - 75
-    end = dyads[5] + 75
-
-    file = pd.read_excel(filename, sheet_name='mean', header=0, usecols =['g_shift_kT',
-               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT', 'g_total (kT)']).iloc[begin:end]
-    # coords = pd.read_excel(filename, sheet_name='mean', header=0, usecols =['x (nm)', 'y (nm)', 'z (nm)']).iloc[begin:end]
-    coords = plot_npz(filename)
-    coord_n =[]
-    for c in coords:
-        coord_n.append(c/10.0)
-
-    # energy = np.sqrt(file[energy_kT]**2)/np.amax(file[energy_kT])
-    # file[energy_kT] = (np.sqrt(file[energy_kT] ** 2))
-    n_bins = 50
-    bin_max = 1.5 #kT
-    bin = np.linspace(0, bin_max, n_bins, dtype=float)
-    bin_labels = np.arange(n_bins-1)
-    file[energy_kT] = np.clip(file[energy_kT], 0 , bin_max)
-
-    colorwaaier = []
-    rod = []
-    for i, b in enumerate(bin):
-        p = b/bin_max
-        colorwaaier.append([0.6 + (0.4 * p) , 0.6 * (1 - p)**2,  0.6 * (1 - p)**2])
-        rod.append([0,0,i/10.0])
-
-    POVe.main(fileio.change_extension(filename, 'label.png'), rod, colorwaaier, radius=1, range_A=[25, 25], offset_A=[0, 0, 10], width_pix=500, showt=True)
-
-    file['bin'] = pd.cut(file[energy_kT], bins=bin, labels=bin_labels, include_lowest=True)
-    colors = []
-
-    for b in file['bin']:
-        colors.append(colorwaaier[b])
-
-    # POVe.main(fileio.change_extension(filename, 'Etot.png'), coords.to_numpy(), colors, radius=1, range_A=[50, 50], offset_A=[0, 0, 25], width_pix=500, showt=True)
-    POVe.main(fileio.change_extension(filename, 'Etot.png'), coord_n, colors, radius=1, range_A=[50, 50], offset_A=[0, 0, 25], width_pix=500, showt=True)
-
-    return
 
 def format_plot(xtitle='x (a.u.)', ytitle='y (a.u.)', title='', xrange=None, yrange=None,
                 ylog=False, xlog=False, scale_page=1.0, aspect=0.5, save=None, boxed=True,
@@ -400,101 +291,426 @@ def stack_exp(param_name):
     fixed = pd.read_excel(filename, sheet_name='fixed', header=0, index_col=0, usecols="A,B,C,D,E,F,G")
     NRL167 = pd.read_excel(filename, sheet_name='167', header=0, index_col=0)
     NRL197 = pd.read_excel(filename, sheet_name='197', header=0, index_col=0)
-    # print(zero_start_167.loc['fps 0', param_name])
-    # one_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,D,E")
-    # two_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,F,G")
-    #
-    # zero_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,B,C")
-    # one_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,D,E")
-    # two_start_197 = pd.read_excel(filename, sheet_name='197', header=1, index_col=0, usecols="A,F,G")
-    #
-    # x_1 = range(1, 8)
-    # x_tick = one_start_167.index[:-1]
-    #
-    # y_0 = zero_start_167.iloc[:, 0]
-    # e_0 = zero_start_167.iloc[:, 1]
-    #
-    # y_1 = one_start_167.iloc[:, 0]
-    # e_1 = one_start_167.iloc[:, 1]
-    #
-    # y_2 = two_start_167.iloc[:, 0]
-    # e_2 = two_start_167.iloc[:, 1]
-    #
-    # y9_0 = zero_start_197.iloc[:, 0]
-    # e9_0 = zero_start_197.iloc[:, 1]
-    #
-    # y9_1 = one_start_197.iloc[:, 0]
-    # e9_1 = one_start_197.iloc[:, 1]
-    #
-    # y9_2 = two_start_197.iloc[:, 0]
-    # e9_2 = two_start_197.iloc[:, 1]
     #
     fig, ax = plt.subplots()
-    ax.get_xaxis().set_visible(False)
+    # ax.get_xaxis().set_visible(False)
+    ax.set_xticks([5.5,15.5])
+    ax.set_xticklabels(['167', '197'])
     # left, bottom, width, height = [0.6, 0.55, 0.35, 0.35]
     # ax2 = fig.add_axes([left, bottom, width, height]) # inset
     ax.axhline(y=fixed.loc['1-start', param_name], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
     ax.axhline(y=fixed.loc['2-start', param_name], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
 
     # FPS 167
-    # ax.errorbar(1, NRL167.loc['fps 0', param_name], NRL167.loc['fps 0', param_name + ' std'], color=(0.2, 0.2, 0.2), marker='o', markersize=5, label='fps 0-start', linewidth=0,
-    #             ecolor=(0.2, 0.2, 0.2), elinewidth=2, capsize=3)
+    ax.errorbar(1, NRL167.loc['fps 0', param_name], NRL167.loc['fps 0', param_name + ' std'], color=(0.2, 0.2, 0.2), marker='o', markersize=5, label='fps 0-start', linewidth=0,
+                ecolor=(0.2, 0.2, 0.2), elinewidth=2, capsize=3)
     ax.errorbar(2, NRL167.loc['fps 1', param_name], NRL167.loc['fps 1', param_name + ' std'], color=(0.2, 0.2, 0.2), marker='^', markersize=5, label='fps 1-start', linewidth=0,
                 ecolor=(0.2, 0.2, 0.2), elinewidth=2, capsize=3)
     ax.errorbar(3, NRL167.loc['fps 2', param_name], NRL167.loc['fps 2', param_name + ' std'], color=(0.2, 0.2, 0.2), marker='s', markersize=5, label='fps 2-start', linewidth=0,
                 ecolor=(0.2, 0.2, 0.2), elinewidth=2, capsize=3)
 
     # 1.31 nm 167
-    # ax.errorbar(5, NRL167.loc['1.31 0', param_name], NRL167.loc['1.31 0', param_name + ' std'], color=(0.75, 0, 0.25), marker='o', markersize=5, label='1.31 0-start', linewidth=0,
-    #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax.errorbar(6, NRL167.loc['1.31 1', param_name], NRL167.loc['1.31 1', param_name + ' std'], color=(0.75, 0, 0.25), marker='^', markersize=5, label='1.31 1-start', linewidth=0,
+    ax.errorbar(5, NRL167.loc['1.31 0', param_name], NRL167.loc['1.31 0', param_name + ' std'], color=(0.75, 0, 0.25), marker='o', markersize=5, label='1.31 0-start', linewidth=0,
                 ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax.errorbar(7, NRL167.loc['1.31 2', param_name], NRL167.loc['1.31 2', param_name + ' std'], color=(0.75, 0, 0.25), marker='s', markersize=5, label='1.31 2-start', linewidth=0,
+    ax.errorbar(7, NRL167.loc['1.31 1', param_name], NRL167.loc['1.31 1', param_name + ' std'], color=(0.75, 0, 0.25), marker='^', markersize=5, label='1.31 1-start', linewidth=0,
+                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    ax.errorbar(9, NRL167.loc['1.31 2', param_name], NRL167.loc['1.31 2', param_name + ' std'], color=(0.75, 0, 0.25), marker='s', markersize=5, label='1.31 2-start', linewidth=0,
                 ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
 
     # 7.91 nm 167
-    # ax.errorbar(5, NRL167.loc['7.91 0', param_name], NRL167.loc['7.91 0', param_name + ' std'], mec=(0.75, 0, 0.25), marker='o', markersize=5, mfc=(1, 1, 1), label='7.91 0-start',
-    #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax.errorbar(6, NRL167.loc['7.91 1', param_name], NRL167.loc['7.91 1', param_name + ' std'], mec=(0.75, 0, 0.25), marker='^', markersize=5, mfc=(1, 1, 1), label='7.91 1-start',
+    ax.errorbar(6, NRL167.loc['7.91 0', param_name], NRL167.loc['7.91 0', param_name + ' std'], mec=(0.75, 0, 0.25), marker='o', markersize=5, mfc=(1, 1, 1), label='7.91 0-start',
                 ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax.errorbar(7, NRL167.loc['7.91 2', param_name], NRL167.loc['7.91 2', param_name + ' std'], mec=(0.75, 0, 0.25), marker='s', markersize=5, mfc=(1, 1, 1), label='7.91 2-start',
+    ax.errorbar(8, NRL167.loc['7.91 1', param_name], NRL167.loc['7.91 1', param_name + ' std'], mec=(0.75, 0, 0.25), marker='^', markersize=5, mfc=(1, 1, 1), label='7.91 1-start',
+                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    ax.errorbar(10, NRL167.loc['7.91 2', param_name], NRL167.loc['7.91 2', param_name + ' std'], mec=(0.75, 0, 0.25), marker='s', markersize=5, mfc=(1, 1, 1), label='7.91 2-start',
                 ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
 
     # # FPS 197
-    # ax.errorbar(9, NRL197.loc['fps 0', param_name], NRL197.loc['fps 0', param_name + ' std'], color=(0.2, 0.2, 0.2),
-    #             marker='o', markersize=5, label='fps 0-start', linewidth=0,
-    #             ecolor=(0.2, 0.2, 0.2), elinewidth=2, capsize=3)
-    ax.errorbar(10, NRL197.loc['fps 1', param_name], NRL197.loc['fps 1', param_name + ' std'], color=(0.2, 0.2, 0.2),
+    ax.errorbar(12, NRL197.loc['fps 0', param_name], NRL197.loc['fps 0', param_name + ' std'], color=(0.2, 0.2, 0.2),
+                marker='o', markersize=5, label='fps 0-start', linewidth=0,
+                ecolor=(0.2, 0.2, 0.2), elinewidth=2, capsize=3)
+    ax.errorbar(13, NRL197.loc['fps 1', param_name], NRL197.loc['fps 1', param_name + ' std'], color=(0.2, 0.2, 0.2),
                 marker='^', markersize=5, label='fps 1-start', linewidth=0,
                 ecolor=(0.2, 0.2, 0.2), elinewidth=2, capsize=3)
-    ax.errorbar(11, NRL197.loc['fps 2', param_name], NRL197.loc['fps 2', param_name + ' std'], color=(0.2, 0.2, 0.2),
+    ax.errorbar(14, NRL197.loc['fps 2', param_name], NRL197.loc['fps 2', param_name + ' std'], color=(0.2, 0.2, 0.2),
                 marker='s', markersize=5, label='fps 2-start', linewidth=0,
                 ecolor=(0.2, 0.2, 0.2), elinewidth=2, capsize=3)
     #
     # # 1.31 nm 197
-    # ax.errorbar(13, NRL197.loc['1.31 0', param_name], NRL197.loc['1.31 0', param_name + ' std'], color=(0, 0.75, 0.25),
-    #             marker='o', markersize=5, label='1.31 0-start', linewidth=0,
-    #             ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    ax.errorbar(14, NRL197.loc['1.31 1', param_name], NRL197.loc['1.31 1', param_name + ' std'], color=(0, 0.75, 0.25),
+    ax.errorbar(16, NRL197.loc['1.31 0', param_name], NRL197.loc['1.31 0', param_name + ' std'], color=(0, 0.75, 0.25),
+                marker='o', markersize=5, label='1.31 0-start', linewidth=0,
+                ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
+    ax.errorbar(18, NRL197.loc['1.31 1', param_name], NRL197.loc['1.31 1', param_name + ' std'], color=(0, 0.75, 0.25),
                 marker='^', markersize=5, label='1.31 1-start', linewidth=0,
                 ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    ax.errorbar(15, NRL197.loc['1.31 2', param_name], NRL197.loc['1.31 2', param_name + ' std'], color=(0, 0.75, 0.25),
+    ax.errorbar(20, NRL197.loc['1.31 2', param_name], NRL197.loc['1.31 2', param_name + ' std'], color=(0, 0.75, 0.25),
                 marker='s', markersize=5, label='1.31 2-start', linewidth=0,
                 ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
     #
     # # 7.91 nm 197
-    # ax.errorbar(13, NRL197.loc['7.91 0', param_name], NRL197.loc['7.91 0', param_name + ' std'], mec=(0, 0.75, 0.25),
-    #             marker='o', markersize=5, mfc=(1, 1, 1), label='7.91 0-start',
-    #             ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    ax.errorbar(14, NRL197.loc['7.91 1', param_name], NRL197.loc['7.91 1', param_name + ' std'], mec=(0, 0.75, 0.25),
+    ax.errorbar(17, NRL197.loc['7.91 0', param_name], NRL197.loc['7.91 0', param_name + ' std'], mec=(0, 0.75, 0.25),
+                marker='o', markersize=5, mfc=(1, 1, 1), label='7.91 0-start',
+                ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
+    ax.errorbar(19, NRL197.loc['7.91 1', param_name], NRL197.loc['7.91 1', param_name + ' std'], mec=(0, 0.75, 0.25),
                 marker='^', markersize=5, mfc=(1, 1, 1), label='7.91 1-start',
                 ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    ax.errorbar(15, NRL197.loc['7.91 2', param_name], NRL197.loc['7.91 2', param_name + ' std'], mec=(0, 0.75, 0.25),
+    ax.errorbar(21, NRL197.loc['7.91 2', param_name], NRL197.loc['7.91 2', param_name + ' std'], mec=(0, 0.75, 0.25),
                 marker='s', markersize=5, mfc=(1, 1, 1), label='7.91 2-start',
                 ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
     #
     # labels=['167 1-start fps', '167 2-start fps', '197 1-start fps', '197 2-start fps', '167 1-start', '167 2-start', '197 1-start', '197 2-start',]
-    save_loc = fileio.change_extension(filename, '.png')
-    format_plot(' ', param_name, 'title', scale_page=(1.0/3),
+    save_loc = fileio.change_extension(filename, (param_name + '.png'))
+    format_plot(' ', param_name + '('u'\xb0'')', 'title', scale_page=(1.0/3),
                 aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
     return
+
+
+def read_npz(filename):
+
+    # get list of npz files in filename folder
+    npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+
+    # Get parameters from excel sheet
+    pars = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0)
+
+    # save parameters of bp of every dna pose in params
+    params = []
+    frames = []
+    coords = []
+
+    for f in npz_f:
+        dna = HelixPose.from_file(f)
+        params.append(dna.params)
+        frames.append(dna.frames)
+        coords.append(dna.coord)
+
+    return params, frames, coords, pars
+
+
+def get_g_dna(filename):
+
+    params, frames, coords, pars = read_npz(filename)
+    L_bp = pars.iloc[0]['L_bp']
+    nrl = pars.iloc[0]['NRL']
+    nucs = pars.iloc[0]['n_nuc']
+    e_wrap_kT = pars.iloc[0]['e_wrap_kT']
+
+    # Initialize random steps
+    p0 = np.load(util.locate_data_file('DNA_gau.npy'))[0]
+    k = np.linalg.inv(np.load(util.locate_data_file('DNA_gau.npy'))[1:])
+
+    # get nucleosome pose en list of dyads
+    nucl, dyads = get_nucl_dyads(L_bp, nrl, nucs)
+    fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coord, nucl.dna.frames, nucl.dyad, nucl.fixed)
+
+    # get energies per bp in fiberpose
+    g_dna = []
+
+    for i, p in enumerate(params):
+        # create binary list of fixed and free bp's
+        w = np.ones(len(p))
+        for dyad in dyads:
+            fixed_bps = rMC.score_wrapping(dyad + 1, coords[i], frames[i], dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                           half_nuc=True)[1]
+            if len(fixed_bps) > 0:
+                w[fixed_bps[0]:fixed_bps[1]] = 0
+            else:
+                w = None
+        g_dna.append(rMC.score_dna(p, p0, k, w=w)) #10xL_bpX6
+
+    g_dna_all = np.mean(g_dna, axis=0) #L_bpx6
+    g_dna_std = np.std(np.sum(g_dna, axis=2), axis=0)
+    g_dna_m = np.mean(np.sum(g_dna, axis=2), axis=0)
+
+    df_std = pd.DataFrame(g_dna_std, columns=['g_total std'], index=range(1, L_bp - 1))
+    df_m = pd.DataFrame(g_dna_m, columns=['g_total (kT)'], index=range(1, L_bp - 1))
+
+    df_all = pd.DataFrame(g_dna_all, columns=['g_shift_kT',
+                                                  'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT',
+                                                  'g_twist_kT'], index=range(1, L_bp - 1))
+
+    df_g_dna = pd.concat([df_all, df_m, df_std], axis=1)
+    df_g_dna.to_excel(fileio.change_extension(filename, '_g_dna.xlsx'))
+
+    return df_m
+
+
+def get_mean_coords(filename):
+
+    params = read_npz(filename)[0]
+    pars = read_npz(filename)[3]
+    L_bp = pars.iloc[0]['L_bp']
+    nrl = pars.iloc[0]['NRL']
+    nucs = pars.iloc[0]['n_nuc']
+
+    # get nucleosome pose en list of dyads
+    nucl, dyads = get_nucl_dyads(L_bp, nrl, nucs)
+
+    # calculate mean parameters per bp
+    params = np.mean(params, axis=0)
+
+    # use 6 parameters to get coordinates of every basepair
+    dr, frames = util.params2data(params)
+    coords = util.dr2coords(dr)
+
+    # get dyad_ofs to project histones in mean fiber pose
+    of_d_fiber = []  # origin frame of dyad in fiber
+    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)  # origin frame dyad in nucl pose
+    tf_d = []  # transformation matrix
+
+    for i, d in enumerate(dyads):
+        # get origin frame of dyad in fiber
+        of_d_fiber.append(nMC.get_of_2(coords, frames, d))
+
+        # get transformation matrix of nucleosome dyad onto fiber dyad
+        tf_d.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
+
+    # get center of masses of nucleosome
+    nuc_cms = []
+    for d, dyad in enumerate(dyads):
+        nuc_cms.append(nMC.apply_transformation(nucl.of, tf_d[d]))
+
+    # append histone positions to coordinates
+    # tf_d ensures that histones are placed correct at nucleosome position
+    coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
+
+    return dyads, nuc_cms, coord_w_hist, radius, colors
+
+
+def dna_energy_display(filename, energy_kT='g_total (kT)'):
+
+    file = get_g_dna(filename)
+
+    n_bins = 50
+    bin_max = 1.5 #kT
+    bin = np.linspace(0, bin_max, n_bins, dtype=float)
+    bin_labels = np.arange(n_bins-1)
+    file[energy_kT] = np.clip(file[energy_kT], 0 , bin_max)
+
+    colorwaaier = []
+    rod = []
+    for i, b in enumerate(np.arange(n_bins)):
+        p = b/float(n_bins)
+        colorwaaier.append([0.6 + (0.4 * p) , 0.6 * (1 - p)**2,  0.6 * (1 - p)**2])
+        rod.append([0,0,i/10.0])
+
+
+    POVe.main(fileio.change_extension(filename, 'label.png'), rod, colorwaaier, radius=1, range_A=[25, 25], offset_A=[0, 0, 10], width_pix=500, showt=True)
+
+    file['bin'] = pd.cut(file[energy_kT], bins=bin, labels=bin_labels, include_lowest=True)
+    colors = []
+
+    for b in file['bin']:
+        colors.append(colorwaaier[b])
+
+
+    dyads, nuc_cms, coords = get_mean_coords(filename)[0:3]
+
+    # transform fiber to origin
+    origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    tf_o = nMC.get_transformation(nuc_cms[4], target=origin_of)
+    t_coord = []  # transformed coords
+    # Tranform coords where first nucleosome is placed in origin
+    t_coord = nMC.apply_transformation(coords[0], tf_o)
+
+    begin = dyads[3] - 75
+    end = dyads[5] + 75
+
+    POVe.main(fileio.change_extension(filename, 'Etot.png'), t_coord[begin:end], colors, radius=10, range_A=[1000, 1000], offset_A=[0, 0, 125], width_pix=500, showt=True)
+
+    return
+
+
+def plot_npz(filename):
+
+    # get list of npz files in filename folder
+    npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
+
+    # Get parameters from excel sheet
+    pars = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0)
+
+    L_bp = pars.iloc[0]['L_bp']
+    nrl = pars.iloc[0]['NRL']
+    nucs = pars.iloc[0]['n_nuc']
+    # L_bp = 1364
+    # nrl = 167
+    # nucs = 8
+
+    # get nucleosome pose en list of dyads
+    nucl, dyads = get_nucl_dyads(L_bp, nrl, nucs)
+
+    for f in npz_f:
+        dna = HelixPose.from_file(f)
+
+        # use 6 parameters to get coordinates of every basepair
+        coords = dna.coord
+        frames = dna.frames
+
+        # get dyad_ofs to project histones in mean fiber pose
+        of_d_fiber = []  # origin frame of dyad in fiber
+        of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)  # origin frame dyad in nucl pose
+        tf_d = []  # transformation matrix
+
+        for i, d in enumerate(dyads):
+            # get origin frame of dyad in fiber
+            of_d_fiber.append(nMC.get_of_2(coords, frames, d))
+
+            # get transformation matrix of nucleosome dyad onto fiber dyad
+            tf_d.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
+
+        # get center of masses of nucleosome
+        nuc_cms = []
+        for d, dyad in enumerate(dyads):
+            nuc_cms.append(nMC.apply_transformation(nucl.of, tf_d[d]))
+
+        # append histone positions to coordinates
+        # tf_d ensures that histones are placed correct at nucleosome position
+        # coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
+        coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 75:dyads[5] + 75], dyads, nucl, tf=tf_d[3:6])
+
+        # transform fiber to origin
+        origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+        # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+        tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
+        t_coord = []  # transformed coords
+        # Tranform coords where first nucleosome is placed in origin
+        for c in coord_w_hist:
+            t_coord.append(nMC.apply_transformation(c, tf_o))
+
+
+        print(fileio.create_pov((fileio.change_extension(f, 'png')), t_coord, radius=radius, colors=colors, range_A=[1000, 1000],
+                                    offset_A=[0, 0, 300], show=False, width_pix=1500))
+
+    return
+
+
+def de_grote_chromatine_show(filename, size):
+
+    params = read_npz(filename)[0]
+    pars = read_npz(filename)[3]
+    L_bp = pars.iloc[0]['L_bp']
+    nrl = pars.iloc[0]['NRL']
+    nucs = pars.iloc[0]['n_nuc']
+    fiber_start = pars.iloc[0]['fiber_start']
+
+    # get nucleosome pose en list of dyads
+    nucl, dyads = get_nucl_dyads(L_bp, nrl, nucs)
+
+    # calculate mean parameters per bp
+    params = np.mean(params, axis=0)
+
+    dyads_block_idx = np.arange(dyads[fiber_start], dyads[-2], fiber_start*nrl)
+    params_block = []
+    for idx in dyads_block_idx:
+        params_block.append(params[idx:idx+fiber_start*nrl])
+
+    params_block = np.mean(params_block, axis=0)
+    params_full = []
+    dyads_new = []
+    for i in range(0,size):
+        params_full.extend(params_block)
+        if fiber_start == 2:
+            dyads_new.append(2*i*nrl)
+            dyads_new.append((2*i+1)*nrl)
+        else:
+            dyads_new.append(i*nrl)
+
+    # delete dyad at position zero (the edge)
+    dyads_new.pop(0)
+    # use 6 parameters to get coordinates of every basepair
+    dr, frames = util.params2data(np.asarray(params_full))
+    coords = util.dr2coords(dr)
+
+    # get dyad_ofs to project histones in mean fiber pose
+    of_d_fiber = []  # origin frame of dyad in fiber
+    of_d_nucl = nMC.get_of(nucl.dna, nucl.dyad)  # origin frame dyad in nucl pose
+    tf_d = []  # transformation matrix
+
+    for i, d in enumerate(dyads_new):
+        # get origin frame of dyad in fiber
+        of_d_fiber.append(nMC.get_of_2(coords, frames, d))
+
+        # get transformation matrix of nucleosome dyad onto fiber dyad
+        tf_d.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
+
+    # append histone positions to coordinates
+    # tf_d ensures that histones are placed correct at nucleosome position
+    coord_w_hist, radius, colors = tMC.get_histones(coords[100:-100], dyads_new, nucl, tf=tf_d, tail=False)
+
+    print(fileio.create_pov((fileio.change_extension(filename, '_big.png')), coord_w_hist, radius=radius, colors=colors,
+                            range_A=[1500, 1500],
+                            offset_A=[0, 0, 100], show=False, width_pix=1500))
+
+    return
+
+def get_g_linker(filename):
+
+    params, frames, coords, pars = read_npz(filename)
+    L_bp = pars.iloc[0]['L_bp']
+    nrl = pars.iloc[0]['NRL']
+    nucs = pars.iloc[0]['n_nuc']
+    e_wrap_kT = pars.iloc[0]['e_wrap_kT']
+
+    # get nucleosome pose en list of dyads
+    nucl, dyads = get_nucl_dyads(L_bp, nrl, nucs)
+    fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coord, nucl.dna.frames, nucl.dyad, nucl.fixed)
+
+    # Initialize random steps
+    p0 = np.load(util.locate_data_file('DNA_gau.npy'))[0]
+    k = np.linalg.inv(np.load(util.locate_data_file('DNA_gau.npy'))[1:])
+
+    # get energies per bp in fiberpose
+    g_dna = []
+
+    for i, p in enumerate(params):
+        # create binary list of fixed and free bp's
+        w = np.ones(len(p))
+        for dyad in dyads:
+            fixed_bps = rMC.score_wrapping(dyad + 1, coords[i], frames[i], dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                           half_nuc=True)[1]
+            if len(fixed_bps) > 0:
+                w[fixed_bps[0]:fixed_bps[1]] = 0
+            else:
+                w = None
+        g_dna.append(rMC.score_dna(p, p0, k, w=w))  # 10xL_bpX6
+
+    dyads_block_idx = np.arange(dyads[1], dyads[-1], nrl)
+    g_dna_block = []
+    for g in g_dna: # energy of each bp in each npz file
+        for idx in dyads_block_idx:
+            g_dna_block.append(g_dna[g][idx:idx + nrl])
+
+    g_dna_std = np.std(g_dna_block, axis=0)
+    g_dna_all = np.mean(g_dna_block, axis=0)
+    g_dna_m = np.sum(g_dna_all, axis=1)
+
+    df_std = pd.DataFrame(g_dna_std, columns=['g_total std'], index=range(1, L_bp - 1))
+    df_m = pd.DataFrame(g_dna_m, columns=['g_total (kT)'], index=range(1, L_bp - 1))
+
+    df_all = pd.DataFrame(g_dna_all, columns=['g_shift_kT',
+                                              'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT',
+                                              'g_twist_kT'], index=range(1, L_bp - 1))
+
+    df_g_dna = pd.concat([df_all, df_m, df_std], axis=1)
+    # df_g_dna.to_excel(fileio.change_extension(filename, '_g_dna.xlsx'))
+
+    return df_g_dna
+
+def plot_g_linker(filename_1, filename_2):
+
+    df_g_dna_1 = get_g_linker(filename_1)
+    df_g_dna_2 = get_g_linker(filename_2)
+
+    fig, ax = plt.subplots()
+    # left, bottom, width, height = [0.6, 0.55, 0.35, 0.35]
+    # ax2 = fig.add_axes([left, bottom, width, height]) # inset
+    #
+    # ax.errorbar(x_tick, y_1.iloc[:-1], e_1.iloc[:-1], color=(0.75, 0, 0.25), marker='^', markersize=5, label='167 1-start', linewidth=0,
+    #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
+    ax.errorbar(x_tick, y_2.iloc[:-1], e_2.iloc[:-1], color=(0.75, 0, 0.25), marker='s', markersize=5,
+                label='167 2-start', linewidth=0,
+                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
+

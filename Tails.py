@@ -61,7 +61,7 @@ def tf_dyad(dyads, dna, nucl):
     return tf
 
 
-def get_histones(coord, dyads, nucl, dna=None, tf=None):
+def get_histones(coord, dyads, nucl, dna=None, tf=None, tail=True):
 
     '''
     projects histones coordinates onto every
@@ -105,16 +105,26 @@ def get_histones(coord, dyads, nucl, dna=None, tf=None):
         # apply transformation on coordinates of histone proteins
         for c in p_coord:
             coord.append(nMC.apply_transformation(c, tfm))
-        # apply transformation on linker coordinates
-        for l in nucl.l_coord:
-            coord.append(nMC.apply_transformation(l, tfm))
         # radius of histone proteins
         radius = np.append(radius, np.ones(8) * 4)
-        # radius of linker-amino-acids
-        radius = np.append(radius, np.ones(4) * 13)
-        # colors of histone proteins and linker-amino-acids
-        # [H3*, H3, H4*, H4, H2A*, H2B*, H2A, H2B]
-        colors += 'bbggyryrpmpm'  # 8 histone proteins + H2A, H2A*, H4, H4*
+
+        if tail == True:
+            # apply transformation on linker coordinates
+            for l in nucl.l_coord:
+                coord.append(nMC.apply_transformation(l, tfm))
+
+            # radius of linker-amino-acids
+            radius = np.append(radius, np.ones(4) * 13)
+
+            # colors of histone proteins and linker-amino-acids
+            # [H3*, H3, H4*, H4, H2A*, H2B*, H2A, H2B]
+            colors += 'bbggyryrpmpm'  # 8 histone proteins + H2A, H2A*, H4, H4*
+
+        else:
+            # colors of histone proteins and linker-amino-acids
+            # [H3*, H3, H4*, H4, H2A*, H2B*, H2A, H2B]
+            colors += 'bbggyryr'  # 8 histone proteins
+
 
     return coord, radius, colors
 
