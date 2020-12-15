@@ -472,7 +472,7 @@ def get_mean_coords(filename):
 
     # append histone positions to coordinates
     # tf_d ensures that histones are placed correct at nucleosome position
-    coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
+    coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d, tail=False)
 
     return dyads, nuc_cms, coord_w_hist, radius, colors
 
@@ -567,7 +567,7 @@ def plot_npz(filename):
         # append histone positions to coordinates
         # tf_d ensures that histones are placed correct at nucleosome position
         # coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
-        coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 75:dyads[5] + 75], dyads, nucl, tf=tf_d[3:6])
+        coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 75:dyads[5] + 75], dyads, nucl, tf=tf_d[3:6], tail=False)
 
         # transform fiber to origin
         origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])

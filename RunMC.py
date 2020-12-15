@@ -315,7 +315,7 @@ def main(n_steps, root):
     # Setup files and forces
     if root is None:
         root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
-                                                 pars['Rep_Amp_pNA'].value, pars['Rep_decay_A'].value).replace('.', '-')
+                                                 pars['Rep_Amp_pNA'].value, pars['e_wrap_kT'].value).replace('.', '-')
 
     else:
         iterpar = []
@@ -326,8 +326,8 @@ def main(n_steps, root):
         pars['n_nuc'].value = int(iterpar[0])
         pars['NRL'].value = iterpar[1]
         pars['fiber_start'].value = int(iterpar[2])
-        pars['Rep_Amp_pNA'].value = iterpar[3]
-        pars['Rep_decay_A'].value = iterpar[4]
+        pars['e_stack_kT'].value = iterpar[3]
+        pars['e_wrap_kT'].value = iterpar[4]
 
 
     # create optimal fiber length for each NRL, with 14 bp handles
@@ -377,6 +377,7 @@ def main(n_steps, root):
     n_ofs = fMC.get_casted_fiber_frames(pars)
     fixed_stack_params = nMC.ofs2params(n_ofs[fiber_start], n_ofs[0], _3dna=True)
 
+
     basepairs = np.asarray(range(pars['L_bp'] - 1))
 
     if pars['e_stack_kT'].value == 0:
@@ -414,7 +415,7 @@ def main(n_steps, root):
         # g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
         #                                    e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         # g_nuc_kT_all.append(g_nuc_kT)
-        tails.append(tMC.tail_dist(3, 4, dyads, dna, nucl, orientation=None))
+        tails.append(tMC.tail_dist(3, 3+fiber_start, dyads, dna, nucl, orientation=None))
         tMC.energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_start, fixed_wrap_params,
                                                fixed_stack_params, p0, k, force)
 
@@ -481,5 +482,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(20, '8x197x2s102w13-1')
+    main(20, '8x197x2s102w2-5')
 

@@ -4,6 +4,7 @@ import os as os
 import pandas as pd
 from helixmc import util
 from helixmc.random_step import RandomStepSimple, RandomStepAgg, symmetrize_WC
+from helixmc.pose import HelixPose
 import glob
 import math
 
@@ -459,7 +460,7 @@ def origin(dna, dyads, nucl, filename, axis=False):
     df_last_cms: coordinates cms of nucleosome in last pose
     """
 
-    coord, radius, colors = get_histones(dna.coord, dyads, nucl, dna=dna)
+    coord, radius, colors = get_histones(dna.coord, dyads, nucl, dna=dna, tail=False)
 
     nuc_cms = []
     for d, dyad in enumerate(dyads):
@@ -566,8 +567,8 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
         tf_d.append(nMC.get_transformation(of_d_nucl, of_d_fiber[i]))
 
     # append histone positions to coordinates
-    coord_w_hist, radius, colors = get_histones(coords, dyads, nucl, tf=tf_d)
-    coord_3_nuc, radius3, colors3 = get_histones(coords[dyads[3]-100:dyads[5]+100], dyads, nucl, tf=tf_d[3:6])
+    coord_w_hist, radius, colors = get_histones(coords, dyads, nucl, tf=tf_d, tail=False)
+    coord_3_nuc, radius3, colors3 = get_histones(coords[dyads[3]-100:dyads[5]+100], dyads, nucl, tf=tf_d[3:6], tail=False)
 
     # transform fiber to origin
     nuc_cms = []
@@ -744,13 +745,12 @@ def save_values(pars, filename, dyads, nucl, results, results_std, energy_all, f
 
     mean_sheet, nucl_sheet, df_H2A, df_H2B, df_H3, df_H4, df_l_coord = coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, k)
 
-
     for key in energy_all:
         pars[key].value = np.mean(energy_all[key])
-        results_std.loc['average'][key] = np.std(energy_all[key])
+        energy_all[key] = np.std(energy_all[key])
     # save mean energy in results df
     results.loc['average'] = pars.valuesdict()
-    # results_std.loc['average'] = results_std.mean()
+    results_std.loc['average'] = energy_all
 
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
