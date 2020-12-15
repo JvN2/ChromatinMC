@@ -507,9 +507,9 @@ def dna_energy_display(filename, energy_kT='g_total (kT)'):
     dyads, nuc_cms, coords = get_mean_coords(filename)[0:3]
 
     # transform fiber to origin
-    origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
-    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
-    tf_o = nMC.get_transformation(nuc_cms[4], target=origin_of)
+    # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+    origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
     t_coord = []  # transformed coords
     # Tranform coords where first nucleosome is placed in origin
     t_coord = nMC.apply_transformation(coords[0], tf_o)
@@ -517,7 +517,7 @@ def dna_energy_display(filename, energy_kT='g_total (kT)'):
     begin = dyads[3] - 75
     end = dyads[5] + 75
 
-    POVe.main(fileio.change_extension(filename, 'Etot.png'), t_coord[begin:end], colors, radius=10, range_A=[1000, 1000], offset_A=[0, 0, 125], width_pix=500, showt=True)
+    POVe.main(fileio.change_extension(filename, 'Etot.png'), t_coord[begin:end], colors, radius=10, range_A=[500, 500], offset_A=[0, 0, 125], width_pix=500, showt=True)
 
     return
 
@@ -675,22 +675,27 @@ def get_g_linker(filename):
                 w = None
         g_dna.append(rMC.score_dna(p, p0, k, w=w))  # 10xL_bpX6
 
+
     dyads_block_idx = np.arange(dyads[1], dyads[-1], nrl)
     g_dna_block = []
-    for g in g_dna: # energy of each bp in each npz file
+    for g, npz in enumerate(g_dna): # energy of each bp in each npz file
         for idx in dyads_block_idx:
             g_dna_block.append(g_dna[g][idx:idx + nrl])
+
 
     g_dna_std = np.std(g_dna_block, axis=0)
     g_dna_all = np.mean(g_dna_block, axis=0)
     g_dna_m = np.sum(g_dna_all, axis=1)
 
-    df_std = pd.DataFrame(g_dna_std, columns=['g_total std'], index=range(1, L_bp - 1))
-    df_m = pd.DataFrame(g_dna_m, columns=['g_total (kT)'], index=range(1, L_bp - 1))
+    df_std = pd.DataFrame(g_dna_std, columns=['g_shift_std',
+                                              'g_slide_std', 'g_rise_std', 'g_tilt_std', 'g_roll_std',
+                                              'g_twist_std'], index=range(nrl))
+
+    df_m = pd.DataFrame(g_dna_m, columns=['g_total (kT)'], index=range(nrl))
 
     df_all = pd.DataFrame(g_dna_all, columns=['g_shift_kT',
                                               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT',
-                                              'g_twist_kT'], index=range(1, L_bp - 1))
+                                              'g_twist_kT'], index=range(nrl))
 
     df_g_dna = pd.concat([df_all, df_m, df_std], axis=1)
     # df_g_dna.to_excel(fileio.change_extension(filename, '_g_dna.xlsx'))
@@ -699,18 +704,29 @@ def get_g_linker(filename):
 
 def plot_g_linker(filename_1, filename_2):
 
+
+    param_name = 'g_twist_kT'
+    error_name = 'g_twist_std'
     df_g_dna_1 = get_g_linker(filename_1)
     df_g_dna_2 = get_g_linker(filename_2)
 
-    fig, ax = plt.subplots()
-    # left, bottom, width, height = [0.6, 0.55, 0.35, 0.35]
-    # ax2 = fig.add_axes([left, bottom, width, height]) # inset
-    #
-    # ax.errorbar(x_tick, y_1.iloc[:-1], e_1.iloc[:-1], color=(0.75, 0, 0.25), marker='^', markersize=5, label='167 1-start', linewidth=0,
-    #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
-    ax.errorbar(x_tick, y_2.iloc[:-1], e_2.iloc[:-1], color=(0.75, 0, 0.25), marker='s', markersize=5,
-                label='167 2-start', linewidth=0,
-                ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
+    x_tick = df_g_dna_1.index[55:-55]
+    y_1 = df_g_dna_1.iloc[55:-55][param_name]
+    e_1 = df_g_dna_1.iloc[55:-55][error_name]
+    y_2 = df_g_dna_2.iloc[55:-55][param_name]
+    e_2 = df_g_dna_2.iloc[55:-55][error_name]
 
+    fig, ax = plt.subplots()
+    #
+    ax.errorbar(x_tick, y_1, e_1, color=(1.0, 0.5, 0.0), marker='^', markersize=1, label='167 1-start', linewidth=0,
+                ecolor=(1.0, 0.5, 0.0), elinewidth=0.3, capsize=0.5)
+    # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
+    ax.errorbar(x_tick, y_2, e_2, color=(0.27, 0.5, 0.7), marker='s', markersize=1,
+                label='167 2-start', linewidth=0,
+                ecolor=(0.27, 0.5, 0.7), elinewidth=0.3, capsize=0.5)
+    # ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
+
+    save_loc = fileio.change_extension(filename_1, (param_name + '.png'))
+    format_plot('bp', 'energy (kT)' , 'title', scale_page=(1.0/4),
+                aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
+    return

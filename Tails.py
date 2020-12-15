@@ -509,10 +509,34 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
     npz_f = glob.glob(fileio.change_extension(filename, '\*.npz'))
 
     params = []
+    g_dna = []
+    e_wrap_kT = pars['e_wrap_kT'].value
     # params contains all 6 parameters for each basepair out of every npz file
     for f, file in enumerate(npz_f):
-        data = np.load(file)
-        params.append(data['params'])
+        dna = HelixPose.from_file(file)
+        params.append(dna.params)
+        # frames.append(dna.frames)
+        # coords.append(dna.coord)
+
+        w = np.ones(len(dna.params))
+
+        for dyad in dyads:
+            fixed_bps = rMC.score_wrapping(dyad + 1, dna.coord, dna.frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                           half_nuc=True)[1]
+            if len(fixed_bps) > 0:
+                w[fixed_bps[0]:fixed_bps[1]] = 0
+            else:
+                w = None
+        g_dna.append(rMC.score_dna(dna.params, p0, k, w=w))
+
+    g_dna_all = np.mean(g_dna, axis=0) #L_bpx6
+    g_dna_m = np.mean(np.sum(g_dna, axis=2), axis=0)
+
+
+    df_m_g_all = pd.DataFrame(g_dna_all, columns=['g_shift_kT',
+               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT'], index=range(1,len(g_dna_all) + 1))
+
+    df_m_g = pd.DataFrame(g_dna_m, columns=['g_total (kT)'], index=range(1,len(g_dna_all) + 1))
 
     # get mean value of every parameter for each basepair
     params_m = np.mean(params, axis=0)
@@ -594,27 +618,6 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
     print(fileio.create_pov((fileio.change_extension(filename, '_3m.png')), coord3, radius=radius3, colors=colors3, range_A=[1000, 1000],
                             offset_A=[0, 0, 200], show=False, width_pix=1500))
 
-    # energy of bps
-    dna_coord = t_coord[0]
-    dna_params = params_m
-    dna_frames = frames
-    e_wrap_kT = pars['e_wrap_kT'].value
-
-    w = np.ones(len(dna_params))
-
-    for dyad in dyads:
-        fixed_bps = rMC.score_wrapping(dyad + 1, dna_coord, dna_frames, dyads, nucl, fixed_wrap_params, e_wrap_kT,
-                                       half_nuc=True)[1]
-        if len(fixed_bps) > 0:
-            w[fixed_bps[0]:fixed_bps[1]] = 0
-        else:
-            w = None
-    g_dna_all = rMC.score_dna(dna_params, p0, k, w=w)
-
-    df_m_g_all = pd.DataFrame(g_dna_all, columns=['g_shift_kT',
-               'g_slide_kT', 'g_rise_kT', 'g_tilt_kT', 'g_roll_kT', 'g_twist_kT'], index=range(1,len(g_dna_all) + 1))
-
-    df_m_g = pd.DataFrame(np.sum(g_dna_all, axis=1), columns=['g_total (kT)'], index=range(1,len(g_dna_all) + 1))
 
 
     # combine dataframe of bp coords and parameters
@@ -744,9 +747,10 @@ def save_values(pars, filename, dyads, nucl, results, results_std, energy_all, f
 
     for key in energy_all:
         pars[key].value = np.mean(energy_all[key])
+        results_std.loc['average'][key] = np.std(energy_all[key])
     # save mean energy in results df
     results.loc['average'] = pars.valuesdict()
-    results_std.loc['average'] = results_std.mean()
+    # results_std.loc['average'] = results_std.mean()
 
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.

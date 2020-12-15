@@ -278,7 +278,7 @@ def main(n_steps, root):
     pars.add('face', value=1)
     pars.add('diameter_A', value=330)
 
-    pars.add('e_wrap_kT', value=2.1)
+    pars.add('e_wrap_kT', value=2.5)
     pars.add('e_stack_kT', value=25e5) # was 25
     pars.add('NRL', value=187)
     pars.add('fiber_start', value=2)
@@ -302,11 +302,11 @@ def main(n_steps, root):
     pars.add('g_total', value=0)  # total energy score of fiber
 
     # parameters for implementation H4 tails
-    pars.add('num_npz', value=10)     # number of npz files that will be stored during simulation
+    pars.add('num_npz', value=50)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
     pars.add('iterations', value=n_steps)
-    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
-    pars.add('Rep_Amp_pNA', value=100)  # Repulsion amplitude (pNA)
+    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
+    pars.add('Rep_Amp_pNA', value=102)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
     pars.add('tail_up_nm', value=0) # mean value of tail distance
@@ -377,7 +377,6 @@ def main(n_steps, root):
     n_ofs = fMC.get_casted_fiber_frames(pars)
     fixed_stack_params = nMC.ofs2params(n_ofs[fiber_start], n_ofs[0], _3dna=True)
 
-
     basepairs = np.asarray(range(pars['L_bp'] - 1))
 
     if pars['e_stack_kT'].value == 0:
@@ -399,7 +398,8 @@ def main(n_steps, root):
 
     previous_bp = 0
     datafile = fileio.get_filename(sub=True, incr=True, ext='npz')
-    tMC.fixed_pars2excel(fixed_stack_params, filename)
+
+    tails = [] # hold value of tial distances
 
     fileio.report_progress(n_steps, title='RunMC', init=True)
     for i, force in enumerate(forces):
@@ -414,7 +414,7 @@ def main(n_steps, root):
         # g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
         #                                    e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
         # g_nuc_kT_all.append(g_nuc_kT)
-
+        tails.append(tMC.tail_dist(3, 4, dyads, dna, nucl, orientation=None))
         tMC.energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_start, fixed_wrap_params,
                                                fixed_stack_params, p0, k, force)
 
@@ -454,7 +454,7 @@ def main(n_steps, root):
             for key in energy:
                 energy[key] = []
 
-            # save stack parameters of nucleosomes in pose
+            # save stack parameters of nucleosomes
             tMC.nuc_pars(dna, dyads, nucl, fiber_start, datafile)
 
             datafile = fileio.increment_file_nr(datafile)
@@ -469,6 +469,8 @@ def main(n_steps, root):
     # return
 
     tMC.save_values(pars, filename, dyads, nucl, results, results_std, energy_all, fixed_wrap_params, p0, k)
+    df_tail = pd.DataFrame(tails, columns=['tail up (nm)', 'tail down (nm)'])
+    df_tail.to_excel(fileio.change_extension(filename, '_tail.xlsx'))
 
     # aMC.plot_fz(filename)
     # aMC.plot_gi(filename, force_range=[0.1, 1.5])
