@@ -802,8 +802,8 @@ def energy_could_be_our_closest_friend(pars, energy, dyads, dna, nucl, fiber_sta
                                    half_nuc=True)[1]
         if len(fixed_bps) > 0:
             w[fixed_bps[0]:fixed_bps[1]] = 0
-        else:
-            w = None
+        # else:
+        #     w = None
     g_dna_all = rMC.score_dna(dna_params, p0, k, w=w)
 
     for dyad1, dyad2 in zip(dyads[:-1], dyads[1:]):
