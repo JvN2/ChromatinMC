@@ -414,8 +414,8 @@ def get_g_dna(filename):
                                            half_nuc=True)[1]
             if len(fixed_bps) > 0:
                 w[fixed_bps[0]:fixed_bps[1]] = 0
-            else:
-                w = None
+            # else:
+            #     w = None
         g_dna.append(rMC.score_dna(p, p0, k, w=w)) #10xL_bpX6
 
     g_dna_all = np.mean(g_dna, axis=0) #L_bpx6
@@ -671,8 +671,8 @@ def get_g_linker(filename):
                                            half_nuc=True)[1]
             if len(fixed_bps) > 0:
                 w[fixed_bps[0]:fixed_bps[1]] = 0
-            else:
-                w = None
+            # else:
+            #     w = None
         g_dna.append(rMC.score_dna(p, p0, k, w=w))  # 10xL_bpX6
 
 
