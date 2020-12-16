@@ -526,8 +526,8 @@ def coord_mean(filename, dyads, nucl, fiber_start, pars, fixed_wrap_params, p0, 
                                            half_nuc=True)[1]
             if len(fixed_bps) > 0:
                 w[fixed_bps[0]:fixed_bps[1]] = 0
-            else:
-                w = None
+            # else:
+            #     w = None
         g_dna.append(rMC.score_dna(dna.params, p0, k, w=w))
 
     g_dna_all = np.mean(g_dna, axis=0) #L_bpx6
