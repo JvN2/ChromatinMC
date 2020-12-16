@@ -639,8 +639,8 @@ def de_grote_chromatine_show(filename, size):
     coord_w_hist, radius, colors = tMC.get_histones(coords[100:-100], dyads_new, nucl, tf=tf_d, tail=False)
 
     print(fileio.create_pov((fileio.change_extension(filename, '_big.png')), coord_w_hist, radius=radius, colors=colors,
-                            range_A=[1500, 1500],
-                            offset_A=[0, 0, 100], show=False, width_pix=1500))
+                            range_A=[2000, 1500],
+                            offset_A=[0, 800, 500], show=False, width_pix=1500))
 
     return
 
