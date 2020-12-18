@@ -307,7 +307,7 @@ def main(n_steps, root):
     pars.add('iterations', value=n_steps)
     pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=102)  # Repulsion amplitude (pNA)
-    pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
+    pars.add('Rep_decay_A', value=79.1) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
     pars.add('tail_up_nm', value=0) # mean value of tail distance
     pars.add('tail_down_nm', value=0) # mean value of tail distance
@@ -328,6 +328,9 @@ def main(n_steps, root):
         pars['fiber_start'].value = int(iterpar[2])
         pars['e_stack_kT'].value = iterpar[3]
         pars['e_wrap_kT'].value = iterpar[4]
+
+    print(pars['e_wrap_kT'].value)
+    return
 
 
     # create optimal fiber length for each NRL, with 14 bp handles
@@ -482,5 +485,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(20, '8x197x2s102w2-5')
+    main(20, '8x167x0s2500000-0w0-5')
 

@@ -235,7 +235,7 @@ def format_plot(xtitle='x (a.u.)', ytitle='y (a.u.)', title='', xrange=None, yra
         plt.rcParams["legend.labelspacing"] = 0.25
         plt.rcParams["legend.handlelength"] = 1
         plt.rcParams["legend.handletextpad"] = 0.25
-        plt.legend(legend, prop={'size': fontsize * 0.8}, )
+        plt.legend(legend, prop={'size': fontsize * 0.8}, markerscale=100)
 
     # fig.canvas.mpl_connect("key_press_event", key_press_action)
 
@@ -482,7 +482,7 @@ def dna_energy_display(filename, energy_kT='g_total (kT)'):
     file = get_g_dna(filename)
 
     n_bins = 50
-    bin_max = 1.5 #kT
+    bin_max = 3.5 #kT
     bin = np.linspace(0, bin_max, n_bins, dtype=float)
     bin_labels = np.arange(n_bins-1)
     file[energy_kT] = np.clip(file[energy_kT], 0 , bin_max)
@@ -507,8 +507,12 @@ def dna_energy_display(filename, energy_kT='g_total (kT)'):
     dyads, nuc_cms, coords = get_mean_coords(filename)[0:3]
 
     # transform fiber to origin
-    # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
-    origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
+    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
+    angle = 1.0*np.pi
+    cos = np.cos(angle)
+    sin = np.sin(angle)
+    origin_of = np.asarray([[0, 0, 0], [-cos, -sin, 0], [-sin, cos, 0], [0, 0, -1]])
     tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
     t_coord = []  # transformed coords
     # Tranform coords where first nucleosome is placed in origin
@@ -573,6 +577,13 @@ def plot_npz(filename):
         origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
         # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
         tf_o = nMC.get_transformation(nuc_cms[4], target=origin_of)
+        # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
+        # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
+        angle = 1.0 * np.pi
+        cos = np.cos(angle)
+        sin = np.sin(angle)
+        origin_of = np.asarray([[0, 0, 0], [-cos, -sin, 0], [-sin, cos, 0], [0, 0, -1]])
+        tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
         t_coord = []  # transformed coords
         # Tranform coords where first nucleosome is placed in origin
         for c in coord_w_hist:
@@ -639,8 +650,8 @@ def de_grote_chromatine_show(filename, size):
     coord_w_hist, radius, colors = tMC.get_histones(coords[100:-100], dyads_new, nucl, tf=tf_d, tail=False)
 
     print(fileio.create_pov((fileio.change_extension(filename, '_big.png')), coord_w_hist, radius=radius, colors=colors,
-                            range_A=[1500, 1500],
-                            offset_A=[0, 0, 100], show=False, width_pix=1500))
+                            range_A=[2000, 1500],
+                            offset_A=[0, 800, 500], show=False, width_pix=1500))
 
     return
 
@@ -718,15 +729,63 @@ def plot_g_linker(filename_1, filename_2):
 
     fig, ax = plt.subplots()
     #
-    ax.errorbar(x_tick, y_1, e_1, color=(1.0, 0.5, 0.0), marker='^', markersize=1, label='167 1-start', linewidth=0,
-                ecolor=(1.0, 0.5, 0.0), elinewidth=0.3, capsize=0.5)
+    ax.errorbar(x_tick, y_1, e_1, color=(1, 0, 0), marker='^', markersize=1, label='167 1-start', linewidth=0,
+                ecolor=(1, 0, 0), elinewidth=0.3, capsize=0.5)
     # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
-    ax.errorbar(x_tick, y_2, e_2, color=(0.27, 0.5, 0.7), marker='s', markersize=1,
+    ax.errorbar(x_tick, y_2, e_2, color=(0, 0, 1), marker='s', markersize=1,
                 label='167 2-start', linewidth=0,
-                ecolor=(0.27, 0.5, 0.7), elinewidth=0.3, capsize=0.5)
+                ecolor=(0, 0, 1), elinewidth=0.3, capsize=0.5)
     # ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
 
     save_loc = fileio.change_extension(filename_1, (param_name + '.png'))
-    format_plot('bp', 'energy (kT)' , 'title', scale_page=(1.0/4),
+    format_plot('bp (#)', 'energy (kT)' , 'title', scale_page=(1.0/4.0),
                 aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
+    return
+
+def plot_tail(filename, filename_2=None):
+
+    tail = pd.read_excel(filename, header=0, index_col=0)
+    x_tick = tail.index[:]
+    t_up = tail.loc[:, 'tail up (nm)']
+    t_down = tail.loc[:, 'tail down (nm)']
+
+    fig, ax = plt.subplots()
+    ax.plot(x_tick, t_up, color=(0.75, 0, 0.5), marker='^', label='tail up', markersize=0.05, linestyle='')
+    ax.plot(x_tick, t_down, color=(1, 0, 1), marker='v', label='tail down', markersize=0.05, linestyle='')
+    label = ['tail up', 'tail down']
+
+    if filename_2 is not None:
+        tail_2 = pd.read_excel(filename_2, header=0, index_col=0)
+        t_up_2 = tail_2.loc[:, 'tail up (nm)']
+        t_down_2 = tail_2.loc[:, 'tail down (nm)']
+        ax.plot(x_tick, t_up_2, color=(0, 0, 0.5), marker='^', label='tail up', markersize=0.05, linestyle='')
+        ax.plot(x_tick, t_down_2, color=(0, 0, 1), marker='v', label='tail down', markersize=0.05, linestyle='')
+        label = []
+
+
+    save_loc = fileio.change_extension(filename, '.png')
+    format_plot('iteration (#)', 'distance (nm)', 'title', scale_page=(1.0 / 2.0),
+                aspect=0.5, save=save_loc, yrange=[0,20], legend=label, ax=ax)
+
+    return
+
+def plot_tail2(filename, filename_2=None):
+
+    tail = pd.read_excel(filename, header=0, index_col=0)
+    x_tick = tail.index[:]
+    t_1 = np.mean(tail, axis=1)
+
+    tail_2 = pd.read_excel(filename_2, header=0, index_col=0)
+    t_2 = np.mean(tail_2, axis=1)
+
+    fig, ax = plt.subplots()
+    ax.plot(x_tick, t_1, color=(0.75, 0, 0.25), marker='o', label='tail up', markersize=0.1, linestyle='')
+    ax.plot(x_tick, t_2, color=(0, 0.75, 0.25), marker='o', label='tail up', markersize=0.1, linestyle='')
+
+    label = ['167', '197']
+
+    save_loc = fileio.change_extension(filename, '3.png')
+    format_plot('iteration (#)', 'distance (nm)', 'title', scale_page=(1.0 / 2.8),
+                aspect=0.8, save=save_loc, yrange=[0,20], legend=label, ax=ax)
+
     return
