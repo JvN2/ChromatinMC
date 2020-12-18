@@ -2,15 +2,20 @@ import NucleosomeMC as nmc
 import TailsAnalyze as TA
 import numpy as np
 import matplotlib.pyplot as plt
+import glob
+import FileIO as fileio
 
+# get list of xlsx files in filename folder
+xlsx_f = glob.glob(fileio.change_extension(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201110 repulsion d varies\20201110 New stacking 2200iter", '\*.xlsx'))
 
-# TA.plot_npz(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201210 Ewrap 167 7_91\8x167x1s102w0-5_001")
+for f in xlsx_f:
+    TA.plot_npz(f)
 
 # TA.repulsion_exp()
 # TA.expo_decay()
 # TA.tail_energy()
 # print(TA.get_stack_params(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 fixed parameters stacking\8x167x0s102w79-1_001.xlsx"))
-TA.dna_energy_display(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 new stacking two decay lengths\8x167x1s102w13-1_001.xlsx")
+# TA.dna_energy_display(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 new stacking two decay lengths\8x167x1s102w13-1_001.xlsx")
 
 # TA.stack_exp('twist')
 # print('('u'\xb0'')')

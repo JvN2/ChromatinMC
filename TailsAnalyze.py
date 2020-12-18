@@ -572,7 +572,7 @@ def plot_npz(filename):
         # transform fiber to origin
         origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
         # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
-        tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
+        tf_o = nMC.get_transformation(nuc_cms[4], target=origin_of)
         t_coord = []  # transformed coords
         # Tranform coords where first nucleosome is placed in origin
         for c in coord_w_hist:
