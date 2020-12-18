@@ -718,16 +718,16 @@ def plot_g_linker(filename_1, filename_2):
 
     fig, ax = plt.subplots()
     #
-    ax.errorbar(x_tick, y_1, e_1, color=(1.0, 0.5, 0.0), marker='^', markersize=1, label='167 1-start', linewidth=0,
-                ecolor=(1.0, 0.5, 0.0), elinewidth=0.3, capsize=0.5)
+    ax.errorbar(x_tick, y_1, e_1, color=(1, 0, 0), marker='^', markersize=1, label='167 1-start', linewidth=0,
+                ecolor=(1, 0, 0), elinewidth=0.3, capsize=0.5)
     # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
-    ax.errorbar(x_tick, y_2, e_2, color=(0.27, 0.5, 0.7), marker='s', markersize=1,
+    ax.errorbar(x_tick, y_2, e_2, color=(0, 0, 1), marker='s', markersize=1,
                 label='167 2-start', linewidth=0,
-                ecolor=(0.27, 0.5, 0.7), elinewidth=0.3, capsize=0.5)
+                ecolor=(0, 0, 1), elinewidth=0.3, capsize=0.5)
     # ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
 
     save_loc = fileio.change_extension(filename_1, (param_name + '.png'))
-    format_plot('bp', 'energy (kT)' , 'title', scale_page=(1.0/4),
+    format_plot('bp (#)', 'energy (kT)' , 'title', scale_page=(1.0/4.0),
                 aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
     return
 
