@@ -482,7 +482,7 @@ def dna_energy_display(filename, energy_kT='g_total (kT)'):
     file = get_g_dna(filename)
 
     n_bins = 50
-    bin_max = 1.5 #kT
+    bin_max = 3.5 #kT
     bin = np.linspace(0, bin_max, n_bins, dtype=float)
     bin_labels = np.arange(n_bins-1)
     file[energy_kT] = np.clip(file[energy_kT], 0 , bin_max)
@@ -507,8 +507,12 @@ def dna_energy_display(filename, energy_kT='g_total (kT)'):
     dyads, nuc_cms, coords = get_mean_coords(filename)[0:3]
 
     # transform fiber to origin
-    # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
-    origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
+    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
+    angle = 1.0*np.pi
+    cos = np.cos(angle)
+    sin = np.sin(angle)
+    origin_of = np.asarray([[0, 0, 0], [-cos, -sin, 0], [-sin, cos, 0], [0, 0, -1]])
     tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
     t_coord = []  # transformed coords
     # Tranform coords where first nucleosome is placed in origin
@@ -570,8 +574,12 @@ def plot_npz(filename):
         coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 75:dyads[5] + 75], dyads, nucl, tf=tf_d[3:6], tail=False)
 
         # transform fiber to origin
-        origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
-        # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+        # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
+        # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
+        angle = 1.0 * np.pi
+        cos = np.cos(angle)
+        sin = np.sin(angle)
+        origin_of = np.asarray([[0, 0, 0], [-cos, -sin, 0], [-sin, cos, 0], [0, 0, -1]])
         tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
         t_coord = []  # transformed coords
         # Tranform coords where first nucleosome is placed in origin
