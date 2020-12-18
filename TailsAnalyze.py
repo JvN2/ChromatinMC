@@ -235,7 +235,7 @@ def format_plot(xtitle='x (a.u.)', ytitle='y (a.u.)', title='', xrange=None, yra
         plt.rcParams["legend.labelspacing"] = 0.25
         plt.rcParams["legend.handlelength"] = 1
         plt.rcParams["legend.handletextpad"] = 0.25
-        plt.legend(legend, prop={'size': fontsize * 0.8}, )
+        plt.legend(legend, prop={'size': fontsize * 0.8}, markerscale=100)
 
     # fig.canvas.mpl_connect("key_press_event", key_press_action)
 
@@ -729,4 +729,52 @@ def plot_g_linker(filename_1, filename_2):
     save_loc = fileio.change_extension(filename_1, (param_name + '.png'))
     format_plot('bp', 'energy (kT)' , 'title', scale_page=(1.0/4),
                 aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
+    return
+
+def plot_tail(filename, filename_2=None):
+
+    tail = pd.read_excel(filename, header=0, index_col=0)
+    x_tick = tail.index[:]
+    t_up = tail.loc[:, 'tail up (nm)']
+    t_down = tail.loc[:, 'tail down (nm)']
+
+    fig, ax = plt.subplots()
+    ax.plot(x_tick, t_up, color=(0.75, 0, 0.5), marker='^', label='tail up', markersize=0.05, linestyle='')
+    ax.plot(x_tick, t_down, color=(1, 0, 1), marker='v', label='tail down', markersize=0.05, linestyle='')
+    label = ['tail up', 'tail down']
+
+    if filename_2 is not None:
+        tail_2 = pd.read_excel(filename_2, header=0, index_col=0)
+        t_up_2 = tail_2.loc[:, 'tail up (nm)']
+        t_down_2 = tail_2.loc[:, 'tail down (nm)']
+        ax.plot(x_tick, t_up_2, color=(0, 0, 0.5), marker='^', label='tail up', markersize=0.05, linestyle='')
+        ax.plot(x_tick, t_down_2, color=(0, 0, 1), marker='v', label='tail down', markersize=0.05, linestyle='')
+        label = []
+
+
+    save_loc = fileio.change_extension(filename, '.png')
+    format_plot('iteration (#)', 'distance (nm)', 'title', scale_page=(1.0 / 2.0),
+                aspect=0.5, save=save_loc, yrange=[0,20], legend=label, ax=ax)
+
+    return
+
+def plot_tail2(filename, filename_2=None):
+
+    tail = pd.read_excel(filename, header=0, index_col=0)
+    x_tick = tail.index[:]
+    t_1 = np.mean(tail, axis=1)
+
+    tail_2 = pd.read_excel(filename_2, header=0, index_col=0)
+    t_2 = np.mean(tail_2, axis=1)
+
+    fig, ax = plt.subplots()
+    ax.plot(x_tick, t_1, color=(0.75, 0, 0.25), marker='o', label='tail up', markersize=0.1, linestyle='')
+    ax.plot(x_tick, t_2, color=(0, 0.75, 0.25), marker='o', label='tail up', markersize=0.1, linestyle='')
+
+    label = ['167', '197']
+
+    save_loc = fileio.change_extension(filename, '3.png')
+    format_plot('iteration (#)', 'distance (nm)', 'title', scale_page=(1.0 / 2.8),
+                aspect=0.8, save=save_loc, yrange=[0,20], legend=label, ax=ax)
+
     return
