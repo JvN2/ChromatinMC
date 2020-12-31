@@ -391,7 +391,6 @@ def main(n_steps, root):
     g_nuc_kT_all = []
 
     idx = np.round(np.linspace(2 * dummy_steps, len(forces) - 1, pars['num_npz'].value))
-    # indices of nucleosomes of which distances will be calculated in tails and cms_dist
     Tail_switch = pars['tail_switch'].value # True: score tails, False: score_stacking
     energy = {} # dictonary to hold energy values before calculating mean
     energy_all = {}  # dictonary to hold all energy values

@@ -364,6 +364,16 @@ def stack_exp(param_name):
                 aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
     return
 
+def get_stack_params (filename):
+
+
+    # get list of xlsx files in filename folder
+    xlsx_f = glob.glob(fileio.change_extension(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201110 repulsion d varies\20201110 New stacking 2200iter", '\*.xlsx'))
+
+    params = []
+    for f in xlsx_f:
+        params = pd.read_excel(f, header=0, index_col=0)
+        print params
 
 def read_npz(filename):
 
@@ -789,3 +799,4 @@ def plot_tail2(filename, filename_2=None):
                 aspect=0.8, save=save_loc, yrange=[0,20], legend=label, ax=ax)
 
     return
+
