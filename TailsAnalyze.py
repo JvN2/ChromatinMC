@@ -382,6 +382,16 @@ def stack_exp(param_name):
                 aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
     return
 
+def get_stack_params (filename):
+
+
+    # get list of xlsx files in filename folder
+    xlsx_f = glob.glob(fileio.change_extension(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201110 repulsion d varies\20201110 New stacking 2200iter", '\*.xlsx'))
+
+    params = []
+    for f in xlsx_f:
+        params = pd.read_excel(f, header=0, index_col=0)
+        print params
 
 def get_stack_params(filename):
 
@@ -613,6 +623,9 @@ def plot_npz(filename):
         coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 75:dyads[5] + 75], dyads, nucl, tf=tf_d[3:6], tail=False)
 
         # transform fiber to origin
+        origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
+        # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+        tf_o = nMC.get_transformation(nuc_cms[4], target=origin_of)
         # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
         # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
         angle = 1.3 * np.pi
@@ -832,3 +845,4 @@ def plot_tail2(filename, filename_2=None):
                 aspect=0.8, save=save_loc, yrange=[0,20], legend=label, ax=ax)
 
     return
+
