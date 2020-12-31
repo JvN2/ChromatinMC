@@ -106,9 +106,27 @@ def expo_decay ():
     # for A in Amp:
     #     ax.plot(x, y[A], color=(A / 205.0, 0, 1 - (A / 205.0)), linewidth=5, label='A' + ' = ' + "{:3.1f}".format(A/kT))
     #
-    sv_loc = r"C:\Users\Annelies\Documents\Natuurkunde\Master project 02\figures\repulsion_graphA2_5kTdvaries.png"
-    format_plot('distance (nm)', 'energy (kT)', 'title', scale_page=(3.0/5.0),
-                aspect=0.7, save=sv_loc, yrange=None, legend=label, ax=ax)
+    sv_loc = r"D:\users\vlaar\data\repulsion_graphA2_5kTdvaries.png"
+    format_plot('distance (nm)', 'energy (kT)', 'title', scale_page=(1.0/2.0),
+                aspect=1, save=sv_loc, yrange=None, legend=label, ax=ax)
+
+    return
+
+
+def debye ():
+
+    Lb = 0.71 #Bjerrum length
+
+    x = np.linspace(0.00055,0.25, 500)
+    y = 1/(np.sqrt(8*np.pi*Lb*x))
+
+    fig, ax = plt.subplots()
+
+    ax.plot(x, y, color=(0, 0, 0.75), linewidth=4)
+
+    sv_loc = r"D:\users\vlaar\data\Debeylength_graph.png"
+    format_plot('concentration (M)', 'Screening length (nm)', 'title', scale_page=(1.0/2.0),
+                aspect=1, save=sv_loc, yrange=None, ax=ax)
 
     return
 
@@ -365,6 +383,27 @@ def stack_exp(param_name):
     return
 
 
+def get_stack_params(filename):
+
+    # get list of xlsx files in filename folder
+    xlsx_f = glob.glob(fileio.change_extension(filename, '\*.xlsx'))
+
+    params = []
+    for f in xlsx_f:
+        xlsx = pd.read_excel(f, header=0, index_col=0)
+        params.append(xlsx.iloc[1:6])
+
+    df_stack = pd.concat(params, axis=0)
+    df_stack['shift (A)'] = df_stack['shift (A)']/10
+    df_stack['slide (A)'] = df_stack['slide (A)']/10
+    df_stack['rise (A)'] = df_stack['rise (A)']/10
+    df_stack['tilt'] = df_stack['tilt'] * 180 / np.pi
+    df_stack['roll'] = df_stack['roll'] * 180 / np.pi
+    df_stack['twist'] = df_stack['twist'] * 180 / np.pi
+
+    df_stack.to_excel(fileio.change_extension(filename, '_stack.xlsx'))
+    print(df_stack)
+
 def read_npz(filename):
 
     # get list of npz files in filename folder
@@ -509,7 +548,7 @@ def dna_energy_display(filename, energy_kT='g_total (kT)'):
     # transform fiber to origin
     # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
     # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
-    angle = 1.0*np.pi
+    angle = 1.3*np.pi
     cos = np.cos(angle)
     sin = np.sin(angle)
     origin_of = np.asarray([[0, 0, 0], [-cos, -sin, 0], [-sin, cos, 0], [0, 0, -1]])
@@ -576,7 +615,7 @@ def plot_npz(filename):
         # transform fiber to origin
         # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
         # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
-        angle = 1.0 * np.pi
+        angle = 1.3 * np.pi
         cos = np.cos(angle)
         sin = np.sin(angle)
         origin_of = np.asarray([[0, 0, 0], [-cos, -sin, 0], [-sin, cos, 0], [0, 0, -1]])
@@ -647,8 +686,8 @@ def de_grote_chromatine_show(filename, size):
     coord_w_hist, radius, colors = tMC.get_histones(coords[100:-100], dyads_new, nucl, tf=tf_d, tail=False)
 
     print(fileio.create_pov((fileio.change_extension(filename, '_big.png')), coord_w_hist, radius=radius, colors=colors,
-                            range_A=[2000, 1500],
-                            offset_A=[0, 800, 500], show=False, width_pix=1500))
+                            range_A=[1500, 1500],
+                            offset_A=[0, 500, 500], show=False, width_pix=1500))
 
     return
 
@@ -747,9 +786,15 @@ def plot_tail(filename, filename_2=None):
     t_down = tail.loc[:, 'tail down (nm)']
 
     fig, ax = plt.subplots()
-    ax.plot(x_tick, t_up, color=(0.75, 0, 0.5), marker='^', label='tail up', markersize=0.05, linestyle='')
-    ax.plot(x_tick, t_down, color=(1, 0, 1), marker='v', label='tail down', markersize=0.05, linestyle='')
-    label = ['tail up', 'tail down']
+    ax.plot(x_tick, t_up, color=(0.75, 0, 0.5), marker='^', label='up', markersize=0.05, linestyle='')
+    ax.plot(x_tick, t_down, color=(1, 0, 1), marker='v', label='down', markersize=0.05, linestyle='')
+    # print(np.mean(t_up))
+    # print(np.std(t_up))
+    # print(np.mean(t_down))
+    # print(np.std(t_down))
+    # return
+
+    label = ['up', 'down']
 
     if filename_2 is not None:
         tail_2 = pd.read_excel(filename_2, header=0, index_col=0)
@@ -761,8 +806,9 @@ def plot_tail(filename, filename_2=None):
 
 
     save_loc = fileio.change_extension(filename, '.png')
-    format_plot('iteration (#)', 'distance (nm)', 'title', scale_page=(1.0 / 2.0),
-                aspect=0.5, save=save_loc, yrange=[0,20], legend=label, ax=ax)
+    format_plot('iteration', 'distance (nm)', 'title', scale_page=(1.0 / 2.0),
+                aspect=0.5, save=save_loc, yrange=[0,24], #legend=label,
+                ax=ax)
 
     return
 

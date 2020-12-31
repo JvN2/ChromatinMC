@@ -305,7 +305,7 @@ def main(n_steps, root):
     pars.add('num_npz', value=50)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
     pars.add('iterations', value=n_steps)
-    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
+    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=102)  # Repulsion amplitude (pNA)
     pars.add('Rep_decay_A', value=79.1) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
@@ -326,12 +326,8 @@ def main(n_steps, root):
         pars['n_nuc'].value = int(iterpar[0])
         pars['NRL'].value = iterpar[1]
         pars['fiber_start'].value = int(iterpar[2])
-        pars['e_stack_kT'].value = iterpar[3]
-        pars['e_wrap_kT'].value = iterpar[4]
-
-    print(pars['e_wrap_kT'].value)
-    return
-
+        pars['Rep_Amp_pNA'].value = iterpar[3]
+        pars['Rep_decay_A'].value = iterpar[4]
 
     # create optimal fiber length for each NRL, with 14 bp handles
     pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
@@ -395,6 +391,7 @@ def main(n_steps, root):
     Tail_switch = pars['tail_switch'].value # True: score tails, False: score_stacking
     energy = {} # dictonary to hold energy values before calculating mean
     energy_all = {}  # dictonary to hold all energy values
+    energy_std = {}
     results_std = tMC.which_energies(energy) # put energy keys in dict and form dataframe to report results
 
     pars['F_pN'].value = 0
@@ -414,6 +411,7 @@ def main(n_steps, root):
             for key in energy:
                 energy[key] = []
                 energy_all[key] = []
+                energy_std[key] = []
 
         # g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
         #                                    e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
@@ -444,7 +442,7 @@ def main(n_steps, root):
                 # pass sum of energy to pars
                 pars[key].value = np.mean(energy[key])
                 # calculate standard deviation of energies
-                energy[key] = np.std(energy[key])
+                energy_std[key] = np.std(energy[key])
 
             pars['F_pN'].value = force
             pars['z_nm'].value = dna.coord_terminal[2] / 10
@@ -452,7 +450,7 @@ def main(n_steps, root):
             # save mean energy in results df
             results.loc[datafile] = pars.valuesdict()
             # save stds of energy in results df
-            results_std.loc[datafile] = energy
+            results_std.loc[datafile] = energy_std
 
             # empty the energy dictionary
             for key in energy:

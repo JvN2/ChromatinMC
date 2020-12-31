@@ -151,6 +151,9 @@ def tail_dist(dyad_1, dyad_2, dyads, dna, nucl, orientation=None):
     d_up = 0
     d_down = 0
 
+    if dyad_1 == dyad_2:
+        dyad_2 += 1
+
     if orientation == None:
         orientation = '-*'
     l_coord = np.asarray(nucl.l_coord)
