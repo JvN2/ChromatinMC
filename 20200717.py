@@ -17,9 +17,9 @@ import FileIO as fileio
 # TA.expo_decay()
 # TA.debye()
 # TA.tail_energy()
-TA.get_stack_params(r"D:\Downloads\20201218 Fixed Parameters Stacking\8x197x0s2500000w2-5_001")
+# TA.get_stack_params(r"D:\Downloads\20201218 Fixed Parameters Stacking\8x197x0s2500000w2-5_001")
 # print(TA.get_stack_params(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 fixed parameters stacking\8x167x0s102w79-1_001.xlsx"))
-TA.dna_energy_display(r"D:\users\vlaar\data\20201216\8x167x1s2500000-0w0-5_001.xlsx")
+# TA.dna_energy_display(r"D:\users\vlaar\data\20201216\8x167x1s2500000-0w0-5_001.xlsx")
 
 # TA.stack_exp('twist')
 # print('('u'\xb0'')')
