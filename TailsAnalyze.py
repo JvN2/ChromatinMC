@@ -513,7 +513,7 @@ def wrap(filename):
 
 def plot_wrap(NRL, fiberstart):
 
-    filename = r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201216 Eunwrap\2021-01-02 E unwrap exp.xlsx"
+    filename = r"D:\Downloads\2021-01-02 E unwrap exp.xlsx"
 
     data = pd.read_excel(filename, sheet_name=str(NRL), header=0, index_col=0)
     x_tick = data.columns
@@ -557,8 +557,8 @@ def plot_wrap(NRL, fiberstart):
                 ecolor=color, elinewidth=1, capsize=3)
 
     save_loc = fileio.change_extension(filename, (str(NRL) + 's' + str(fiberstart) + '.png'))
-    format_plot('E$_{unwrap, max}$', 'E$_{unwrap}$', 'title', scale_page=(1.0/2),
-                aspect=0.5, save=save_loc, yrange=[-0.1,1.6], legend=None, ax=ax)
+    format_plot('E$_{unwrap, max}$ (K$_B$T)', 'E$_{unwrap}$ (K$_B$T)', 'title', scale_page=(1.0/3),
+                aspect=1, save=save_loc, yrange=[-1.0,11], legend=None, ax=ax)
     return
 
 def get_g_dna(filename):
@@ -923,16 +923,16 @@ def plot_g_linker(filename_1, filename_2):
     fig, ax = plt.subplots()
     #
     ax.errorbar(x_tick, y_1, e_1, color=(1, 0, 0), marker='^', markersize=1, label='167 1-start', linewidth=0,
-                ecolor=(1, 0, 0), elinewidth=0.3, capsize=0.5)
+                ecolor=(1, 0, 0), elinewidth=0.0, capsize=0.0)
     # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
     ax.errorbar(x_tick, y_2, e_2, color=(0, 0, 1), marker='s', markersize=1,
                 label='167 2-start', linewidth=0,
-                ecolor=(0, 0, 1), elinewidth=0.3, capsize=0.5)
+                ecolor=(0, 0, 1), elinewidth=0.0, capsize=0.0)
     # ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
 
     save_loc = fileio.change_extension(filename_1, (param_name + '.png'))
-    format_plot('basepair', 'energy (kT)' , 'title', scale_page=(1.0/4.0),
-                aspect=1, save=save_loc, yrange=[-1.3,2.6], legend=None, ax=ax)
+    format_plot('basepair', '$\\Delta$G (k$_B$T)' , 'title', scale_page=(1.0/4.0),
+                aspect=1, save=save_loc, yrange=[-1.0,1.0], legend=None, ax=ax)
     return
 
 def plot_tail(filename, filename_2=None):

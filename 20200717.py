@@ -11,7 +11,7 @@ import FileIO as fileio
 # for f in xlsx_f:
 #     TA.plot_npz(f)
 
-# TA.plot_npz(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201210 Ewrap 167 7_91\8x167x1s102w0-5_001")
+# TA.plot_npz(r"D:\Downloads\7_91nm\8x197x2s102w2-5_001")
 
 # TA.repulsion_exp()
 # TA.expo_decay()
@@ -26,8 +26,8 @@ import FileIO as fileio
 # TA.stack_exp('twist')
 # print('('u'\xb0'')')
 # TA.get_g_dna(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 fixed parameters stacking\8x197x1s102w79-1_001")
-TA.de_grote_chromatine_show(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201225 Two salt concentrations exp\1_31nm\8x167x1s102w2-5_001", 28)
-# TA.plot_g_linker(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201225 Two salt concentrations exp\1_31nm\8x197x1s102w2-5_001",r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201225 Two salt concentrations exp\1_31nm\8x197x2s102w2-5_001")
+# TA.de_grote_chromatine_show(r"D:\Downloads\7_91nm\8x197x2s102w2-5_001", 16)
+# TA.plot_g_linker(r"D:\Downloads\1_31nm\8x197x1s102w2-5_001",r"D:\Downloads\1_31nm\8x197x2s102w2-5_001")
 
 # TA.plot_tail2(r"D:\users\vlaar\data\20201216\8x167x1s2500000-0w0-5_001_tail.xlsx", r"D:\users\vlaar\data\20201216\8x167x2s2500000-0w0-5_001_tail.xlsx")
 
@@ -42,4 +42,4 @@ TA.de_grote_chromatine_show(r"C:\Users\Annelies\OneDrive\Documents\experimental 
 #     # print(f)
 #     TA.wrap(f)
 
-# TA.plot_wrap(167, 1)
+TA.plot_wrap(197, 2)
