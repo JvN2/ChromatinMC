@@ -16,7 +16,7 @@ import FileIO as fileio
 # TA.repulsion_exp()
 # TA.expo_decay()
 # TA.debye()
-# TA.tail_energy()
+TA.tail_energy()
 # TA.get_stack_params(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201218 Fixed Parameters Stacking\8x197x2s2500000w2-5_001")
 # TA.get_stack_params(r"D:\Downloads\20201218 Fixed Parameters Stacking\8x197x0s2500000w2-5_001")
 # print(TA.get_stack_params(r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201208 fixed parameters stacking\8x167x0s102w79-1_001.xlsx"))
@@ -42,4 +42,4 @@ import FileIO as fileio
 #     # print(f)
 #     TA.wrap(f)
 
-TA.plot_wrap(197, 2)
+# TA.plot_wrap(197, 2)

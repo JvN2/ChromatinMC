@@ -106,8 +106,8 @@ def expo_decay ():
     # for A in Amp:
     #     ax.plot(x, y[A], color=(A / 205.0, 0, 1 - (A / 205.0)), linewidth=5, label='A' + ' = ' + "{:3.1f}".format(A/kT))
     #
-    sv_loc = r"D:\users\vlaar\data\repulsion_graphA2_5kTdvaries.png"
-    format_plot('distance (nm)', 'energy (kT)', 'title', scale_page=(1.0/2.0),
+    sv_loc = r"D:\Downloads\repulsive_graph"
+    format_plot('distance (nm)', 'energy (k$_B$T)', 'title', scale_page=(1.0/2.0),
                 aspect=1, save=sv_loc, yrange=None, legend=label, ax=ax)
 
     return
@@ -160,8 +160,8 @@ def tail_energy():
     fig, ax = plt.subplots()
 
     ax.plot(z_array, g_array, color=(0.8, 0, 0.8), linewidth=5)
-    sv_loc = r"C:\Users\Annelies\Documents\Natuurkunde\Master project 02\figures\Tail_extension_energy_graph.png"
-    format_plot('distance (nm)', 'energy (kT)', 'titel', scale_page=(3.0/5.0),
+    sv_loc = r"D:\Downloads\Tail_extension_energy_graph.png"
+    format_plot('distance (nm)', 'energy (k$_B$T)', 'titel', scale_page=(3.0/5.0),
                 aspect=0.7, save=sv_loc, ax=ax)
 
     return
