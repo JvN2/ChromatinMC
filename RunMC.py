@@ -305,9 +305,9 @@ def main(n_steps, root):
     pars.add('num_npz', value=50)     # number of npz files that will be stored during simulation
     pars.add('dummy_steps', value=100)
     pars.add('iterations', value=n_steps)
-    pars.add('tail_switch', value=False) # False: use old stacking, True: use tail stacking
+    pars.add('tail_switch', value=True) # False: use old stacking, True: use tail stacking
     pars.add('Rep_Amp_pNA', value=102)  # Repulsion amplitude (pNA)
-    pars.add('Rep_decay_A', value=28.0) # Repulsion decay length (A)
+    pars.add('Rep_decay_A', value=79.1) # Repulsion decay length (A)
     pars.add('nucl_cms_nm', value=0) # mean value of distance between nucleosome center of masses
     pars.add('tail_up_nm', value=0) # mean value of tail distance
     pars.add('tail_down_nm', value=0) # mean value of tail distance
@@ -315,7 +315,7 @@ def main(n_steps, root):
     # Setup files and forces
     if root is None:
         root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
-                                                 pars['Rep_Amp_pNA'].value, pars['e_wrap_kT'].value).replace('.', '-')
+                                                 pars['Rep_Amp_pNA'].value, pars['Rep_decay_A'].value).replace('.', '-')
 
     else:
         iterpar = []
@@ -326,9 +326,8 @@ def main(n_steps, root):
         pars['n_nuc'].value = int(iterpar[0])
         pars['NRL'].value = iterpar[1]
         pars['fiber_start'].value = int(iterpar[2])
-        pars['e_stack_kT'].value = iterpar[3]
-        pars['e_wrap_kT'].value = iterpar[4]
-
+        pars['Rep_Amp_pNA'].value = iterpar[3]
+        pars['Rep_decay_A'].value = iterpar[4]
 
     # create optimal fiber length for each NRL, with 14 bp handles
     pars['L_bp'].value = int(pars['n_nuc'].value * pars['NRL'].value + 28)
