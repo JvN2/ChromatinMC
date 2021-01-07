@@ -255,15 +255,17 @@ def read_pdb(pdb_file):
             if l[21] == 'I':
                 P_I[int(l[22:27]) - start_i] = np.fromstring(l[30:55], sep=' ')
 
-    #    chain_dict['DNA'][3]=B_factor
+    # chain_dict['DNA'][3]=B_factor
     av_I = np.mean(P_I, axis=0)
 
     dI = np.sqrt(np.sum((P_I - av_I) ** 2, axis=1))
     chain_dict['DNA'][3] = dI
-    #    plt.plot(np.arange(len(dI)), dI)
+    # plt.plot(np.arange(len(dI)), dI, label='p')
     #
-    #    plt.plot(np.arange(len(B_factor)), B_factor)
-    #    plt.show()
+    # plt.plot(np.arange(len(B_factor)), B_factor, label='B factor')
+    # plt.legend()
+    # plt.show()
+
     return chain_dict
 
 
@@ -437,7 +439,7 @@ def main():
 
     filename = fileio.get_filename(root='1nuc', ext='pov', incr=True)
     # print(fileio.create_pov(filename, n_coord, range_A=[250, 350], offset_A=[0, 0, 150], show=True, width_pix=1500))
-    print(nuc.fixed)
+    print(nuc.fixed + 75)
 
 if __name__ == '__main__':
     main()

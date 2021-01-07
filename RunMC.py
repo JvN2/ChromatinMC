@@ -387,10 +387,10 @@ def main(n_steps, root):
     g_nuc_kT_all = []
 
     idx = np.round(np.linspace(2 * dummy_steps, len(forces) - 1, pars['num_npz'].value))
-    # indices of nucleosomes of which distances will be calculated in tails and cms_dist
     Tail_switch = pars['tail_switch'].value # True: score tails, False: score_stacking
     energy = {} # dictonary to hold energy values before calculating mean
     energy_all = {}  # dictonary to hold all energy values
+    energy_std = {}
     results_std = tMC.which_energies(energy) # put energy keys in dict and form dataframe to report results
 
     pars['F_pN'].value = 0
@@ -410,6 +410,7 @@ def main(n_steps, root):
             for key in energy:
                 energy[key] = []
                 energy_all[key] = []
+                energy_std[key] = []
 
         # g_nuc_kT, names = get_nuc_energies(dna, fixed_wrap_params, fixed_stack_params, dyads, nucl, e_wrap_kT,
         #                                    e_stack_kT, e_nuc_kT, fiber_start, p0, k, force)
@@ -440,7 +441,7 @@ def main(n_steps, root):
                 # pass sum of energy to pars
                 pars[key].value = np.mean(energy[key])
                 # calculate standard deviation of energies
-                energy[key] = np.std(energy[key])
+                energy_std[key] = np.std(energy[key])
 
             pars['F_pN'].value = force
             pars['z_nm'].value = dna.coord_terminal[2] / 10
@@ -448,7 +449,7 @@ def main(n_steps, root):
             # save mean energy in results df
             results.loc[datafile] = pars.valuesdict()
             # save stds of energy in results df
-            results_std.loc[datafile] = energy
+            results_std.loc[datafile] = energy_std
 
             # empty the energy dictionary
             for key in energy:
@@ -481,5 +482,5 @@ def main(n_steps, root):
 if __name__ == '__main__':
     # pars.pretty_print(columns=['value'])
 
-    main(20, '8x197x2s102w2-5')
+    main(20, '8x167x1s2500000-0w0-5')
 

@@ -106,9 +106,27 @@ def expo_decay ():
     # for A in Amp:
     #     ax.plot(x, y[A], color=(A / 205.0, 0, 1 - (A / 205.0)), linewidth=5, label='A' + ' = ' + "{:3.1f}".format(A/kT))
     #
-    sv_loc = r"C:\Users\Annelies\Documents\Natuurkunde\Master project 02\figures\repulsion_graphA2_5kTdvaries.png"
-    format_plot('distance (nm)', 'energy (kT)', 'title', scale_page=(3.0/5.0),
-                aspect=0.7, save=sv_loc, yrange=None, legend=label, ax=ax)
+    sv_loc = r"D:\Downloads\repulsive_graph"
+    format_plot('distance (nm)', 'energy (k$_B$T)', 'title', scale_page=(1.0/2.0),
+                aspect=1, save=sv_loc, yrange=None, legend=label, ax=ax)
+
+    return
+
+
+def debye ():
+
+    Lb = 0.71 #Bjerrum length
+
+    x = np.linspace(0.00055,0.25, 500)
+    y = 1/(np.sqrt(8*np.pi*Lb*x))
+
+    fig, ax = plt.subplots()
+
+    ax.plot(x, y, color=(0, 0, 0.75), linewidth=4)
+
+    sv_loc = r"D:\users\vlaar\data\Debeylength_graph.png"
+    format_plot('concentration (M)', 'Screening length (nm)', 'title', scale_page=(1.0/2.0),
+                aspect=1, save=sv_loc, yrange=None, ax=ax)
 
     return
 
@@ -142,8 +160,8 @@ def tail_energy():
     fig, ax = plt.subplots()
 
     ax.plot(z_array, g_array, color=(0.8, 0, 0.8), linewidth=5)
-    sv_loc = r"C:\Users\Annelies\Documents\Natuurkunde\Master project 02\figures\Tail_extension_energy_graph.png"
-    format_plot('distance (nm)', 'energy (kT)', 'titel', scale_page=(3.0/5.0),
+    sv_loc = r"D:\Downloads\Tail_extension_energy_graph.png"
+    format_plot('distance (nm)', 'energy (k$_B$T)', 'titel', scale_page=(3.0/5.0),
                 aspect=0.7, save=sv_loc, ax=ax)
 
     return
@@ -235,7 +253,7 @@ def format_plot(xtitle='x (a.u.)', ytitle='y (a.u.)', title='', xrange=None, yra
         plt.rcParams["legend.labelspacing"] = 0.25
         plt.rcParams["legend.handlelength"] = 1
         plt.rcParams["legend.handletextpad"] = 0.25
-        plt.legend(legend, prop={'size': fontsize * 0.8}, )
+        plt.legend(legend, prop={'size': fontsize * 0.8}, markerscale=100)
 
     # fig.canvas.mpl_connect("key_press_event", key_press_action)
 
@@ -286,7 +304,7 @@ def format_plot(xtitle='x (a.u.)', ytitle='y (a.u.)', title='', xrange=None, yra
 
 def stack_exp(param_name):
 
-    filename = r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201210 Nucleosome stacking.xlsx"
+    filename = r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201231 Nucleosome stacking.xlsx"
 
     fixed = pd.read_excel(filename, sheet_name='fixed', header=0, index_col=0, usecols="A,B,C,D,E,F,G")
     NRL167 = pd.read_excel(filename, sheet_name='167', header=0, index_col=0)
@@ -299,7 +317,7 @@ def stack_exp(param_name):
     # left, bottom, width, height = [0.6, 0.55, 0.35, 0.35]
     # ax2 = fig.add_axes([left, bottom, width, height]) # inset
     ax.axhline(y=fixed.loc['1-start', param_name], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
-    ax.axhline(y=fixed.loc['2-start', param_name], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
+    # ax.axhline(y=fixed.loc['2-start', param_name], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
 
     # FPS 167
     ax.errorbar(1, NRL167.loc['fps 0', param_name], NRL167.loc['fps 0', param_name + ' std'], color=(0.2, 0.2, 0.2), marker='o', markersize=5, label='fps 0-start', linewidth=0,
@@ -360,10 +378,33 @@ def stack_exp(param_name):
     #
     # labels=['167 1-start fps', '167 2-start fps', '197 1-start fps', '197 2-start fps', '167 1-start', '167 2-start', '197 1-start', '197 2-start',]
     save_loc = fileio.change_extension(filename, (param_name + '.png'))
-    format_plot(' ', param_name + '('u'\xb0'')', 'title', scale_page=(1.0/3),
+    format_plot(' ', param_name + ' ('u'\xb0'')', 'title', scale_page=(1.0/3),
+    # format_plot(' ', param_name, 'title', scale_page=(1.0/3),
                 aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
     return
 
+
+
+def get_stack_params(filename):
+
+    # get list of xlsx files in filename folder
+    xlsx_f = glob.glob(fileio.change_extension(filename, '\*.xlsx'))
+
+    params = []
+    for f in xlsx_f:
+        xlsx = pd.read_excel(f, header=0, index_col=0)
+        params.append(xlsx.iloc[1:-1])
+
+    df_stack = pd.concat(params, axis=0)
+    df_stack['shift (A)'] = df_stack['shift (A)']/10
+    df_stack['slide (A)'] = df_stack['slide (A)']/10
+    df_stack['rise (A)'] = df_stack['rise (A)']/10
+    df_stack['tilt'] = df_stack['tilt'] * 180 / np.pi
+    df_stack['roll'] = df_stack['roll'] * 180 / np.pi
+    df_stack['twist'] = df_stack['twist'] * 180 / np.pi
+
+    df_stack.to_excel(fileio.change_extension(filename, '_stack.xlsx'))
+    print(df_stack)
 
 def read_npz(filename):
 
@@ -386,6 +427,139 @@ def read_npz(filename):
 
     return params, frames, coords, pars
 
+def g_dna_kT(filename):
+
+    params, frames, coords, pars = read_npz(filename)
+
+    e_wrap_kT = pars.iloc[0]['e_wrap_kT']
+    L_bp = pars.iloc[0]['L_bp']
+    nrl = pars.iloc[0]['NRL']
+    nucs = pars.iloc[0]['n_nuc']
+
+    # Initialize random steps
+    p0 = np.load(util.locate_data_file('DNA_gau.npy'))[0]
+    k = np.linalg.inv(np.load(util.locate_data_file('DNA_gau.npy'))[1:])
+
+    # get nucleosome pose en list of dyads
+    nucl, dyads = get_nucl_dyads(L_bp, nrl, nucs)
+    fixed_wrap_params = nMC.get_wrap_param(nucl.dna.coord, nucl.dna.frames, nucl.dyad, nucl.fixed)
+
+    g_dna = np.zeros(6)
+    g_dna_kT = []
+
+    for i, p in enumerate(params):
+        # create binary list of fixed and free bp's
+        w = np.ones(len(p))
+        for dyad in dyads:
+            fixed_bps = rMC.score_wrapping(dyad + 1, coords[i], frames[i], dyads, nucl, fixed_wrap_params, e_wrap_kT,
+                                           half_nuc=True)[1]
+            if len(fixed_bps) > 0:
+                w[fixed_bps[0]:fixed_bps[1]] = 0
+
+            # else:
+            #     w = None
+        g_dna_all = rMC.score_dna(p, p0, k, w=w)
+
+        for dyad1, dyad2 in zip(dyads[:-1], dyads[1:]):
+            g_dna += np.sum(g_dna_all[dyad1:dyad2], axis=0)
+
+
+        g_dna /= (nucs - 1)
+
+        g_dna_kT.append(np.sum(g_dna))
+
+    print('DNA')
+    print(np.mean(g_dna_kT))
+    print(np.std(g_dna_kT))
+    return g_dna_kT
+
+def tabel(filename):
+
+    g_dna = g_dna_kT(filename)
+    xlsx = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0, index_col=0)
+
+    print('stack (tails)')
+    print(xlsx.iloc[:-1]['g_stack_kT'].mean())
+    print(xlsx.iloc[:-1]['g_stack_kT'].std())
+    print('tails')
+    print(xlsx.iloc[:-1]['g_tails_kT'].mean())
+    print(xlsx.iloc[:-1]['g_tails_kT'].std())
+    print('rep')
+    print(xlsx.iloc[:-1]['g_rep_kT'].mean())
+    print(xlsx.iloc[:-1]['g_rep_kT'].std())
+    print('wrap')
+    print(xlsx.iloc[:-1]['g_wrap_kT'].mean())
+    print(xlsx.iloc[:-1]['g_wrap_kT'].std())
+
+    df = np.sum([g_dna, xlsx.iloc[:-1]['g_stack_kT'], xlsx.iloc[:-1]['g_tails_kT'], xlsx.iloc[:-1]['g_rep_kT'], xlsx.iloc[:-1]['g_wrap_kT']], axis=0)
+    print('Total')
+    if xlsx.iloc[1]['fiber_start'] == 0:
+        print('0-start')
+        print(np.mean(df) - 0.0)
+    else:
+        print(np.mean(df) - 25.0)
+    print(np.std(df))
+
+def wrap(filename):
+
+    xlsx = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0, index_col=0)
+    print(xlsx.iloc[1]['NRL'])
+    print(xlsx.iloc[1]['fiber_start'])
+    print(xlsx.iloc[1]['e_wrap_kT'])
+    print('wrap')
+    print(xlsx.iloc[:-1]['g_wrap_kT'].mean())
+    print(xlsx.iloc[:-1]['g_wrap_kT'].std())
+    return
+
+def plot_wrap(NRL, fiberstart):
+
+    filename = r"D:\Downloads\2021-01-02 E unwrap exp.xlsx"
+
+    data = pd.read_excel(filename, sheet_name=str(NRL), header=0, index_col=0)
+    x_tick = data.columns
+    y_fps = data.loc['FPS ' + str(fiberstart) + '-start']
+    e_fps = data.loc['FPS ' + str(fiberstart) + '-start' + ' std']
+
+    y_131 = data.loc['131 ' + str(fiberstart) + '-start']
+    e_131 = data.loc['131 ' + str(fiberstart) + '-start' + ' std']
+
+    y_791 = data.loc['791 ' + str(fiberstart) + '-start']
+    e_791 = data.loc['791 ' + str(fiberstart) + '-start' + ' std']
+
+
+    if fiberstart == 1:
+        marker = '^'
+    elif fiberstart == 2:
+        marker = 's'
+    else:
+        marker = 'o'
+
+    if NRL == 167:
+        color = (0.75, 0, 0.25)
+    else:
+        color = (0, 0.75, 0.25)
+
+
+    fig, ax = plt.subplots()
+
+
+    # FPS
+    ax.errorbar(x_tick, y_fps, e_fps, color=(0.2, 0.2, 0.2),
+                marker=marker, markersize=5, label='fps', linewidth=0,
+                ecolor=(0.2, 0.2, 0.2), elinewidth=1, capsize=3)
+
+    ax.errorbar(x_tick, y_131, e_131, color=color,
+                marker=marker, markersize=5, label='1.31', linewidth=0,
+                ecolor=color, elinewidth=1, capsize=3)
+
+    ax.errorbar(x_tick, y_791, e_791, mec=color,
+                marker=marker, markersize=5, mfc=(1, 1, 1), label='7.91', linewidth=0,
+                ecolor=color, elinewidth=1, capsize=3)
+
+    save_loc = fileio.change_extension(filename, (str(NRL) + 's' + str(fiberstart) + '.png'))
+    format_plot('E$_{unwrap, max}$ (K$_B$T)', 'E$_{unwrap}$ (K$_B$T)', 'title', scale_page=(1.0/3),
+                aspect=1, save=save_loc, yrange=[-1.0,11], legend=None, ax=ax)
+    return
 
 def get_g_dna(filename):
 
@@ -416,7 +590,7 @@ def get_g_dna(filename):
                 w[fixed_bps[0]:fixed_bps[1]] = 0
             # else:
             #     w = None
-        g_dna.append(rMC.score_dna(p, p0, k, w=w)) #10xL_bpX6
+        g_dna.append(rMC.score_dna(p, p0, k, w=w)) #npzsxL_bpX6
 
     g_dna_all = np.mean(g_dna, axis=0) #L_bpx6
     g_dna_std = np.std(np.sum(g_dna, axis=2), axis=0)
@@ -431,6 +605,11 @@ def get_g_dna(filename):
 
     df_g_dna = pd.concat([df_all, df_m, df_std], axis=1)
     df_g_dna.to_excel(fileio.change_extension(filename, '_g_dna.xlsx'))
+
+    begin = dyads[3] - 75
+    end = dyads[5] + 75
+
+    print(np.max(g_dna_m[begin:end]))
 
     return df_m
 
@@ -480,44 +659,44 @@ def get_mean_coords(filename):
 def dna_energy_display(filename, energy_kT='g_total (kT)'):
 
     file = get_g_dna(filename)
+    # return
 
-    n_bins = 50
-    bin_max = 1.5 #kT
-    bin = np.linspace(0, bin_max, n_bins, dtype=float)
-    bin_labels = np.arange(n_bins-1)
-    file[energy_kT] = np.clip(file[energy_kT], 0 , bin_max)
+    E_max = 1.5 #kT
+    file[energy_kT] = np.clip(file[energy_kT], 0 , E_max)
 
     colorwaaier = []
     rod = []
-    for i, b in enumerate(np.arange(n_bins)):
-        p = b/float(n_bins)
-        colorwaaier.append([0.6 + (0.4 * p) , 0.6 * (1 - p)**2,  0.6 * (1 - p)**2])
+    for i, b in enumerate(np.arange(50)):
+        p = b/50.0
+        colorwaaier.append([0.6 + (0.4 * p) , 0.6 * (1 - p),  0.6 * (1 - p)])
         rod.append([0,0,i/10.0])
 
 
-    POVe.main(fileio.change_extension(filename, 'label.png'), rod, colorwaaier, radius=1, range_A=[25, 25], offset_A=[0, 0, 10], width_pix=500, showt=True)
+    # POVe.main(fileio.change_extension(filename, 'label.png'), rod, colorwaaier, radius=1, range_A=[25, 25], offset_A=[0, 0, 10], width_pix=500, showt=True)
 
-    file['bin'] = pd.cut(file[energy_kT], bins=bin, labels=bin_labels, include_lowest=True)
     colors = []
-
-    for b in file['bin']:
-        colors.append(colorwaaier[b])
+    for e in file[energy_kT]:
+        c = e/E_max
+        colors.append([0.6 + (0.4 * c) , 0.6 * (1 - c),  0.6 * (1 - c)])
 
 
     dyads, nuc_cms, coords = get_mean_coords(filename)[0:3]
 
     # transform fiber to origin
-    # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
-    origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+    # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
+    # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
+    angle = 0.7*np.pi
+    cos = np.cos(angle)
+    sin = np.sin(angle)
+    origin_of = np.asarray([[0, 0, 0], [-cos, -sin, 0], [-sin, cos, 0], [0, 0, -1]])
     tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
-    t_coord = []  # transformed coords
     # Tranform coords where first nucleosome is placed in origin
     t_coord = nMC.apply_transformation(coords[0], tf_o)
 
     begin = dyads[3] - 75
     end = dyads[5] + 75
 
-    POVe.main(fileio.change_extension(filename, 'Etot.png'), t_coord[begin:end], colors, radius=10, range_A=[500, 500], offset_A=[0, 0, 125], width_pix=500, showt=True)
+    POVe.main(fileio.change_extension(filename, 'Etot.png'), t_coord[begin:end], colors[begin:end], radius=10, range_A=[500, 500], offset_A=[0, 0, 125], width_pix=500, showt=True)
 
     return
 
@@ -566,12 +745,19 @@ def plot_npz(filename):
 
         # append histone positions to coordinates
         # tf_d ensures that histones are placed correct at nucleosome position
-        # coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d)
-        coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 75:dyads[5] + 75], dyads, nucl, tf=tf_d[3:6], tail=False)
+        coord_w_hist, radius, colors = tMC.get_histones(coords, dyads, nucl, tf=tf_d, tail=False)
+        # coord_w_hist, radius, colors = tMC.get_histones(coords[dyads[3] - 75:dyads[5] + 75], dyads, nucl, tf=tf_d[3:6], tail=False)
 
         # transform fiber to origin
         origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]])
         # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]])
+        tf_o = nMC.get_transformation(nuc_cms[4], target=origin_of)
+        # origin_of = np.asarray([[0, 0, 0], [0.866, -0.5, 0], [-0.5, -0.866, 0], [0, 0, -1]]) np.pi/6.
+        # origin_of = np.asarray([[0, 0, 0], [0.707, 0.707, 0], [0.707, -0.707, 0], [0, 0, -1]]) 0.25*np.pi
+        angle = 1.3 * np.pi
+        cos = np.cos(angle)
+        sin = np.sin(angle)
+        origin_of = np.asarray([[0, 0, 0], [-cos, -sin, 0], [-sin, cos, 0], [0, 0, -1]])
         tf_o = nMC.get_transformation(nuc_cms[3], target=origin_of)
         t_coord = []  # transformed coords
         # Tranform coords where first nucleosome is placed in origin
@@ -638,9 +824,9 @@ def de_grote_chromatine_show(filename, size):
     # tf_d ensures that histones are placed correct at nucleosome position
     coord_w_hist, radius, colors = tMC.get_histones(coords[100:-100], dyads_new, nucl, tf=tf_d, tail=False)
 
-    print(fileio.create_pov((fileio.change_extension(filename, '_big.png')), coord_w_hist, radius=radius, colors=colors,
+    print(fileio.create_pov((fileio.change_extension(filename, '_2big.png')), coord_w_hist, radius=radius, colors=colors,
                             range_A=[1500, 1500],
-                            offset_A=[0, 0, 100], show=False, width_pix=1500))
+                            offset_A=[0, 0, 500], show=False, width_pix=1500))
 
     return
 
@@ -676,7 +862,7 @@ def get_g_linker(filename):
         g_dna.append(rMC.score_dna(p, p0, k, w=w))  # 10xL_bpX6
 
 
-    dyads_block_idx = np.arange(dyads[1], dyads[-1], nrl)
+    dyads_block_idx = np.arange(dyads[1], dyads[-2], nrl)
     g_dna_block = []
     for g, npz in enumerate(g_dna): # energy of each bp in each npz file
         for idx in dyads_block_idx:
@@ -698,35 +884,109 @@ def get_g_linker(filename):
                                               'g_twist_kT'], index=range(nrl))
 
     df_g_dna = pd.concat([df_all, df_m, df_std], axis=1)
-    # df_g_dna.to_excel(fileio.change_extension(filename, '_g_dna.xlsx'))
+    df_g_dna.to_excel(fileio.change_extension(filename, 'g_linker.xlsx'))
 
     return df_g_dna
 
 def plot_g_linker(filename_1, filename_2):
 
-
+    # param_name = 'g_shift_kT'
+    # error_name = 'g_shift_std'
+    # param_name = 'g_slide_kT'
+    # error_name = 'g_slide_std'
+    # param_name = 'g_rise_kT'
+    # error_name = 'g_rise_std'
+    # param_name = 'g_tilt_kT'
+    # error_name = 'g_tilt_std'
+    # param_name = 'g_roll_kT'
+    # error_name = 'g_roll_std'
     param_name = 'g_twist_kT'
     error_name = 'g_twist_std'
-    df_g_dna_1 = get_g_linker(filename_1)
-    df_g_dna_2 = get_g_linker(filename_2)
+    # df_g_dna_1 = get_g_linker(filename_1)
+    # df_g_dna_2 = get_g_linker(filename_2)
+    df_g_dna_1 = pd.read_excel(filename_1 + 'g_linker.xlsx', header=0, index_col=0)
+    df_g_dna_2 = pd.read_excel(filename_2 + 'g_linker.xlsx', header=0, index_col=0)
 
-    x_tick = df_g_dna_1.index[55:-55]
-    y_1 = df_g_dna_1.iloc[55:-55][param_name]
-    e_1 = df_g_dna_1.iloc[55:-55][error_name]
-    y_2 = df_g_dna_2.iloc[55:-55][param_name]
-    e_2 = df_g_dna_2.iloc[55:-55][error_name]
+    # 167
+    # x_tick = df_g_dna_1.index[55:-55]
+    # y_1 = df_g_dna_1.iloc[55:-55][param_name]
+    # e_1 = df_g_dna_1.iloc[55:-55][error_name]
+    # y_2 = df_g_dna_2.iloc[55:-55][param_name]
+    # e_2 = df_g_dna_2.iloc[55:-55][error_name]
+    # 197
+    x_tick = df_g_dna_1.index[50:-50]
+    y_1 = df_g_dna_1.iloc[50:-50][param_name]
+    e_1 = df_g_dna_1.iloc[50:-50][error_name]
+    y_2 = df_g_dna_2.iloc[50:-50][param_name]
+    e_2 = df_g_dna_2.iloc[50:-50][error_name]
 
     fig, ax = plt.subplots()
     #
-    ax.errorbar(x_tick, y_1, e_1, color=(1.0, 0.5, 0.0), marker='^', markersize=1, label='167 1-start', linewidth=0,
-                ecolor=(1.0, 0.5, 0.0), elinewidth=0.3, capsize=0.5)
+    ax.errorbar(x_tick, y_1, e_1, color=(1, 0, 0), marker='^', markersize=1, label='167 1-start', linewidth=0,
+                ecolor=(1, 0, 0), elinewidth=0.0, capsize=0.0)
     # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
-    ax.errorbar(x_tick, y_2, e_2, color=(0.27, 0.5, 0.7), marker='s', markersize=1,
+    ax.errorbar(x_tick, y_2, e_2, color=(0, 0, 1), marker='s', markersize=1,
                 label='167 2-start', linewidth=0,
-                ecolor=(0.27, 0.5, 0.7), elinewidth=0.3, capsize=0.5)
+                ecolor=(0, 0, 1), elinewidth=0.0, capsize=0.0)
     # ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
 
     save_loc = fileio.change_extension(filename_1, (param_name + '.png'))
-    format_plot('bp', 'energy (kT)' , 'title', scale_page=(1.0/4),
-                aspect=1, save=save_loc, yrange=None, legend=None, ax=ax)
+    format_plot('basepair', '$\\Delta$G (k$_B$T)' , 'title', scale_page=(1.0/4.0),
+                aspect=1, save=save_loc, yrange=[-1.0,1.0], legend=None, ax=ax)
     return
+
+def plot_tail(filename, filename_2=None):
+
+    tail = pd.read_excel(filename, header=0, index_col=0)
+    x_tick = tail.index[:]
+    t_up = tail.loc[:, 'tail up (nm)']
+    t_down = tail.loc[:, 'tail down (nm)']
+
+    fig, ax = plt.subplots()
+    ax.plot(x_tick, t_up, color=(0.75, 0, 0.5), marker='^', label='up', markersize=0.05, linestyle='')
+    ax.plot(x_tick, t_down, color=(1, 0, 1), marker='v', label='down', markersize=0.05, linestyle='')
+    # print(np.mean(t_up))
+    # print(np.std(t_up))
+    # print(np.mean(t_down))
+    # print(np.std(t_down))
+    # return
+
+    label = ['up', 'down']
+
+    if filename_2 is not None:
+        tail_2 = pd.read_excel(filename_2, header=0, index_col=0)
+        t_up_2 = tail_2.loc[:, 'tail up (nm)']
+        t_down_2 = tail_2.loc[:, 'tail down (nm)']
+        ax.plot(x_tick, t_up_2, color=(0, 0, 0.5), marker='^', label='tail up', markersize=0.05, linestyle='')
+        ax.plot(x_tick, t_down_2, color=(0, 0, 1), marker='v', label='tail down', markersize=0.05, linestyle='')
+        label = []
+
+
+    save_loc = fileio.change_extension(filename, '.png')
+    format_plot('iteration', 'distance (nm)', 'title', scale_page=(1.0 / 2.0),
+                aspect=0.5, save=save_loc, yrange=[0,24], #legend=label,
+                ax=ax)
+
+    return
+
+def plot_tail2(filename, filename_2=None):
+
+    tail = pd.read_excel(filename, header=0, index_col=0)
+    x_tick = tail.index[:]
+    t_1 = np.mean(tail, axis=1)
+
+    tail_2 = pd.read_excel(filename_2, header=0, index_col=0)
+    t_2 = np.mean(tail_2, axis=1)
+
+    fig, ax = plt.subplots()
+    ax.plot(x_tick, t_1, color=(0.75, 0, 0.25), marker='o', label='tail up', markersize=0.1, linestyle='')
+    ax.plot(x_tick, t_2, color=(0, 0.75, 0.25), marker='o', label='tail up', markersize=0.1, linestyle='')
+
+    label = ['167', '197']
+
+    save_loc = fileio.change_extension(filename, '3.png')
+    format_plot('iteration (#)', 'distance (nm)', 'title', scale_page=(1.0 / 2.8),
+                aspect=0.8, save=save_loc, yrange=[0,20], legend=label, ax=ax)
+
+    return
+

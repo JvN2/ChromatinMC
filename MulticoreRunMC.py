@@ -48,7 +48,7 @@ if __name__ == "__main__":
         [8, 197, 1, 102, 100.0],
         [8, 197, 2, 102, 100.0],
 
-    ]
+
 
     if len(iterpars) > 22:
         print('>>> More than 22 processes, only the first 22 are executed')
