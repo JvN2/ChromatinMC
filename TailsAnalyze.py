@@ -12,7 +12,7 @@ import RunMC as rMC
 
 def repulsion_exp():
 
-    filename = r"C:\Users\Annelies\OneDrive\Documents\experimental data\20201110 repulsion d varies\20201112_cms_dists.xlsx"
+    filename = r"D:\Downloads\20210105_cms_dists.xlsx"
     zero_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,B,C")
     one_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,D,E")
     two_start_167 = pd.read_excel(filename, sheet_name='167', header=1, index_col=0, usecols="A,F,G")
@@ -46,32 +46,32 @@ def repulsion_exp():
     # left, bottom, width, height = [0.6, 0.55, 0.35, 0.35]
     # ax2 = fig.add_axes([left, bottom, width, height]) # inset
     #
-    # ax.errorbar(x_tick, y_1.iloc[:-1], e_1.iloc[:-1], color=(0.75, 0, 0.25), marker='^', markersize=5, label='167 1-start', linewidth=0,
-    #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    # ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
-    ax.errorbar(x_tick, y_2.iloc[:-1], e_2.iloc[:-1], color=(0.75, 0, 0.25), marker='s', markersize=5, label='167 2-start', linewidth=0,
+    ax.errorbar(x_tick, y_1.iloc[:-1], e_1.iloc[:-1], color=(0.75, 0, 0.25), marker='^', markersize=5, label='167 1-start', linewidth=0,
                 ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
-    ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
+    ax.axhline(y=y_1['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
+    # ax.errorbar(x_tick, y_2.iloc[:-1], e_2.iloc[:-1], color=(0.75, 0, 0.25), marker='s', markersize=5, label='167 2-start', linewidth=0,
+    #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
+    # ax.axhline(y=y_2['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
 
     # ax.errorbar(x_tick, y_0.iloc[:-1], e_0.iloc[:-1], color=(0.75, 0, 0.25), marker='o', markersize=5, label='167 0-start', linewidth=0,
     #             ecolor=(0.75, 0, 0.25), elinewidth=2, capsize=3)
     # ax.axhline(y=y_0['old'], color=(0.6, 0.6, 0.6), linestyle='-', lw=2)
 
-    # ax.errorbar(x_tick, y9_1.iloc[:-1], e9_1.iloc[:-1], color=(0, 0.75, 0.25), marker='^', markersize=5, label='197 1-start', linewidth=0,
-    #             ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    # ax.axhline(y=y9_1['old'], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
-    ax.errorbar(x_tick, y9_2.iloc[:-1], e9_2.iloc[:-1], color=(0, 0.75, 0.25), marker='s', markersize=5, label='197 2-start', linewidth=0,
+    ax.errorbar(x_tick, y9_1.iloc[:-1], e9_1.iloc[:-1], color=(0, 0.75, 0.25), marker='^', markersize=5, label='197 1-start', linewidth=0,
                 ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
-    ax.axhline(y=y9_2['old'], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
+    ax.axhline(y=y9_1['old'], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
+    # ax.errorbar(x_tick, y9_2.iloc[:-1], e9_2.iloc[:-1], color=(0, 0.75, 0.25), marker='s', markersize=5, label='197 2-start', linewidth=0,
+    #             ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
+    # ax.axhline(y=y9_2['old'], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
 
     # ax.errorbar(x_tick, y9_0.iloc[:-1], e9_0.iloc[:-1], color=(0, 0.75, 0.25), marker='o', markersize=5, label='197 0-start', linewidth=0,
     #             ecolor=(0, 0.75, 0.25), elinewidth=2, capsize=3)
     # ax.axhline(y=y9_0['old'], color=(0.6, 0.6, 0.6), linestyle='--', lw=2)
 
     labels=['167 1-start fps', '167 2-start fps', '197 1-start fps', '197 2-start fps', '167 1-start', '167 2-start', '197 1-start', '197 2-start',]
-    save_loc = fileio.change_extension(filename, '2-start.png')
-    format_plot('decay length (nm)', 'distance (nm)', 'title', scale_page=(1.0/3),
-                aspect=1, save=save_loc, yrange=[0,33], legend=None, ax=ax)
+    save_loc = fileio.change_extension(filename, '1-start.png')
+    format_plot('screening length (nm)', 'distance (nm)', 'title', scale_page=(1.0/2.7),
+                aspect=0.8, save=save_loc, yrange=[0,33], legend=None, ax=ax)
 
     return
 
@@ -510,6 +510,19 @@ def wrap(filename):
     print(xlsx.iloc[:-1]['g_wrap_kT'].mean())
     print(xlsx.iloc[:-1]['g_wrap_kT'].std())
     return
+
+def rep(filename):
+
+    xlsx = pd.read_excel(fileio.change_extension(filename, '.xlsx'), sheet_name='params', header=0, index_col=0)
+    print(xlsx.iloc[1]['NRL'])
+    print(xlsx.iloc[1]['fiber_start'])
+    print(xlsx.iloc[1]['Rep_decay_A'])
+    print('repulsion')
+    print(xlsx.iloc[:-1]['nucl_cms_nm'].mean())
+    print(xlsx.iloc[:-1]['nucl_cms_nm'].std())
+    return
+
+
 
 def plot_wrap(NRL, fiberstart):
 

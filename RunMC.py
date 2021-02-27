@@ -315,7 +315,7 @@ def main(n_steps, root):
     # Setup files and forces
     if root is None:
         root = '{1}x{2}x{0}s{3}w{4:0.1f}'.format(pars['fiber_start'].value, pars['n_nuc'].value, pars['NRL'].value,
-                                                 pars['Rep_Amp_pNA'].value, pars['e_wrap_kT'].value).replace('.', '-')
+                                                 pars['Rep_Amp_pNA'].value, pars['Rep_decay_A'].value).replace('.', '-')
 
     else:
         iterpar = []
